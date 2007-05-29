@@ -1,0 +1,54 @@
+body
+{
+    background: #15181a;
+    color: #fff;
+    font-family: Verdana;
+    font-size: 12px;
+    text-align: center;
+}
+
+#controls
+{
+    font-family: Monospace;
+    position: fixed;
+}
+
+#controls a
+{
+    background: #fff;
+    border: #ccc 1px solid;
+    color: #666;
+}
+
+#space
+{
+    border: #fff 1px solid;
+    height: 100%;
+    width: 100%;
+}
+
+#starfield
+{
+    background: url('images/space.png');
+    cursor: crosshair;
+    height: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    overflow: hidden;
+    text-align: left;
+    width: 500px;
+}
+
+.star
+{
+    cursor: pointer;
+    cursor: hand;
+    height: 20px;
+    position: relative;
+    width: 20px;
+}
+
+#mine
+{
+    border: #fff 1px solid;
+}
