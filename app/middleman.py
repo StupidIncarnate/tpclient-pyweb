@@ -14,17 +14,9 @@ def callback(mode, state, message="", todownload=None, total=None, amount=None):
     pass
     #print "Downloading %s %s Message:%s" %  (mode, state, message)
 
-def connect():
-    debug = False
-    host = 'demo1.thousandparsec.net'
-    port = 6923
-    username = 'test'
-    password = 'test1234'
-
+def connect(host, port, username, password):
     connection = Connection()
-
-    # Download the entire universe
-    if connection.setup(host=host, port=port, debug=debug):
+    if connection.setup(host=host, port=port, debug=False):
         print "Unable to connect to the host."
         return
 
@@ -38,10 +30,13 @@ def connect():
     cache = Cache(Cache.key(host, username))
     return connection, cache
 
-conn, cache = connect()
+#conn, cache = connect()
 
-print "Download all data"
-cache.update(conn, callback)
+#print "Download all data"
+#cache.update(conn, callback)
+
+#cache.file = 'lol'
+#cache.save()
 
 """lastturn = cache.objects[0].turn
 waitfor = conn.time()
