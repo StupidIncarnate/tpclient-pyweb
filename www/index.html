@@ -4,6 +4,7 @@
     <title>Draggable tile map</title>
     <script type="text/javascript" src="scripts/jquery-dev.js"></script>
     <script type="text/javascript" src="scripts/jquery-timers.js"></script>
+    <script type="text/javascript" src="scripts/jquery.cookies.2.1.0.min.js"></script>
     <script type="text/javascript" src="scripts/map.js"></script>
     <style type="text/css">
         html, body { height: 100%; margin: 0; padding: 0; background-color: grey; font-family: verdana; font-size: 12px; }
@@ -14,10 +15,23 @@
         #container { position: relative; }
         #panel { position: absolute; top: 0px; left: 0px; background-color: green; width: 300px; z-index: 100; height: 100%; }
         #panel h2 { margin: 0; padding: 0; }
+        #loginbox { position: absolute; top: 50px; left: 50px; z-index: 1001; color: orange; background-color: black; padding: 20px; }
+        #loginbox .error { color: red; }
     </style>
 </head>
 
 <body>
+<div id="loginbox" style="display: none;">
+    <h1>Welcome to thousand parsec web client</h1>
+    <form method="post" action="">
+        <div class="error" style="display: none;"></div>
+        <p>Host: <input type="text" id="tphost" name="tphost" /></p>
+        <p>Username: <input type="text" id="tpuser" name="tpuser" /></p>
+        <p>Password: <input type="text" id="tppass" name="tppass" /></p>
+        <p><input type="submit" id="tpsubmit" name="tpsubmit" value="Login" /></p>
+    </form>
+</div>
+
     <div id="header">This header...</div>
     <div id="container">
         <div id="panel">

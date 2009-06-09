@@ -180,6 +180,47 @@ $(document).ready(function () {
         map.drawobject(i*5, i*5);
         map.drawobject(-i*5, i*5);
     }
+
+    // If there is no cookie we should display a login box (will move this to its own function when backend works)
+    var cookie = $.cookies.get('tpclient-pyweb')
+    if(cookie == null) {
+        $('#tpsubmit').click(function() {
+            $('#login-error').hide();
+            var host = $('#tphost').val();
+            var user = $('#tpuser').val();
+            var pass = $('#tppass').val();
+            var error = false;
+
+            if(host == '' || user == '' || pass == '') {
+                error = true;
+                $('#loginbox .error').show().text('No empty fields are allowed.');
+            } else {
+                // Change to post sometimes later
+                $.ajax({type: "GET", url: "/json/login/"+host+"/"+user+"/"+pass+"/", 
+                    error: function(data, textstatus) {
+                        error = true;
+                        $('#loginbox .error').show().text('Something went terribly wrong...');                  
+                    }, 
+                    success: function(data, textstatus) {
+                        if(data.ok = 'yes') {
+                            window.location.reload();
+                        } else {
+                            error = true;
+                            $('#loginbox .error').show().text('Wrong username or password.');
+                        }
+                }});
+            }
+            return false;
+        });
+        // Display login box
+        $('#loginbox').show();
+
+        var logincon = $(document.createElement('div'));
+        logincon.attr('id', 'logincontainer');
+        logincon.css({'position': 'absolute', 'top': '0px', 'left': '0px', 'width': '100%', 'height': '100%', 'background-color': 'black', 'z-index': 1000, opacity: 0.9});
+        $('body').append(logincon);
+    }
+
     /*$.getJSON('http://space.xvid.se/json/planets/', function(planet) {
         for(pid in planet) {
             map.drawobject(planet[pid]['coordinate']['x'], planet[pid]['coordinate']['y'], planet[pid]['name']);
