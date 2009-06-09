@@ -2,6 +2,11 @@
 import sys
 sys.stdout = sys.stderr
 
+try:
+    import requirements
+except ImportError:
+    pass
+
 # Using beaker for session middleware
 from beaker.middleware import SessionMiddleware
 
