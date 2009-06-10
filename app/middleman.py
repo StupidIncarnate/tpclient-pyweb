@@ -8,8 +8,6 @@ from tp.netlib import Connection
 from tp.netlib import failed, constants, objects
 from tp.client.cache import Cache
 
-"""This is just old prototype code..."""
-
 class ConnectionError(Exception):
     """Exception used in connect"""
     def __init__(self, value):
@@ -19,10 +17,11 @@ class ConnectionError(Exception):
         return str(self.value)
 
 def callback(mode, state, message="", todownload=None, total=None, amount=None):
+    """Callback function used when downloading all game data"""
     pass
-    #print "Downloading %s %s Message:%s" %  (mode, state, message)
 
 def connect(host, port, username, password):
+    """Connect function, used by the backend"""
     try:
         connection = Connection(host=host, port=port, debug=False)
     except socket.error, e:
@@ -36,18 +35,3 @@ def connect(host, port, username, password):
 
     cache = Cache(Cache.key(host, username))
     return connection, cache
-
-#conn, cache = connect()
-
-#print "Download all data"
-#cache.update(conn, callback)
-
-"""lastturn = cache.objects[0].turn
-waitfor = conn.time()
-print "Awaiting end of turn %s (%s s)..." % (lastturn,waitfor)
-while lastturn == conn.get_objects(0)[0].turn:
-    while waitfor > 1:
-        time.sleep(1)
-        waitfor = conn.time()
-    time.sleep(2)
-"""
