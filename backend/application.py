@@ -9,40 +9,6 @@ except ImportError, e:
 # Local imports
 import middleman
 
-# A method from my prototype
-def test(request):
-    ret = []
-    for a in cache.objects:
-        if hasattr(cache.objects[a], 'parent') and cache.objects[a].parent == 1:
-            norm[a] = int(((cache.objects[a].pos[0]**2) + (cache.objects[a].pos[1]**2)) ** 0.5)
-            if norm[a] == 0:
-                x = y = 300
-            else:
-                x = ((cache.objects[a].pos[0] / maxsize) * 300) + 300
-                #x = ((cache.objects[a].pos[0] / norm[a]) * 300) + 300
-                #y = ((cache.objects[a].pos[1] / norm[a]) * 300)
-                y = ((cache.objects[a].pos[1] / maxsize) * 300)
-                y = 300-y
-            ret.append((x,y))
-    return json.dumps(ret)
-
-
-def index(environ, start_response):
-    """A test handler that only return hello world"""
-
-    import datetime
-
-    output = ['Hello world! First visit!']
-    session = environ.get('session')
-    if 'test' in session:
-        output = ['Hello world! I was here before...', str(session['test'])]
-    else:
-        session['test'] = datetime.datetime.now()
-        session.save()
-
-    start_response('200 OK', [('Content-Type', 'text/plain')])
-    return output
-
 def login(environ, start_response):
     """Login handler"""
 
@@ -78,9 +44,9 @@ def cache_update(environ, start_response):
         conn, cache = middleman.connect(host, port, username, password)
         cache.update(conn, middleman.callback)
         cache.save()
-        data = 'cache update ok'
+        data = {'auth': True, 'cache': True, 'time': conn.time()}
     else:
-        data = 'not logged in'
+        data = {'auth': False}
 
     output = json.dumps(data, encoding='utf-8', ensure_ascii=False)
 
@@ -90,28 +56,41 @@ def cache_update(environ, start_response):
 def get_objects(environ, start_response):
     """Get all objects from cache"""
 
-    host = 'demo1.thousandparsec.net'
-    port = 6923
-    username = 'test'
-    password = 'test1234'
+    session = environ.get('session')
+    if 'uid' in session:
+        cache = middleman.cache(session['uid'][0], session['uid'][2])
+        ret = []
+        try:
+            file = open(cache.file)
+        except IOError:
+            pass
+        else:
+            norm = {}
+            maxsize = 0
+            for a in cache.objects:
+                if hasattr(cache.objects[a], 'parent') and cache.objects[a].parent == 1:
+                    maxsize = max(cache.objects[a].pos[0], cache.objects[a].pos[1], maxsize) 
 
-    conn, cache = middleman.connect(host, port, username, password)
+            for a in cache.objects:
+                if hasattr(cache.objects[a], 'parent') and cache.objects[a].parent == 1:
+                    norm[a] = int(((cache.objects[a].pos[0]**2) + (cache.objects[a].pos[1]**2)) ** 0.5)
+                    if norm[a] == 0:
+                        x = y = 300
+                    else:
+                        x = ((cache.objects[a].pos[0] / maxsize) * 300) + 300
+                        #x = ((cache.objects[a].pos[0] / norm[a]) * 300) + 300
+                        #y = ((cache.objects[a].pos[1] / norm[a]) * 300)
+                        y = ((cache.objects[a].pos[1] / maxsize) * 300)
+                        y = 300-y
+                    ret.append((x,y))
 
-    cache.file = '/tmp/tpclient-pyweb/' + host + username
-    try:
-        file = open(cache.file)
-    except IOError:
-        cache.update(conn, middleman.callback)
+        data = {'auth': True, 'objects': ret}
     else:
-        cache.load()
+        data = {'auth': False}
 
-    lastturn = cache.objects[0].turn
-    waitfor = conn.time()
-    output = "Awaiting end of turn %s (%s s)..." % (lastturn, waitfor)
+    output = json.dumps(data, encoding='utf-8', ensure_ascii=False)
 
-    cache.save()
-
-    start_response('200 OK', [('Content-Type', 'text/plain')])
+    start_response('200 OK', [('Content-Type', 'application/json')])
     return [output]
 
 def delete_session(environ, start_response):
@@ -130,11 +109,10 @@ def not_found(environ, start_response):
 
 # All valid urls for this application
 urls = [
-    (r'^$', index),
-    (r'^delete$', delete_session),
-    (r'get/objects/$', get_objects),
-    (r'cache_update/$', cache_update),
-    (r'login/(.+)/(.+)/(.+)/(.+)/$', login),
+    (r'^delete(|/)$', delete_session),
+    (r'get_objects(|/)$', get_objects),
+    (r'cache_update(|/)$', cache_update),
+    (r'login/(.+)/(.+)/(.+)/(.+)(|/)$', login),
 ]
 
 def application(environ, start_response):

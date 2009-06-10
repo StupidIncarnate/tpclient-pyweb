@@ -35,3 +35,7 @@ def connect(host, port, username, password):
 
     cache = Cache(Cache.key(host, username), configdir='/tmp/tpclient-pyweb/cache/')
     return connection, cache
+
+def cache(host, username):
+    return Cache(Cache.key(host, username), configdir='/tmp/tpclient-pyweb/cache/')
+

@@ -173,19 +173,19 @@ function DragTileMap(target) {
     }
 }
 
+function intialCacheUpdate() {
+
+}
+
 $(document).ready(function () {
     var map = new DragTileMap('#mapdiv');
-    map.init(575, 275);
-    for(var i = 0; i < 250; i++) {
-        map.drawobject(i*5, i*5);
-        map.drawobject(-i*5, i*5);
-    }
+    map.init(250, 250);
 
     // If there is no cookie we should display a login box (will move this to its own function when backend works)
     var cookie = $.cookies.get('tpclient-pyweb')
     if(cookie == null) {
         $('#tpsubmit').click(function() {
-            $('#login-error').hide();
+            $('#login .error').hide();
             var host = $('#tphost').val();
             var port = $('#tpport').val();
             var user = $('#tpuser').val();
@@ -197,15 +197,25 @@ $(document).ready(function () {
                 // Change to post sometimes later
                 $.ajax({type: "GET", dataType: 'json', url: "/json/login/"+encodeURI(host)+"/"+encodeURI(port)+"/"+encodeURI(user)+"/"+encodeURI(pass)+"/", 
                     error: function(data, textstatus) {
-                        error = true;
                         $('#loginbox .error').show().text('Something went terribly wrong...');                  
                     }, 
                     success: function(data, textstatus) {
                         // If login was ok reload to get new cookie, else display error
                         if(data.ok === true) {
-                            $('#loginbox .error').hide();
-                            $('#loginbox').hide();
-                            window.location.reload();
+                            // Call for a cache update before login is complete
+                            $.ajax({type: "GET", dataType: 'json', url: "/json/cache_update/", 
+                                error: function(data, textstatus) { }, 
+                                success: function(data, textstatus) {
+                                    if(data.auth === true && data.cache === true) { 
+                                        $('#loginbox .error').hide();
+                                        $('#loginbox').hide();
+                                        window.location.reload();
+                                    } else {
+                                        $.cookies.del('tpclient-pyweb');
+                                        window.location.reload();
+                                    }
+                                }
+                            });
                         } else {
                             if(data.error !== '') {
                                 $('#loginbox .error').show().text(data.error);
@@ -224,13 +234,25 @@ $(document).ready(function () {
         logincon.attr('id', 'logincontainer');
         logincon.css({'position': 'absolute', 'top': '0px', 'left': '0px', 'width': '100%', 'height': '100%', 'background-color': 'black', 'z-index': 1000, opacity: 0.9});
         $('body').append(logincon);
+
+    } else {
+
+        $.ajax({type: "GET", dataType: 'json', url: "/json/get_objects/", 
+            error: function(data, textstatus) { }, 
+            success: function(data, textstatus) {
+                if(data.auth === true) {
+                    for(var i in data.objects) {
+                        map.drawobject(data.objects[i][0], data.objects[i][1]);
+                    }
+                } else {
+                    // Logout...
+                    $.cookies.del('tpclient-pyweb');
+                    window.location.reload();
+                }
+            }
+        });
     }
 
-    /*$.getJSON('http://space.xvid.se/json/planets/', function(planet) {
-        for(pid in planet) {
-            map.drawobject(planet[pid]['coordinate']['x'], planet[pid]['coordinate']['y'], planet[pid]['name']);
-        }
-    });*/
     $('#hide').click(function(e) {
         $('#panel').hide();
     });
