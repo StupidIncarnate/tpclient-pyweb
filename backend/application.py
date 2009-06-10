@@ -109,10 +109,10 @@ def not_found(environ, start_response):
 
 # All valid urls for this application
 urls = [
-    (r'^delete(|/)$', delete_session),
-    (r'get_objects(|/)$', get_objects),
-    (r'cache_update(|/)$', cache_update),
-    (r'login/(.+)/(.+)/(.+)/(.+)(|/)$', login),
+    (r'^delete/$', delete_session),
+    (r'get_objects/$', get_objects),
+    (r'cache_update/$', cache_update),
+    (r'login/(.+)/(.+)/(.+)/(.+)/$', login),
 ]
 
 def application(environ, start_response):
