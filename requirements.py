@@ -6,7 +6,7 @@ sys.path.insert(0, '.')
 import os.path
 
 # If we are working from git, initialise the submodules
-modules = [("libtpproto-py", "tp.netlib"), ("libtpclient-py", "tp.client")]
+modules = [("libtpproto-py", "tp.netlib"), ("libtpclient-py", "tp.client"), ("backend", "backend")]
 if os.path.exists(".git"):
     for dir, name in modules:
         if os.path.exists(dir) and not os.path.exists(os.path.join(dir, ".git")):
@@ -15,7 +15,15 @@ if os.path.exists(".git"):
 
 for dir, name in modules:
     if os.path.exists(dir):
-        sys.path.insert(0, dir)
+        sys.path.insert(0, dir) 
+
+# Simplejson (if 2.5)
+cur_ver = sys.version_info
+if cur_ver[0] == 2 and cur_ver[1] == 5:
+    modules.append(("simplejson", "simplejson"))
+
+# Beaker (for sessions)
+modules.append(("beaker", "beaker"))
 
 # Check for our dependencies.
 notfound = []
@@ -23,8 +31,15 @@ for dir, name in modules:
     try:
         exec("import %s as module" % name)
 
-        print "%s version" % dir, module.__version__ 
-        print "    (installed at %s)" % module.__installpath__
+        try:
+            print "%s version %s" % (dir, module.__version__)
+        except AttributeError, e:
+            print "%s" % dir
+
+        try:
+            print "    (installed at %s)" % module.__installpath__
+        except AttributeError, e:
+            pass
 
         try:
             exec("from %s.version import version_git" % name)
@@ -36,6 +51,7 @@ for dir, name in modules:
         print e
         notfound.append(dir)
     print
+
 
 if len(notfound) > 0:
     print "The following requirements where not met:"

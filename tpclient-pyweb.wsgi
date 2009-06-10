@@ -10,7 +10,8 @@ except ImportError:
 # Using beaker for session middleware
 from beaker.middleware import SessionMiddleware
 
-from application import application
+# Import backend application
+from backend.application import application
 
 session_opts = {
     'session.type': 'file',
