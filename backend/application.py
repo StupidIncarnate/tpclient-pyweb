@@ -35,6 +35,15 @@ def login(environ, start_response):
     start_response('200 OK', [('Content-Type', 'application/json')])
     return [output]
 
+def logout(environ, start_response):
+    """A helper method during development to delete a session"""
+
+    environ.get('session').delete()
+    output = json.dumps({'ok': True}, encoding='utf-8', ensure_ascii=False)
+
+    start_response('200 OK', [('Content-Type', 'application/json')])
+    return [output]
+
 def cache_update(environ, start_response):
     """Update cache"""
 
@@ -93,15 +102,6 @@ def get_objects(environ, start_response):
     start_response('200 OK', [('Content-Type', 'application/json')])
     return [output]
 
-def delete_session(environ, start_response):
-    """A helper method during development to delete a session"""
-
-    session = environ.get('session')
-    session.delete()
-
-    start_response('200 OK', [('Content-Type', 'text/plain')])
-    return ['Session is deleted.']
-
 def not_found(environ, start_response):
     """A simple not found handler"""
     start_response('404 NOT FOUND', [('Content-Type', 'text/plain')])
@@ -109,10 +109,10 @@ def not_found(environ, start_response):
 
 # All valid urls for this application
 urls = [
-    (r'^delete/$', delete_session),
-    (r'get_objects/$', get_objects),
-    (r'cache_update/$', cache_update),
-    (r'login/(.+)/(.+)/(.+)/(.+)/$', login),
+    (r'^logout/$', logout),
+    (r'^get_objects/$', get_objects),
+    (r'^cache_update/$', cache_update),
+    (r'^login/(.+)/(.+)/(.+)/(.+)/$', login),
 ]
 
 def application(environ, start_response):

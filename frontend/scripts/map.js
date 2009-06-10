@@ -178,6 +178,22 @@ function intialCacheUpdate() {
 }
 
 $(document).ready(function () {
+
+    // Setup logout handler
+    $('#logout').click(function() {
+        $.ajax({type: "GET", dataType: "json", url: "/json/logout/",
+            error: function() {
+                // If we couldnt kill it nicely just remove cookie and reload page
+                $.cookies.del('tpclient-pyweb');
+                window.location.reload();
+            },
+            success: function(data, textstatus) {
+                window.location.reload();
+            }
+        });
+        return false;
+    });
+
     var map = new DragTileMap('#mapdiv');
     map.init(250, 250);
 
