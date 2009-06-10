@@ -2,9 +2,9 @@
 from __future__ import division
 import re
 try:
-    import simplejson
+    import json
 except ImportError, e:
-    import json as simplejson
+    import simplejson as json
 
 # Local imports
 import middleman
@@ -42,6 +42,32 @@ def index(environ, start_response):
 
     start_response('200 OK', [('Content-Type', 'text/plain')])
     return output
+
+def login(environ, start_response):
+    """Login handler"""
+
+    host, port, username, password = environ['tpclient-pyweb.url_args']
+    data = {'ok': True, 'error': None}
+
+    try:
+        conn, cache = middleman.connect(host, port, username, password)
+    except middleman.ConnectionError, e:
+        data['ok'] = False
+        data['error'] = str(e)
+    
+    if data['ok']:
+        conn.disconnect()
+
+        # Set session when login was ok
+        import datetime, hashlib
+        session = environ.get('session')
+        session['uid'] = (host, username, hashlib.sha1(password).hexdigest(), datetime.datetime.now())
+        session.save()
+
+    output = json.dumps(data, encoding='utf-8', ensure_ascii=False)
+
+    start_response('200 OK', [('Content-Type', 'application/json')])
+    return [output]
 
 def get_objects(environ, start_response):
     """Get all objects from cache"""
@@ -89,6 +115,7 @@ urls = [
     (r'^$', index),
     (r'^delete$', delete_session),
     (r'get/objects/$', get_objects),
+    (r'login/(.+)/(.+)/(.+)/(.+)/$', login),
 ]
 
 def application(environ, start_response):

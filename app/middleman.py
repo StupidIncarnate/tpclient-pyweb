@@ -1,5 +1,5 @@
 # Python imports
-import time
+import time, socket
 
 # Local imports
 import tp.client.threads
@@ -10,22 +10,29 @@ from tp.client.cache import Cache
 
 """This is just old prototype code..."""
 
+class ConnectionError(Exception):
+    """Exception used in connect"""
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return str(self.value)
+
 def callback(mode, state, message="", todownload=None, total=None, amount=None):
     pass
     #print "Downloading %s %s Message:%s" %  (mode, state, message)
 
 def connect(host, port, username, password):
-    connection = Connection()
-    if connection.setup(host=host, port=port, debug=False):
-        print "Unable to connect to the host."
-        return
+    try:
+        connection = Connection(host=host, port=port, debug=False)
+    except socket.error, e:
+        raise ConnectionError('Unable to connect to the host.')
 
     if failed(connection.connect()):
-        print "Unable to connect to the host."
-        return
+        raise ConnectionError('Unable to connect to the host.')
 
     if failed(connection.login(username, password)):
-        print "User did not exist."
+        raise ConnectionError('User did not exist.')
 
     cache = Cache(Cache.key(host, username))
     return connection, cache
@@ -34,9 +41,6 @@ def connect(host, port, username, password):
 
 #print "Download all data"
 #cache.update(conn, callback)
-
-#cache.file = 'lol'
-#cache.save()
 
 """lastturn = cache.objects[0].turn
 waitfor = conn.time()

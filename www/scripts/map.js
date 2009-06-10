@@ -187,26 +187,31 @@ $(document).ready(function () {
         $('#tpsubmit').click(function() {
             $('#login-error').hide();
             var host = $('#tphost').val();
+            var port = $('#tpport').val();
             var user = $('#tpuser').val();
             var pass = $('#tppass').val();
-            var error = false;
 
-            if(host == '' || user == '' || pass == '') {
-                error = true;
+            if(host == '' || port == '' || user == '' || pass == '') {
                 $('#loginbox .error').show().text('No empty fields are allowed.');
             } else {
                 // Change to post sometimes later
-                $.ajax({type: "GET", url: "/json/login/"+host+"/"+user+"/"+pass+"/", 
+                $.ajax({type: "GET", dataType: 'json', url: "/json/login/"+encodeURI(host)+"/"+encodeURI(port)+"/"+encodeURI(user)+"/"+encodeURI(pass)+"/", 
                     error: function(data, textstatus) {
                         error = true;
                         $('#loginbox .error').show().text('Something went terribly wrong...');                  
                     }, 
                     success: function(data, textstatus) {
-                        if(data.ok = 'yes') {
+                        // If login was ok reload to get new cookie, else display error
+                        if(data.ok === true) {
+                            $('#loginbox .error').hide();
+                            $('#loginbox').hide();
                             window.location.reload();
                         } else {
-                            error = true;
-                            $('#loginbox .error').show().text('Wrong username or password.');
+                            if(data.error !== '') {
+                                $('#loginbox .error').show().text(data.error);
+                            } else {
+                                $('#loginbox .error').show().text('Wrong username or password.');
+                            }
                         }
                 }});
             }
