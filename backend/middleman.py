@@ -33,5 +33,5 @@ def connect(host, port, username, password):
     if failed(connection.login(username, password)):
         raise ConnectionError('User did not exist.')
 
-    cache = Cache(Cache.key(host, username))
+    cache = Cache(Cache.key(host, username), configdir='/tmp/tpclient-pyweb/cache/')
     return connection, cache

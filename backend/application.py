@@ -61,8 +61,26 @@ def login(environ, start_response):
         # Set session when login was ok
         import datetime, hashlib
         session = environ.get('session')
-        session['uid'] = (host, username, hashlib.sha1(password).hexdigest(), datetime.datetime.now())
+        session['uid'] = (host, port, username, password, datetime.datetime.now())
         session.save()
+
+    output = json.dumps(data, encoding='utf-8', ensure_ascii=False)
+
+    start_response('200 OK', [('Content-Type', 'application/json')])
+    return [output]
+
+def cache_update(environ, start_response):
+    """Update cache"""
+
+    session = environ.get('session')
+    if 'uid' in session:
+        host, port, username, password, now = session['uid']
+        conn, cache = middleman.connect(host, port, username, password)
+        cache.update(conn, middleman.callback)
+        cache.save()
+        data = 'cache update ok'
+    else:
+        data = 'not logged in'
 
     output = json.dumps(data, encoding='utf-8', ensure_ascii=False)
 
@@ -115,6 +133,7 @@ urls = [
     (r'^$', index),
     (r'^delete$', delete_session),
     (r'get/objects/$', get_objects),
+    (r'cache_update/$', cache_update),
     (r'login/(.+)/(.+)/(.+)/(.+)/$', login),
 ]
 
