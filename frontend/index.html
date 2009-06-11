@@ -18,20 +18,23 @@
         #panel h2 { margin: 0; padding: 0; }
         #loginbox { position: absolute; top: 50px; left: 50px; z-index: 1001; color: orange; background-color: black; padding: 20px; }
         #loginbox .error { color: red; }
+        #loginbox-transparent { position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; background-color: black; z-index: 1000; }
+        .transparent { filter:alpha(opacity=90); -moz-opacity: 0.9; -khtml-opacity: 0.9; opacity: 0.9; -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=90)"; }
     </style>
 </head>
 
 <body>
-<div id="loginbox" style="display: none;">
-    <h1>Welcome to thousand parsec web client</h1>
-    <form method="post" action="">
-        <div class="error" style="display: none;"></div>
-        <p>Host and port: <input type="text" id="tphost" name="tphost" /> <input type="text" id="tpport" name="tpport" size="5" /></p>
-        <p>Username: <input type="text" id="tpuser" name="tpuser" /></p>
-        <p>Password: <input type="text" id="tppass" name="tppass" /></p>
-        <p><input type="submit" id="tpsubmit" name="tpsubmit" value="Login" /></p>
-    </form>
-</div>
+    <div id="loginbox">
+        <h1>Welcome to thousand parsec web client</h1>
+        <form method="post" action="">
+            <div class="error" style="display: none;"></div>
+            <p>Host and port: <input type="text" id="tphost" name="tphost" /> <input type="text" id="tpport" name="tpport" size="5" /></p>
+            <p>Username: <input type="text" id="tpuser" name="tpuser" /></p>
+            <p>Password: <input type="text" id="tppass" name="tppass" /></p>
+            <p><input type="submit" id="tpsubmit" name="tpsubmit" value="Login" /></p>
+        </form>
+    </div>
+    <div id="loginbox-transparent" class="transparent"></div>
 
     <div id="header">This header...</div>
     <div id="container">

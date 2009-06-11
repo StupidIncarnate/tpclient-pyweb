@@ -243,15 +243,13 @@ $(document).ready(function () {
             }
             return false;
         });
+
         // Display login box
         $('#loginbox').show();
 
-        var logincon = $(document.createElement('div'));
-        logincon.attr('id', 'logincontainer');
-        logincon.css({'position': 'absolute', 'top': '0px', 'left': '0px', 'width': '100%', 'height': '100%', 'background-color': 'black', 'z-index': 1000, opacity: 0.9});
-        $('body').append(logincon);
-
     } else {
+
+        $('#loginbox, #loginbox-transparent').hide();
 
         $.ajax({type: "GET", dataType: 'json', url: "/json/get_objects/", 
             error: function(data, textstatus) { }, 
