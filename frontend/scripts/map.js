@@ -201,7 +201,10 @@ $(document).ready(function () {
     var cookie = $.cookies.get('tpclient-pyweb')
     if(cookie == null) {
         $('#tpsubmit').click(function() {
+            $('#loading').show();
             $('#login .error').hide();
+            $('#tpsubmit').attr("disabled", "true");
+            
             var host = $('#tphost').val();
             var port = $('#tpport').val();
             var user = $('#tpuser').val();
@@ -213,7 +216,9 @@ $(document).ready(function () {
                 // Change to post sometimes later
                 $.ajax({type: "GET", dataType: 'json', url: "/json/login/"+encodeURI(host)+"/"+encodeURI(port)+"/"+encodeURI(user)+"/"+encodeURI(pass)+"/", 
                     error: function(data, textstatus) {
-                        $('#loginbox .error').show().text('Something went terribly wrong...');                  
+                        $('#loginbox .error').show().text('Something went terribly wrong...');
+                        $('#tpsubmit').removeAttr('disabled');
+                        $('#loading').hide();
                     }, 
                     success: function(data, textstatus) {
                         // If login was ok reload to get new cookie, else display error
@@ -238,6 +243,8 @@ $(document).ready(function () {
                             } else {
                                 $('#loginbox .error').show().text('Wrong username or password.');
                             }
+                            $('#tpsubmit').removeAttr('disabled');
+                            $('#loading').hide();
                         }
                 }});
             }
