@@ -2,6 +2,7 @@
 import sys
 sys.stdout = sys.stderr
 
+# Make sure we have all requirements to run this application
 try:
     import requirements
 except ImportError:
@@ -11,15 +12,12 @@ except ImportError:
 from beaker.middleware import SessionMiddleware
 
 # Import backend application
+from backend.config import session_opts, config
 from backend.application import application
+from backend.exception_middleware import ExceptionMiddleware
 
-session_opts = {
-    'session.type': 'file',
-    'session.data_dir': '/tmp/tpclient-pyweb/sessions',
-    'session.lock_dir': '/tmp/tpclient-pyweb/lock',
-    'session.cookie_expires': True,
-    'session.key': 'tpclient-pyweb',
-    'session.secret': 'MyS3cR3T'
-}
-application = SessionMiddleware(application, session_opts, environ_key='session')
-
+# If debug is set add exception middleware
+if 'debug' in config and config['debug']:
+    application = ExceptionMiddleware(SessionMiddleware(application, session_opts, environ_key='session'))
+else:
+    application = SessionMiddleware(application, session_opts, environ_key='session')
