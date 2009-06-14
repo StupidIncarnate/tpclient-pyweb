@@ -6,29 +6,46 @@ try:
 except ImportError, e:
     import simplejson as json
 
+try:
+    from urlparse import parse_qs
+except ImportError:
+    from cgi import parse_qs
+
 # Local imports
 import middleman
 
 def login(environ, start_response):
     """Login handler"""
 
-    host, port, username, password = environ['tpclient-pyweb.url_args']
-    data = {'ok': True, 'error': None}
+    if environ['REQUEST_METHOD'].lower() == 'post':
+        postdata = parse_qs(environ['wsgi.input'].read())
+        
+        host, colon, port = postdata['host'][0].rpartition(':')
+        if colon == '':
+            host = port
+            port = 6923
 
-    try:
-        conn, cache = middleman.connect(host, port, username, password)
-    except middleman.ConnectionError, e:
-        data['ok'] = False
-        data['error'] = str(e)
+        username = postdata['user'][0]
+        password = postdata['pass'][0]
+
+        data = {'auth': True, 'error': 'Wrong username or password.'}
+
+        try:
+            conn, cache = middleman.connect(host, port, username, password)
+        except middleman.ConnectionError, e:
+            data['auth'] = False
+            data['error'] = str(e)
     
-    if data['ok']:
-        conn.disconnect()
+        if data['auth']:
+            conn.disconnect()
 
-        # Set session when login was ok
-        import datetime, hashlib
-        session = environ.get('session')
-        session['uid'] = (host, port, username, password, datetime.datetime.now())
-        session.save()
+            # Set session when login was ok
+            import datetime, hashlib
+            session = environ.get('session')
+            session['uid'] = (host, port, username, password, datetime.datetime.now())
+            session.save()
+    else:
+        data = {'auth': False, 'error': 'Just use the form we provid to submit data, OK?'}
 
     output = json.dumps(data, encoding='utf-8', ensure_ascii=False)
 
@@ -39,7 +56,7 @@ def logout(environ, start_response):
     """A helper method during development to delete a session"""
 
     environ.get('session').delete()
-    output = json.dumps({'ok': True}, encoding='utf-8', ensure_ascii=False)
+    output = json.dumps({'auth': False}, encoding='utf-8', ensure_ascii=False)
 
     start_response('200 OK', [('Content-Type', 'application/json')])
     return [output]
@@ -74,30 +91,56 @@ def get_objects(environ, start_response):
         except IOError:
             pass
         else:
-            norm = {}
-            maxsize = 0
-            for a in cache.objects:
-                if hasattr(cache.objects[a], 'parent') and cache.objects[a].parent == 1:
-                    maxsize = max(cache.objects[a].pos[0], cache.objects[a].pos[1], maxsize) 
+            #maxsize = 0
+            #for i in cache.objects:
+            #    if cache.objects[i].subtype == 2:
+            #        maxsize = max(cache.objects[i].pos[0], cache.objects[i].pos[1], maxsize) 
 
-            for a in cache.objects:
-                if hasattr(cache.objects[a], 'parent') and cache.objects[a].parent == 1:
-                    norm[a] = int(((cache.objects[a].pos[0]**2) + (cache.objects[a].pos[1]**2)) ** 0.5)
-                    if norm[a] == 0:
-                        x = y = 300
+            """
+            for i in cache.objects:
+                if cache.objects[i].subtype == 2:
+                    x = cache.objects[i].pos[0]
+                    y = cache.objects[i].pos[1]
+
+                    if x == 0:
+                        x = 0
                     else:
-                        x = ((cache.objects[a].pos[0] / maxsize) * 300) + 300
-                        #x = ((cache.objects[a].pos[0] / norm[a]) * 300) + 300
-                        #y = ((cache.objects[a].pos[1] / norm[a]) * 300)
-                        y = ((cache.objects[a].pos[1] / maxsize) * 300)
-                        y = 300-y
-                    ret.append((x,y))
+                        x = (x / cache.objects[0].size) * 60000
 
-        data = {'auth': True, 'objects': ret}
+                    if y == 0:
+                        y = 0
+                    else:
+                        y = (y / cache.objects[0].size) * 60000
+
+                    ret.append((x, y, cache.objects[i].name.encode('utf-8')))
+            """
+            """
+            retdata = []
+            for i in cache.objects:
+                obj = []
+
+                obj.append(i)
+                obj.append(str(type(cache.objects[i])))
+                attrdata = {}
+                for attr in dir(cache.objects[i]):
+                    if attr.find('_') == -1: #and b != 'VersionError' and b != 'fromstr':
+                        res = getattr(cache.objects[i], attr)
+                        if isinstance(res, unicode):
+                            attrdata[attr] = res.encode('utf-8')
+                        else:
+                            attrdata[attr] = res
+                obj.append(attrdata)
+                retdata.append(obj)
+            """
+        
+        data = {'auth': True, 'objects': middleman.FriendlyObjects(cache).build()}
     else:
         data = {'auth': False}
 
-    output = json.dumps(data, encoding='utf-8', ensure_ascii=False)
+    def test(obj):
+        return str(obj).encode('utf-8')
+
+    output = json.dumps(data, encoding='utf-8', ensure_ascii=False, default=test)
 
     start_response('200 OK', [('Content-Type', 'application/json')])
     return [output]
@@ -112,7 +155,7 @@ urls = [
     (r'^logout/$', logout),
     (r'^get_objects/$', get_objects),
     (r'^cache_update/$', cache_update),
-    (r'^login/(.+)/(.+)/(.+)/(.+)/$', login),
+    (r'^login/$', login),
 ]
 
 def application(environ, start_response):

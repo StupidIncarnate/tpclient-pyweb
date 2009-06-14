@@ -135,7 +135,7 @@ function DragTileMap(target) {
         var ej = Math.max(this.oldStartCol + Math.max(this.oldvpCols, this.vpCols), endCol);
 
         // Loop, i = row, j = column
-        for(var i = si; i >= ei; i--) {
+        /*for(var i = si; i >= ei; i--) {
             for(var j = sj; j <= ej; j++) {
                 if(i > startRow || i < endRow || j < startCol || j > endCol) {
                     if(this.shownMap[i] && this.shownMap[i][j]) {
@@ -159,31 +159,180 @@ function DragTileMap(target) {
                     }
                 }
             }
-        }
+        }*/
         this.oldStartRow = startRow;
         this.oldStartCol = startCol;
     }
 
-    this.drawobject = function(x, y, text) {
+    this.drawobject = function(x, y, id) {
         var test = $(document.createElement('div'));
-        test.attr('id', 'object-1');
-        test.css({'position': 'absolute', 'top': (this.tilesize) - y+'px', 'left': x+'px', 'background-color': 'yellow', 'width': '10px', 'height': '10px'});
-        test.text(text);
+        test.attr('id', id).attr('class', 'obj');
+        test.css({'position': 'absolute', 'top': (this.tilesize) - y+'px', 'left': x+'px', 'background-color': 'red', 'width': '10px', 'height': '10px', 'font-size': '8px'});
         this.canvas.append(test);
     }
+
+    this.drawfleet = function(x, y, id) {
+        var test = $(document.createElement('div'));
+        test.attr('id', id).attr('class', 'fleet');
+        test.css({'position': 'absolute', 'top': (this.tilesize) - y+'px', 'left': x+'px', 'background-color': 'green', 'width': '10px', 'height': '10px', 'font-size': '8px'});
+        this.canvas.append(test);
+    }       
 }
 
-function intialCacheUpdate() {
+userinterface = ( function() {
+    var loggedin = false;
 
-}
+    var clear_uilock = function(e) {
+        $('#login-lock, #login-loading').remove();
+    }
+
+    var login = function(e) {
+        var login_error = function(text, loading) {
+            loading.css({'color': 'red'}).text(text + " Click anywhere to get a second chance.");
+            $('#login-lock, #login-loading').one("click", clear_uilock);
+        }
+        var login_message = function(text, loading) {
+            loading.css({'color': 'orange'}).html(text);
+        }
+
+        var lock = $(document.createElement('div'))
+            .attr('id', 'login-lock')
+            .attr('class', 'transparent')
+            .css({'position': 'absolute', 'top': '0px', 'left': '0px', 'background-color': 'black', 'width': '100%', 'height': '100%', 'z-index': '10000'});
+
+        var loading = $(document.createElement('div'))
+            .attr('id', 'login-loading')
+            .css({'position': 'absolute', 'top': '15px', 'left': '50%', 'width': '440px', 'margin-left': '-220px', 'z-index': '10001', 'text-align': 'center'});
+
+        login_message('Please wait while connecting to host <img src="/images/loading.gif" />', loading);
+
+        $('body').append(lock).append(loading);
+
+        var host = $("input[name='tphost']", this).val();
+        var user = $("input[name='tpuser']", this).val();
+        var pass = $("input[name='tppass']", this).val();
+
+        if(host == '' || user == '' || pass == '') {
+            login_error('No empty fields are allowed.', loading);
+        } else {
+            $.ajax({type: "POST", dataType: 'json', data: {'host': host, 'user': user, 'pass': pass}, url: "/json/login/", 
+                error: function(req, textstatus) { 
+                    login_error('Something went really wrong, contact administrator.', loading);
+                }, 
+                success: function(data, textstatus) { 
+                    if(data.auth === true) {
+                        loggedin = true;
+                        login_message('Please wait while the user interface is loading <img src="/images/loading.gif" />', loading);
+                        e.data.cache_update();
+                    } else {
+                       login_error(data.error, loading);
+                    }
+                }
+            });
+        }
+        return false;
+    };
+
+    var logout = function(e) {
+        $.ajax({type: "GET", dataType: "json", url: "/json/logout/",
+            complete: function() {
+                $.cookies.del('tpclient-pyweb');
+                window.location.reload();
+            }
+        });
+        return false;
+    };
+
+    var draw_ui = function() {
+        clear_uilock();
+        
+        $('#loginbox').hide();
+        $('#ui').show();
+
+        map = new DragTileMap('#mapdiv');
+        map.init(0, 0);
+
+        $.ajax({type: "GET", dataType: 'json', url: "/json/get_objects/", 
+            error: function(data, textstatus) { }, 
+            success: function(data, textstatus) {
+                if(data.auth === true) {
+                    universe = data.objects[0];
+                    for(var i in universe.objects) {
+                        galaxy = universe.objects[i];
+                        for(var j in galaxy.objects) {
+                            starsystem = galaxy.objects[j];
+                            var x = (starsystem.pos[0] / universe.size) * 100000;
+                            var y = (starsystem.pos[1] / universe.size) * 100000;
+                            if(starsystem.type == 'Star System') {
+                                map.drawobject(x, y, starsystem.id);
+                            } else if(starsystem.type == 'Fleet') {
+                                map.drawfleet(x, y, starsystem.id);
+                            }
+                        }
+                    }
+                } else {
+                    this.logout();
+                }
+            }
+        });
+    };
+
+
+    var constructor = function(){};
+
+    constructor.prototype.draw_ui = function() {
+        draw_ui();
+    };
+
+    constructor.prototype.isLoggedin = function() {
+        if($.cookies.get('tpclient-pyweb') == null) {
+            return false;
+        } else { 
+            return true;
+        }
+    };
+
+    constructor.prototype.cache_update = function() {
+        $.ajax({type: "GET", dataType: 'json', url: "/json/cache_update/", 
+            error: function(data, textstatus) { 
+                this.logout();
+            }, 
+            success: function(data, textstatus) {
+                if(data.auth === true && data.cache === true) {
+                    draw_ui();
+                    window.location.reload();
+                } else {
+                    this.logout();
+                }
+            }
+        });
+    };
+
+    constructor.prototype.objclicked = function(e) {
+        console.log(parseInt(e.target.id));
+    }
+
+    constructor.prototype.setup = function() {
+        $('#logout').bind("click", this, logout);
+        $('#loginform').bind("submit", this, login);
+        $('.obj, .fleet').live("click", this.objclicked);
+    };
+
+    return new constructor();
+} )();
 
 $(document).ready(function () {
 
+    userinterface.setup();
+
+    if(userinterface.isLoggedin() === true) {
+        userinterface.draw_ui();
+    }
+
     // Setup logout handler
-    $('#logout').click(function() {
+    /*$('#logout').click(function() {
         $.ajax({type: "GET", dataType: "json", url: "/json/logout/",
             error: function() {
-                // If we couldnt kill it nicely just remove cookie and reload page
                 $.cookies.del('tpclient-pyweb');
                 window.location.reload();
             },
@@ -192,10 +341,10 @@ $(document).ready(function () {
             }
         });
         return false;
-    });
+    });*/
 
-    var map = new DragTileMap('#mapdiv');
-    map.init(250, 250);
+    /*var map = new DragTileMap('#mapdiv');
+    map.init(0, 0);
 
     // If there is no cookie we should display a login box (will move this to its own function when backend works)
     var cookie = $.cookies.get('tpclient-pyweb')
@@ -262,8 +411,19 @@ $(document).ready(function () {
             error: function(data, textstatus) { }, 
             success: function(data, textstatus) {
                 if(data.auth === true) {
-                    for(var i in data.objects) {
-                        map.drawobject(data.objects[i][0], data.objects[i][1]);
+                    universe = data.objects[0];
+                    for(var i in universe.objects) {
+                        galaxy = universe.objects[i];
+                        for(var j in galaxy.objects) {
+                            starsystem = galaxy.objects[j];
+                            var x = (starsystem.pos[0] / universe.size) * 100000;
+                            var y = (starsystem.pos[1] / universe.size) * 100000;
+                            if(starsystem.type == 'Star System') {
+                                map.drawobject(x, y, starsystem.name);
+                            } else if(starsystem.type == 'Fleet') {
+                                map.drawfleet(x, y, starsystem.name);
+                            }
+                        }
                     }
                 } else {
                     // Logout...
@@ -276,6 +436,6 @@ $(document).ready(function () {
 
     $('#hide').click(function(e) {
         $('#panel').hide();
-    });
+    });*/
 });
 

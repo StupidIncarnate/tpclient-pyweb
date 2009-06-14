@@ -3,55 +3,68 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
     <title>Draggable tile map</title>
-    <script type="text/javascript" src="scripts/jquery-dev.js"></script>
-    <script type="text/javascript" src="scripts/jquery-timers.js"></script>
-    <script type="text/javascript" src="scripts/jquery.cookies.2.1.0.min.js"></script>
-    <script type="text/javascript" src="scripts/map.js"></script>
+    <link rel="stylesheet" href="/css/screen.css" type="text/css" media="screen, projection">
+    <link rel="stylesheet" href="/css/print.css" type="text/css" media="print"> 
+    <!--[if lt IE 8]>
+        <link rel="stylesheet" href="/css/ie.css" type="text/css" media="screen, projection">
+    <![endif]-->
     <style type="text/css">
-        html, body { height: 100%; margin: 0; padding: 0; background-color: grey; font-family: verdana; font-size: 12px; }
-    	#scrollMapViewport { position: relative; overflow: hidden; width: 100%; height: 100%;  }
-        #scrollMapCanvas { background:#CCCCCC; position: absolute; top: 0px; left: 0px; }
+        html, body { background-color: grey; }
+    	#scrollMapViewport { position: relative; overflow: hidden; width: 100%; height: 100%; }
+        #scrollMapCanvas { background: #CCCCCC; position: absolute; top: 0px; left: 0px; }
         #mapdiv { margin: 0; padding: 0; width: 100%; background-color: white;}
-        #header { height: 125px; width: 100%; }
+        #header { height: 100px; width: 100%; padding: 0; margin: 0; }
         #container { position: relative; }
         #panel { position: absolute; top: 0px; left: 0px; background-color: green; width: 300px; z-index: 100; height: 100%; }
         #panel h2 { margin: 0; padding: 0; }
-        #loginbox { position: absolute; top: 50px; left: 50px; z-index: 1001; color: orange; background-color: black; padding: 20px; }
-        #loginbox .error { color: red; }
+        #loginbox { position: absolute; top: 40px; left: 50%; width: 440px; margin-left: -220px; z-index: 1001; color: orange; background-color: black; }
+        #loginbox h1 { color: orange; text-align: center; margin: 10px 20px; padding: 0; }
+        #loginbox fieldset { margin: 10px 20px; border: 0; padding: 0; }
+        #loginbox input { float: right; }
+        #loginbox label { float: left; margin-top: 10px; }
+        #loginbox p { clear: both; }
         #loginbox-transparent { position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; background-color: black; z-index: 1000; }
-        .transparent { filter:alpha(opacity=90); -moz-opacity: 0.9; -khtml-opacity: 0.9; opacity: 0.9; -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=90)"; }
+        .transparent { filter:alpha(opacity=80); -moz-opacity: 0.8; -khtml-opacity: 0.8; opacity: 0.8; -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=80)"; }
     </style>
+    <script type="text/javascript" src="scripts/jquery-dev.js"></script>
+    <script type="text/javascript" src="scripts/jquery-timers.js"></script>
+    <script type="text/javascript" src="scripts/jquery.cookies.2.1.0.min.js"></script>
+    <script type="text/javascript" src="scripts/jquery.history.js"></script>
+    <script type="text/javascript" src="scripts/map.js"></script>
 </head>
 
 <body>
     <div id="loginbox">
-        <h1>Welcome to thousand parsec web client</h1>
-        <form method="post" action="">
-            <div class="error" style="display: none;"></div>
-            <p>Host and port: <input type="text" id="tphost" name="tphost" /> <input type="text" id="tpport" name="tpport" size="5" /></p>
-            <p>Username: <input type="text" id="tpuser" name="tpuser" /></p>
-            <p>Password: <input type="text" id="tppass" name="tppass" /></p>
-            <p><input type="submit" id="tpsubmit" name="tpsubmit" value="Login" /> <img id="loading" style="display: none;" src="/images/loading.gif" /></p>
+        <h1>Welcome to Thousand Parsec web client</h1>
+        <form id="loginform" method="post" action="">
+            <fieldset>
+                <p><label for="tphost">Host</label> <input class="text" type="text" name="tphost" /></p>
+                <p><label for="tpuser">Username</label> <input class="text" type="text" name="tpuser" /></p>
+                <p><label for="tppass">Password</label> <input class="text" type="password" name="tppass" /></p>
+                <p><input type="submit" name="tpsubmit" value="Login" /></p>
+            </fieldset>
         </form>
     </div>
-    <div id="loginbox-transparent" class="transparent"></div>
-
-    <div id="header">This header...</div>
-    <div id="container">
-        <div id="panel">
-            <div style="margin: 5px;">
-                <h2>Information panel</h2>
-                <a id="logout" href="#">Logout</a>
+    <!--<div id="loginbox-transparent" class="transparent"></div>-->
+    
+    <div id="ui" style="display: none;">
+        <div id="header">This header...</div>
+        <div id="container">
+            <div id="panel">
+                <div style="margin: 5px;">
+                    <h2>Information panel</h2>
+                    <a id="logout" href="#">Logout</a>
+                    <a id="testar" href="#wtf">LOL</a>
+                </div>
             </div>
-            <div id="hide" style="position: absolute; top: 8px; right: 8px; border: 1px solid black; padding: 2px;">Hide</div>
+            <div id="mapdiv"></div>
         </div>
-        <div id="mapdiv"></div>
-    </div>
 
-    <div id="debug" style="position: absolute; top: 10px; left: 10px; width: 280px; background-color: orange;">
-        <div id="debug-1" style="margin: 8px; background-color: white; padding: 5px;">Postion (256, 256)</div>
-        <div id="debug-2" style="margin: 8px; background-color: white; padding: 5px;">Tile X: 1 [256, 511]</div>
-        <div id="debug-3" style="margin: 8px; background-color: white; padding: 5px;">Tile Y: 1 [256, 511]</div>
+        <div id="debug" style="position: absolute; top: 10px; left: 10px; width: 280px; background-color: orange; display: none;">
+            <div id="debug-1" style="margin: 8px; background-color: white; padding: 5px;">Postion (256, 256)</div>
+            <div id="debug-2" style="margin: 8px; background-color: white; padding: 5px;">Tile X: 1 [256, 511]</div>
+            <div id="debug-3" style="margin: 8px; background-color: white; padding: 5px;">Tile Y: 1 [256, 511]</div>
+        </div>
     </div>
 </body>
 </html>

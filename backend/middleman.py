@@ -8,6 +8,56 @@ from tp.netlib import Connection
 from tp.netlib import failed, constants, objects
 from tp.client.cache import Cache
 
+object_type = ['Universe', 'Galaxy', 'Star System', 'Planet', 'Fleet']
+
+class FriendlyObjects(object):
+    def __init__(self, cache):
+        self.cache = cache
+        self._object_chain = [self._base, self._galaxy, self._galaxy, self._planet, self._fleet]
+
+    def _base(self, obj, node, level):
+        node.update({
+            'name': obj.name.encode('utf-8'),
+            'id': obj.id,
+            'type': object_type[obj.subtype],
+            'size': obj.size,
+            'objects': [],
+            'level': level
+        })
+
+    def _galaxy(self, obj, node, level):
+        self._base(obj, node, level)
+        node.update({
+            'pos': obj.pos,
+            'vel': obj.vel,
+            'parent': obj.parent
+        })
+
+    def _planet(self, obj, node, level):
+        self._galaxy(obj, node, level)
+        node.update({
+            'owner': obj.owner,
+            'resource': obj.resources
+        })
+
+    def _fleet(self, obj, node, level):
+        self._galaxy(obj, node, level)
+        node.update({
+            'owner': obj.owner,
+            'damage': obj.damage,
+            'ships': obj.ships
+        })
+
+    def _build(self, obj, tree, level):
+        tree.append({})
+        self._object_chain[obj.subtype](obj, tree[-1], level)
+        for i in obj.contains:
+            self._build(self.cache.objects[i], tree[-1]['objects'], level+1)
+        return tree
+
+    def build(self):
+        return self._build(self.cache.objects[0], [], 0)
+
 class ConnectionError(Exception):
     """Exception used in connect"""
     def __init__(self, value):
