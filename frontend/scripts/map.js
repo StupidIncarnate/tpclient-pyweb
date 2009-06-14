@@ -237,6 +237,41 @@ UserInterface = ( function() {
     } )();
 
     /**
+     * End of Turn Handler
+     */
+    var TurnHandler = ( function() {
+        var TurnHandlerClass = function(){};
+
+        var turntime = 0;
+        var element = null;
+        var callback = null;
+
+        TurnHandlerClass.prototype.register = function(elem, cb) {
+            element = $(elem);
+            callback = cb;
+        };
+
+        TurnHandlerClass.prototype.setTime = function(time) {
+            turntime = parseInt(time); 
+            element.text(turntime);
+
+            $(window).stopTime('turnhandler');
+            $(window).oneTime(time*1000, 'turnhandler', callback);
+            $(window).everyTime("1s", 'turnhandler', function() {
+                turntime--;
+                element.text(turntime);
+            }, turntime);
+        };
+
+        TurnHandlerClass.prototype.notice = function() {
+            $('#turn .info').text('Finished downloading the Universe, click here if you want the changes');
+        };
+
+        return new TurnHandlerClass();
+    } )();
+
+
+    /**
      * Login handler
      */
     var login = function(e) {
@@ -257,7 +292,7 @@ UserInterface = ( function() {
                     if(data.auth === true) {
                         loggedin = true;
                         UILock.notice('Please wait while the user interface is loading <img src="/images/loading.gif" />');
-                        e.data.cache_update();
+                        e.data.cache_update(true);
                     } else {
                         UILock.error(data.error, true);
                     }
@@ -295,7 +330,7 @@ UserInterface = ( function() {
             error: function(data, textstatus) { }, 
             success: function(data, textstatus) {
                 if(data.auth === true) {
-                    setCountdown(data.time);
+                    TurnHandler.setTime(data.time);
                     objects = data.objects;
                     universe = data.objects[0];
                     for(var i in universe.contains) {
@@ -321,18 +356,6 @@ UserInterface = ( function() {
         });
     };
 
-    EOT = 0;
-    var setCountdown = function(time) {
-        EOT = parseInt(time);
-        $("#nextturn").everyTime("1s", "nextturn", function() {
-            EOT--;
-            $("#nextturn span").text(EOT);
-            if(EOT < 1) {
-                // Do cache update 
-            }
-        });
-    }
-
     var constructor = function(){};
 
     constructor.prototype.drawUI = function() {
@@ -347,15 +370,19 @@ UserInterface = ( function() {
         }
     };
 
-    constructor.prototype.cache_update = function() {
+    constructor.prototype.cache_update = function(forceRedraw) {
         $.ajax({type: "GET", dataType: 'json', url: "/json/cache_update/", 
             error: function(data, textstatus) { 
                 this.logout();
             }, 
             success: function(data, textstatus) {
                 if(data.auth === true && data.cache === true) {
-                    drawUI();
-                    setCountdown(data.time);
+                    if(forceRedraw === true) {
+                        drawUI();
+                    } else {
+                        TurnHandler.notice();   
+                    }
+                    TurnHandler.setTime(data.time);
                  } else {
                     this.logout();
                 }
@@ -392,9 +419,12 @@ UserInterface = ( function() {
         }
         dd.html(text);
         dl.append(dt).append(dd);
-    }
+    };
 
     constructor.prototype.setup = function() {
+
+        TurnHandler.register("#turn span.time", this.cache_update);
+
         $('#logout').bind("click", this, logout);
         $('#loginform').bind("submit", this, login);
         $('.starsystem, .fleet').live("click", this.objclicked);
@@ -410,6 +440,5 @@ $(document).ready(function () {
     if(UserInterface.isLoggedin() === true) {
         UserInterface.drawUI();
     }
-
 });
 
