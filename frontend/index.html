@@ -10,7 +10,7 @@
     <![endif]-->
     <style type="text/css">
         html, body { background-color: grey; }
-    	#scrollMapViewport { position: relative; overflow: hidden; width: 100%; height: 100%; }
+    	#scrollMapViewport { position: relative; overflow: hidden; width: 100%; }
         #scrollMapCanvas { background: #CCCCCC; position: absolute; top: 0px; left: 0px; }
         #mapdiv { margin: 0; padding: 0; width: 100%; background-color: white;}
         #header { height: 100px; width: 100%; padding: 0; margin: 0; }
@@ -25,6 +25,18 @@
         #loginbox p { clear: both; }
         #loginbox-transparent { position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; background-color: black; z-index: 1000; }
         .transparent { filter:alpha(opacity=80); -moz-opacity: 0.8; -khtml-opacity: 0.8; opacity: 0.8; -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=80)"; }
+
+        #uilock { position: absolute; top: 0; left: 0; background-color: black; width: 100%; height: 100%; z-index: 10000 }
+        #uilock-content { position: absolute; top: 0; left: 50%;
+            width: 440px; margin: 0 0 0 -220px; padding: 1em 0; z-index: 10001; text-align: center; background: 0; border: 0; }
+        #uilock-content.error { color: red; }
+        #uilock-content.notice { color: orange; }
+
+        #info-comp h4 { margin: 0; padding: 0; }
+        #info-comp dl { }
+        #info-comp dt { float: left; clear: left; width: 5em; text-align: left; }
+        #info-comp dt:after { content: ":"; }
+        #info-comp dd { margin: 0 0 0 5.5em; padding: 0 0 0.2em 0; }
     </style>
     <script type="text/javascript" src="scripts/jquery-dev.js"></script>
     <script type="text/javascript" src="scripts/jquery-timers.js"></script>
@@ -57,6 +69,11 @@
                     <h2>Information panel</h2>
                     <a id="logout" href="#">Logout</a>
                     <div id="info"></div>
+                    <div id="info-comp">
+                        <h3>Information component</h3>
+                        <h4>My epic star</h4>
+                        <dl></dl>
+                    </div>
                 </div>
             </div>
             <div id="mapdiv"></div>

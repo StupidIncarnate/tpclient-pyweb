@@ -181,53 +181,85 @@ function DragTileMap(target) {
     }       
 }
 
-userinterface = ( function() {
+UserInterface = ( function() {
     var loggedin = false;
 
-    var clear_uilock = function(e) {
-        $('#login-lock, #login-loading').remove();
-    }
+    /**
+     * User Interface Lock
+     * 
+     */
+    var UILock = ( function() {
 
+        var UILockClass = function(){};
+
+        var active = false;
+
+        UILockClass.prototype.create = function() {
+            if(active === false) {
+                this.lock = $(document.createElement('div')).attr('id', 'uilock').addClass('transparent');
+                this.content = $(document.createElement('div')).attr('id', 'uilock-content');
+                $("body").append(this.lock).append(this.content);
+                active = true;
+            }
+            return this;
+        };
+
+        UILockClass.prototype.clear = function(e) {
+            if(this.lock) { this.lock.remove(); }
+            if(this.content) { this.content.remove(); }
+            active = false;
+        };
+
+        UILockClass.prototype.text = function(text, remove) {
+            if(active === false) {
+                this.create();
+            }
+            if(remove === true) {
+                this.lock.one("click", this, function(e) { e.data.clear(); });
+                this.content.one("click", this, function(e) { e.data.clear(); });
+                text = text + " Click anywhere to go back.";
+            }
+            this.content.html(text);
+        };
+
+        UILockClass.prototype.error = function(error, remove) {
+            this.content.attr('class', 'error');
+            this.text(error, remove);
+        };
+
+        UILockClass.prototype.notice = function(notice, remove) {
+            this.content.attr('class', 'notice');
+            this.text(notice, remove);
+        };
+
+        return new UILockClass();
+
+    } )();
+
+    /**
+     * Login handler
+     */
     var login = function(e) {
-        var login_error = function(text, loading) {
-            loading.css({'color': 'red'}).text(text + " Click anywhere to get a second chance.");
-            $('#login-lock, #login-loading').one("click", clear_uilock);
-        }
-        var login_message = function(text, loading) {
-            loading.css({'color': 'orange'}).html(text);
-        }
-
-        var lock = $(document.createElement('div'))
-            .attr('id', 'login-lock')
-            .attr('class', 'transparent')
-            .css({'position': 'absolute', 'top': '0px', 'left': '0px', 'background-color': 'black', 'width': '100%', 'height': '100%', 'z-index': '10000'});
-
-        var loading = $(document.createElement('div'))
-            .attr('id', 'login-loading')
-            .css({'position': 'absolute', 'top': '15px', 'left': '50%', 'width': '440px', 'margin-left': '-220px', 'z-index': '10001', 'text-align': 'center'});
-
-        login_message('Please wait while connecting to host <img src="/images/loading.gif" />', loading);
-
-        $('body').append(lock).append(loading);
+        UILock.create().notice('Please wait while connecting to host <img src="/images/loading.gif" />');
 
         var host = $("input[name='tphost']", this).val();
         var user = $("input[name='tpuser']", this).val();
         var pass = $("input[name='tppass']", this).val();
 
         if(host == '' || user == '' || pass == '') {
-            login_error('No empty fields are allowed.', loading);
+            UILock.error('No empty fields are allowed.', true);
         } else {
             $.ajax({type: "POST", dataType: 'json', data: {'host': host, 'user': user, 'pass': pass}, url: "/json/login/", 
                 error: function(req, textstatus) { 
-                    login_error('Something went really wrong, contact administrator.', loading);
+                    UILock.error('Something went really wrong, contact administrator.', true);
                 }, 
                 success: function(data, textstatus) { 
                     if(data.auth === true) {
                         loggedin = true;
-                        login_message('Please wait while the user interface is loading <img src="/images/loading.gif" />', loading);
+                        UILock.notice('Please wait while the user interface is loading <img src="/images/loading.gif" />');
                         e.data.cache_update();
                     } else {
-                       login_error(data.error, loading);
+                        UILock.error(data.error, true);
                     }
                 }
             });
@@ -235,6 +267,9 @@ userinterface = ( function() {
         return false;
     };
 
+    /**
+     * Logout handler
+     */
     var logout = function(e) {
         $.ajax({type: "GET", dataType: "json", url: "/json/logout/",
             complete: function() {
@@ -247,9 +282,9 @@ userinterface = ( function() {
 
     var objects = null;
 
-    var draw_ui = function() {
-        clear_uilock();
-        
+    var drawUI = function() {
+        UILock.create().notice('Please wait while loading user interface <img src="/images/loading.gif" />');
+
         $('#loginbox').hide();
         $('#ui').show();
 
@@ -277,6 +312,8 @@ userinterface = ( function() {
                         }
                     }
 
+                    UILock.clear();
+
                 } else {
                     this.logout();
                 }
@@ -298,8 +335,8 @@ userinterface = ( function() {
 
     var constructor = function(){};
 
-    constructor.prototype.draw_ui = function() {
-        draw_ui();
+    constructor.prototype.drawUI = function() {
+        drawUI();
     };
 
     constructor.prototype.isLoggedin = function() {
@@ -317,7 +354,7 @@ userinterface = ( function() {
             }, 
             success: function(data, textstatus) {
                 if(data.auth === true && data.cache === true) {
-                    draw_ui();
+                    drawUI();
                     setCountdown(data.time);
                  } else {
                     this.logout();
@@ -328,7 +365,33 @@ userinterface = ( function() {
 
     constructor.prototype.objclicked = function(e) {
         id = parseInt(e.target.id);
-        $('#info').html('<h3>'+objects[id].name+' info</h3><p>Position: '+objects[id].pos+'</p><p>Size: '+objects[id].size+'</p>');
+        object = objects[id];
+
+        infoComp = $("#info-comp");
+        $("h4", infoComp).text(object.name);
+        dl = $("dl", infoComp).html("");
+
+        base = {'name': 'Name', 'id': 'Id', 'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size'}
+        for(var attr in base) {
+            dt = $(document.createElement('dt')).text(base[attr]);
+            dd = $(document.createElement('dd')).text(object[attr].toString());
+            dl.append(dt).append(dd);
+        }
+
+
+        dt = $(document.createElement('dt')).text('Contains');
+        dd = $(document.createElement('dd'));
+        text = "";
+        for(var i in object.contains) {
+            lone = objects[object.contains[i]];
+            text += lone.name + "<br />";
+            for(var j in lone.contains) {
+                ltwo = objects[lone.contains[j]];
+                text += "&nbsp;&nbsp;" + ltwo.name + "<br />";
+            }
+        }
+        dd.html(text);
+        dl.append(dt).append(dd);
     }
 
     constructor.prototype.setup = function() {
@@ -342,10 +405,10 @@ userinterface = ( function() {
 
 $(document).ready(function () {
 
-    userinterface.setup();
+    UserInterface.setup();
 
-    if(userinterface.isLoggedin() === true) {
-        userinterface.draw_ui();
+    if(UserInterface.isLoggedin() === true) {
+        UserInterface.drawUI();
     }
 
 });
