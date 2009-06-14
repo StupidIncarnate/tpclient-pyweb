@@ -79,6 +79,26 @@ def cache_update(environ, start_response):
     start_response('200 OK', [('Content-Type', 'application/json')])
     return [output]
 
+def get_orders(environ, start_response):
+
+    session = environ.get('session')
+    if 'uid' in session:
+        host, port, username, password, now = session['uid']
+        conn, cache = middleman.connect(host, port, username, password)
+
+        data = {'auth': True, 'orders': cache.orders, 'time': conn.time()}
+    else:
+        data = {'auth': False}
+
+    def test(obj):
+        return str(obj).encode('utf-8')
+
+    output = json.dumps(data, encoding='utf-8', ensure_ascii=False, default=test)
+
+    start_response('200 OK', [('Content-Type', 'application/json')])
+    return [output]
+   
+
 def get_objects(environ, start_response):
     """Get all objects from cache"""
 
@@ -108,6 +128,7 @@ def not_found(environ, start_response):
 urls = [
     (r'^logout/$', logout),
     (r'^get_objects/$', get_objects),
+    (r'^get_orders/$', get_orders),
     (r'^cache_update/$', cache_update),
     (r'^login/$', login),
 ]
