@@ -21,8 +21,7 @@ class FriendlyObjects(object):
             'id': obj.id,
             'type': object_type[obj.subtype],
             'size': obj.size,
-            'objects': [],
-            'level': level
+            'contains': obj.contains
         })
 
     def _galaxy(self, obj, node, level):
@@ -48,15 +47,23 @@ class FriendlyObjects(object):
             'ships': obj.ships
         })
 
+    """
     def _build(self, obj, tree, level):
         tree.append({})
         self._object_chain[obj.subtype](obj, tree[-1], level)
         for i in obj.contains:
             self._build(self.cache.objects[i], tree[-1]['objects'], level+1)
         return tree
+    """
 
     def build(self):
-        return self._build(self.cache.objects[0], [], 0)
+        ret = [None] * len(self.cache.objects)
+        for i in self.cache.objects:
+            obj = self.cache.objects[i]
+            ret.insert(obj.id, {})
+            self._object_chain[obj.subtype](obj, ret[obj.id], 0)
+        #return self._build(self.cache.objects[0], [], 0)
+        return ret
 
 class ConnectionError(Exception):
     """Exception used in connect"""

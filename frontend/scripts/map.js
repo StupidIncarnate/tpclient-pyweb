@@ -164,9 +164,9 @@ function DragTileMap(target) {
         this.oldStartCol = startCol;
     }
 
-    this.drawobject = function(x, y, id) {
+    this.drawstarsystem = function(x, y, id) {
         var test = $(document.createElement('div'));
-        test.attr('id', id).attr('class', 'obj');
+        test.attr('id', id).attr('class', 'starsystem');
         test.css({'position': 'absolute', 'top': (this.tilesize) - y+'px', 'left': x+'px', 'background-color': 'red', 'width': '10px', 'height': '10px', 'font-size': '8px'});
         this.canvas.append(test);
     }
@@ -243,6 +243,8 @@ userinterface = ( function() {
         return false;
     };
 
+    var objects = null;
+
     var draw_ui = function() {
         clear_uilock();
         
@@ -256,20 +258,22 @@ userinterface = ( function() {
             error: function(data, textstatus) { }, 
             success: function(data, textstatus) {
                 if(data.auth === true) {
+                    objects = data.objects;
                     universe = data.objects[0];
-                    for(var i in universe.objects) {
-                        galaxy = universe.objects[i];
-                        for(var j in galaxy.objects) {
-                            starsystem = galaxy.objects[j];
-                            var x = (starsystem.pos[0] / universe.size) * 100000;
-                            var y = (starsystem.pos[1] / universe.size) * 100000;
-                            if(starsystem.type == 'Star System') {
-                                map.drawobject(x, y, starsystem.id);
-                            } else if(starsystem.type == 'Fleet') {
-                                map.drawfleet(x, y, starsystem.id);
+                    for(var i in universe.contains) {
+                        galaxy = data.objects[universe.contains[i]];
+                        for(var j in galaxy.contains) {
+                            obj = data.objects[galaxy.contains[j]];
+                            var x = (obj.pos[0] / universe.size) * 120000;
+                            var y = (obj.pos[1] / universe.size) * 120000;
+                            if(obj.type == 'Star System') {
+                                map.drawstarsystem(x, y, obj.id);
+                            } else if(obj.type == 'Fleet') {
+                                map.drawfleet(x, y, obj.id);
                             }
                         }
                     }
+
                 } else {
                     this.logout();
                 }
@@ -309,13 +313,14 @@ userinterface = ( function() {
     };
 
     constructor.prototype.objclicked = function(e) {
-        console.log(parseInt(e.target.id));
+        id = parseInt(e.target.id);
+        $('#info').html('<h3>'+objects[id].name+' info</h3><p>Position: '+objects[id].pos+'</p><p>Size: '+objects[id].size+'</p>');
     }
 
     constructor.prototype.setup = function() {
         $('#logout').bind("click", this, logout);
         $('#loginform').bind("submit", this, login);
-        $('.obj, .fleet').live("click", this.objclicked);
+        $('.starsystem, .fleet').live("click", this.objclicked);
     };
 
     return new constructor();
@@ -329,113 +334,5 @@ $(document).ready(function () {
         userinterface.draw_ui();
     }
 
-    // Setup logout handler
-    /*$('#logout').click(function() {
-        $.ajax({type: "GET", dataType: "json", url: "/json/logout/",
-            error: function() {
-                $.cookies.del('tpclient-pyweb');
-                window.location.reload();
-            },
-            success: function(data, textstatus) {
-                window.location.reload();
-            }
-        });
-        return false;
-    });*/
-
-    /*var map = new DragTileMap('#mapdiv');
-    map.init(0, 0);
-
-    // If there is no cookie we should display a login box (will move this to its own function when backend works)
-    var cookie = $.cookies.get('tpclient-pyweb')
-    if(cookie == null) {
-        $('#tpsubmit').click(function() {
-            $('#loading').show();
-            $('#login .error').hide();
-            $('#tpsubmit').attr("disabled", "true");
-            
-            var host = $('#tphost').val();
-            var port = $('#tpport').val();
-            var user = $('#tpuser').val();
-            var pass = $('#tppass').val();
-
-            if(host == '' || port == '' || user == '' || pass == '') {
-                $('#loginbox .error').show().text('No empty fields are allowed.');
-            } else {
-                // Change to post sometimes later
-                $.ajax({type: "GET", dataType: 'json', url: "/json/login/"+encodeURI(host)+"/"+encodeURI(port)+"/"+encodeURI(user)+"/"+encodeURI(pass)+"/", 
-                    error: function(data, textstatus) {
-                        $('#loginbox .error').show().text('Something went terribly wrong...');
-                        $('#tpsubmit').removeAttr('disabled');
-                        $('#loading').hide();
-                    }, 
-                    success: function(data, textstatus) {
-                        // If login was ok reload to get new cookie, else display error
-                        if(data.ok === true) {
-                            // Call for a cache update before login is complete
-                            $.ajax({type: "GET", dataType: 'json', url: "/json/cache_update/", 
-                                error: function(data, textstatus) { }, 
-                                success: function(data, textstatus) {
-                                    if(data.auth === true && data.cache === true) { 
-                                        $('#loginbox .error').hide();
-                                        $('#loginbox').hide();
-                                        window.location.reload();
-                                    } else {
-                                        $.cookies.del('tpclient-pyweb');
-                                        window.location.reload();
-                                    }
-                                }
-                            });
-                        } else {
-                            if(data.error !== '') {
-                                $('#loginbox .error').show().text(data.error);
-                            } else {
-                                $('#loginbox .error').show().text('Wrong username or password.');
-                            }
-                            $('#tpsubmit').removeAttr('disabled');
-                            $('#loading').hide();
-                        }
-                }});
-            }
-            return false;
-        });
-
-        // Display login box
-        $('#loginbox').show();
-
-    } else {
-
-        $('#loginbox, #loginbox-transparent').hide();
-
-        $.ajax({type: "GET", dataType: 'json', url: "/json/get_objects/", 
-            error: function(data, textstatus) { }, 
-            success: function(data, textstatus) {
-                if(data.auth === true) {
-                    universe = data.objects[0];
-                    for(var i in universe.objects) {
-                        galaxy = universe.objects[i];
-                        for(var j in galaxy.objects) {
-                            starsystem = galaxy.objects[j];
-                            var x = (starsystem.pos[0] / universe.size) * 100000;
-                            var y = (starsystem.pos[1] / universe.size) * 100000;
-                            if(starsystem.type == 'Star System') {
-                                map.drawobject(x, y, starsystem.name);
-                            } else if(starsystem.type == 'Fleet') {
-                                map.drawfleet(x, y, starsystem.name);
-                            }
-                        }
-                    }
-                } else {
-                    // Logout...
-                    $.cookies.del('tpclient-pyweb');
-                    window.location.reload();
-                }
-            }
-        });
-    }
-
-    $('#hide').click(function(e) {
-        $('#panel').hide();
-    });*/
 });
 
