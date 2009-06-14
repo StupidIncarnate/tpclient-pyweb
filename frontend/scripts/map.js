@@ -181,12 +181,67 @@ function DragTileMap(target) {
     }       
 }
 
+Logger = ( function() {
+    var LoggerClass = function(){};
+
+    var container = null;
+    var content = null;
+    var active = false;
+
+    LoggerClass.prototype.info = function(message) {
+        if(active) {
+            var d = new Date();
+            var date = d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() + ':' + d.getMilliseconds();
+            message = date + ' ' + message + "\n";
+            if(window.console) {
+                console.info(message);
+            } else {
+                $('pre', content).prepend(message);
+            }
+        }
+    };
+
+    LoggerClass.prototype.setup = function() {
+        active = true;
+
+        if(!window.console) {
+            container = $(document.createElement('div'));
+            container.attr('id', 'log-container').css({
+                'position': 'absolute',
+                'bottom': '3em',
+                'right': '3em',
+                'width': '400px',
+                'height': '150px',
+                'background-color': 'red'
+            });
+            content = $(document.createElement('div'));
+            content.attr('id', 'log-content').css({
+                'width': '380px',
+                'height': '130px',
+                'margin': '10px',
+                'overflow': 'auto'
+            }).html("<pre style=\"margin: 0;\"></pre>");
+            container.append(content);
+            $('body').append(container);
+        }
+
+        this.info('Starting Logger');
+    };
+
+    return new LoggerClass();
+} )();
+
+EventHandler = ( function() {
+    var EventHandlerClass = function(){};
+
+    return new EventHandlerClass();
+} )();
+
 UserInterface = ( function() {
     var loggedin = false;
 
     /**
      * User Interface Lock
-     * 
      */
     var UILock = ( function() {
 
@@ -235,6 +290,7 @@ UserInterface = ( function() {
         return new UILockClass();
 
     } )();
+
 
     /**
      * End of Turn Handler
@@ -315,6 +371,29 @@ UserInterface = ( function() {
         return false;
     };
 
+    var ObjectHandler = ( function() {
+        var ObjectHandlerClass = function(){};
+        var objects = null;
+        ObjectHandlerClass.prototype.load = function() {
+            $.ajax({type: "GET", dataType: 'json', url: "/json/get_objects/", 
+                error: function(data, textstatus) { }, 
+                success: function(data, textstatus) {
+                    if(data.auth === true) {
+                        TurnHandler.setTime(data.time);
+                        objects = data.objects;
+                        UILock.clear();
+                    } else {
+                        this.logout();
+                    }
+                }
+            });
+        };
+        return new ObjectHandlerClass();
+    } )();
+
+    /**
+     * Store all objects
+     */
     var objects = null;
 
     var drawUI = function() {
@@ -435,10 +514,13 @@ UserInterface = ( function() {
 
 $(document).ready(function () {
 
+    Logger.setup();
     UserInterface.setup();
 
     if(UserInterface.isLoggedin() === true) {
         UserInterface.drawUI();
     }
+
+    Logger.info('Finished loading document.ready');
 });
 
