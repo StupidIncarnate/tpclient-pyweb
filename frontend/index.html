@@ -18,10 +18,10 @@
         #panel { position: absolute; top: 0px; left: 0px; background-color: green; width: 300px; z-index: 100; height: 100%; }
         #panel h2 { margin: 0; padding: 0; }
 
-        #loginbox { position: absolute; top: 40px; left: 50%; width: 440px; margin-left: -220px; z-index: 1001; color: orange; background-color: #222; opacity: 0.80; }
+        #loginbox { position: absolute; top: 40px; left: 50%; width: 440px; margin-left: -220px; z-index: 1001; color: orange; background-color: #222; }
         #loginbox h1 { color: orange; text-align: center; margin: 0.4em 0; padding: 0; width: 440px; height: 63px; background: transparent url('/images/logo.png') no-repeat scroll center; }
         #loginbox h1 span { display: none; }
-        #loginbox .content { background-color: #222; margin: 2em; }
+        #loginbox .content { background-color: #222; margin: 2em; text-align: left; }
         #loginbox .content p.info { margin: 0 0 1em 0; padding: 0; } 
         #loginbox fieldset { margin: 0em 0em; border: 0; padding: 0em 0em; }
         #loginbox fieldset input { float: right; }
@@ -50,7 +50,7 @@
 </head>
 
 <body>
-    <div id="loginbox">
+    <div id="loginbox" class="transparent">
         <h1><span>Welcome to Thousand Parsec's Web Client</span></h1>
         <div class="content">
             <p class="info">
