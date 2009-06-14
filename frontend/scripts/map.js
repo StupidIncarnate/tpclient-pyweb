@@ -167,14 +167,16 @@ function DragTileMap(target) {
     this.drawstarsystem = function(x, y, id) {
         var test = $(document.createElement('div'));
         test.attr('id', id).attr('class', 'starsystem');
-        test.css({'position': 'absolute', 'top': (this.tilesize) - y+'px', 'left': x+'px', 'background-color': 'red', 'width': '10px', 'height': '10px', 'font-size': '8px'});
+        test.css({'position': 'absolute', 'top': (this.tilesize) - y+'px', 'left': x+'px', 'background-color': 'red', 
+                'width': '10px', 'height': '10px', 'font-size': '8px', 'z-index': '100'});
         this.canvas.append(test);
     }
 
     this.drawfleet = function(x, y, id) {
         var test = $(document.createElement('div'));
         test.attr('id', id).attr('class', 'fleet');
-        test.css({'position': 'absolute', 'top': (this.tilesize) - y+'px', 'left': x+'px', 'background-color': 'green', 'width': '10px', 'height': '10px', 'font-size': '8px'});
+        test.css({'position': 'absolute', 'top': (this.tilesize) - y+'px', 'left': x+'px', 'background-color': 'green', 
+                'width': '10px', 'height': '10px', 'font-size': '8px', 'z-index': '100'});
         this.canvas.append(test);
     }       
 }
@@ -258,6 +260,7 @@ userinterface = ( function() {
             error: function(data, textstatus) { }, 
             success: function(data, textstatus) {
                 if(data.auth === true) {
+                    setCountdown(data.time);
                     objects = data.objects;
                     universe = data.objects[0];
                     for(var i in universe.contains) {
@@ -281,6 +284,17 @@ userinterface = ( function() {
         });
     };
 
+    EOT = 0;
+    var setCountdown = function(time) {
+        EOT = parseInt(time);
+        $("#nextturn").everyTime("1s", "nextturn", function() {
+            EOT--;
+            $("#nextturn span").text(EOT);
+            if(EOT < 1) {
+                // Do cache update 
+            }
+        });
+    }
 
     var constructor = function(){};
 
@@ -304,8 +318,8 @@ userinterface = ( function() {
             success: function(data, textstatus) {
                 if(data.auth === true && data.cache === true) {
                     draw_ui();
-                    window.location.reload();
-                } else {
+                    setCountdown(data.time);
+                 } else {
                     this.logout();
                 }
             }

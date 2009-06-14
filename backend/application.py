@@ -84,56 +84,10 @@ def get_objects(environ, start_response):
 
     session = environ.get('session')
     if 'uid' in session:
-        cache = middleman.cache(session['uid'][0], session['uid'][2])
-        ret = []
-        try:
-            file = open(cache.file)
-        except IOError:
-            pass
-        else:
-            #maxsize = 0
-            #for i in cache.objects:
-            #    if cache.objects[i].subtype == 2:
-            #        maxsize = max(cache.objects[i].pos[0], cache.objects[i].pos[1], maxsize) 
-
-            """
-            for i in cache.objects:
-                if cache.objects[i].subtype == 2:
-                    x = cache.objects[i].pos[0]
-                    y = cache.objects[i].pos[1]
-
-                    if x == 0:
-                        x = 0
-                    else:
-                        x = (x / cache.objects[0].size) * 60000
-
-                    if y == 0:
-                        y = 0
-                    else:
-                        y = (y / cache.objects[0].size) * 60000
-
-                    ret.append((x, y, cache.objects[i].name.encode('utf-8')))
-            """
-            """
-            retdata = []
-            for i in cache.objects:
-                obj = []
-
-                obj.append(i)
-                obj.append(str(type(cache.objects[i])))
-                attrdata = {}
-                for attr in dir(cache.objects[i]):
-                    if attr.find('_') == -1: #and b != 'VersionError' and b != 'fromstr':
-                        res = getattr(cache.objects[i], attr)
-                        if isinstance(res, unicode):
-                            attrdata[attr] = res.encode('utf-8')
-                        else:
-                            attrdata[attr] = res
-                obj.append(attrdata)
-                retdata.append(obj)
-            """
-        
-        data = {'auth': True, 'objects': middleman.FriendlyObjects(cache).build()}
+        host, port, username, password, now = session['uid']
+        conn, cache = middleman.connect(host, port, username, password)
+        #cache = middleman.cache(session['uid'][0], session['uid'][2])
+        data = {'auth': True, 'objects': middleman.FriendlyObjects(cache).build(), 'time': conn.time()}
     else:
         data = {'auth': False}
 
