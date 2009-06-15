@@ -261,6 +261,7 @@ EventHandler = ( function(jQuery) {
     };
 
     EventHandlerClass.prototype.notify = function(eventName, data) {
+        Logger.info("Triggered event: " + eventName);
         jQuery(document).trigger(eventName, data);
         return this;
     };
@@ -269,8 +270,6 @@ EventHandler = ( function(jQuery) {
 } )(jQuery);
 
 UserInterface = ( function() {
-    var loggedin = false;
-
     /**
      * User Interface Lock
      */
@@ -373,13 +372,11 @@ UserInterface = ( function() {
         } else {
             $.ajax({type: "POST", dataType: 'json', data: {'host': host, 'user': user, 'pass': pass}, url: "/json/login/", 
                 error: function(req, textstatus) { 
-                    UILock.error('Something went really wrong, contact administrator.', true);
+                    UILock.error('Something went wrong, contact administrator or try again later.', true);
                 }, 
                 success: function(data, textstatus) { 
                     if(data.auth === true) {
-                        loggedin = true;
-                        UILock.notice('Please wait while the user interface is loading <img src="/images/loading.gif" />');
-                        e.data.cache_update(true);
+                        EventHandler.notify("login.complete");
                     } else {
                         UILock.error(data.error, true);
                     }
@@ -426,44 +423,51 @@ UserInterface = ( function() {
      * Store all objects
      */
     var objects = null;
+    var map = null;
 
-    var drawUI = function() {
-        UILock.create().notice('Please wait while loading user interface <img src="/images/loading.gif" />');
-
-        $('#loginbox').hide();
-        $('#ui').show();
-
-        map = new DragTileMap('#mapdiv');
-        map.init(0, 0);
-
-        $.ajax({type: "GET", dataType: 'json', url: "/json/get_objects/", 
+    var getObjects = function() {
+        $.ajax({async: false, type: "GET", dataType: 'json', url: "/json/get_objects/", 
             error: function(data, textstatus) { }, 
             success: function(data, textstatus) {
                 if(data.auth === true) {
                     TurnHandler.setTime(data.time);
                     objects = data.objects;
-                    universe = data.objects[0];
-                    for(var i in universe.contains) {
-                        galaxy = data.objects[universe.contains[i]];
-                        for(var j in galaxy.contains) {
-                            obj = data.objects[galaxy.contains[j]];
-                            var x = (obj.pos[0] / universe.size) * 120000;
-                            var y = (obj.pos[1] / universe.size) * 120000;
-                            if(obj.type == 'Star System') {
-                                map.drawstarsystem(x, y, obj.id);
-                            } else if(obj.type == 'Fleet') {
-                                map.drawfleet(x, y, obj.id);
-                            }
-                        }
-                    }
-
-                    UILock.clear();
-
                 } else {
                     this.logout();
                 }
             }
         });
+    };
+
+    var drawMap = function() {
+        universe = objects[0];
+        for(var i in universe.contains) {
+            galaxy = objects[universe.contains[i]];
+            for(var j in galaxy.contains) {
+                obj = objects[galaxy.contains[j]];
+                var x = (obj.pos[0] / universe.size) * 120000;
+                var y = (obj.pos[1] / universe.size) * 120000;
+                if(obj.type == 'Star System') {
+                    map.drawstarsystem(x, y, obj.id);
+                } else if(obj.type == 'Fleet') {
+                    map.drawfleet(x, y, obj.id);
+                }
+            }
+        }
+    }
+
+    var drawUI = function() {
+        UILock.create().notice('Please wait while loading user interface <img src="/images/loading.gif" />');
+        EventHandler.notify('ui.draw');
+        UILock.clear();
+    };
+
+    var rest = function() {
+        $('#loginbox').hide();
+        $('#ui').show();
+
+        map = new DragTileMap('#mapdiv');
+        map.init(0, 0);
     };
 
     var constructor = function(){};
@@ -532,6 +536,14 @@ UserInterface = ( function() {
     };
 
     constructor.prototype.setup = function() {
+
+        // Setup event subscribers
+        EventHandler.subscribe("login.complete", [this, 'cache_update', true]);
+        EventHandler.subscribe("login.complete", function() { UILock.notice('Please wait while the user interface is loading <img src="/images/loading.gif" />'); });
+
+        EventHandler.subscribe("ui.draw", rest);
+        EventHandler.subscribe("ui.draw", getObjects);
+        EventHandler.subscribe("ui.draw", drawMap);
 
         TurnHandler.register("#turn span.time", this.cache_update);
 
