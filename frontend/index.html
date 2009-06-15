@@ -55,6 +55,16 @@
     <script type="text/javascript" src="scripts/jquery.cookies.2.1.0.min.js"></script>
     <script type="text/javascript" src="scripts/jquery.history.js"></script>
     <script type="text/javascript" src="scripts/map.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            Logger.setup();
+            UserInterface.setup();
+            if(UserInterface.isLoggedin() === true) {
+                UserInterface.drawUI();
+            }
+            Logger.info('Finished loading document.ready');
+        });
+    </script>
 </head>
 
 <body>

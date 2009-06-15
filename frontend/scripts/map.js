@@ -526,15 +526,5 @@ UserInterface = ( function() {
     return new constructor();
 } )();
 
-$(document).ready(function () {
 
-    Logger.setup();
-    UserInterface.setup();
-
-    if(UserInterface.isLoggedin() === true) {
-        UserInterface.drawUI();
-    }
-
-    Logger.info('Finished loading document.ready');
-});
 
