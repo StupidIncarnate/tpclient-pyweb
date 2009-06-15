@@ -88,7 +88,7 @@ def connect(host, port, username, password):
         raise ConnectionError('Unable to connect to the host.')
 
     if failed(connection.login(username, password)):
-        raise ConnectionError('User did not exist.')
+        raise ConnectionError('Wrong user name or password.')
 
     cache = Cache(Cache.key(host, username), configdir='/tmp/tpclient-pyweb/cache/')
     return connection, cache
