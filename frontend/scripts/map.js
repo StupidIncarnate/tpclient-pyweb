@@ -231,11 +231,25 @@ Logger = ( function() {
     return new LoggerClass();
 } )();
 
-EventHandler = ( function() {
+EventHandler = ( function(jQuery) {
     var EventHandlerClass = function(){};
 
+    EventHandlerClass.prototype.subscribe = function(eventName, handler, data) {
+        if(typeof(handler) == 'function') {            
+            jQuery(document).bind(eventName, data, handler);                        
+        }
+    };
+
+    EventHandlerClass.prototype.unsubscribe = function(eventName) {
+        jQuery(document).unbind(eventName);
+    };
+
+    EventHandlerClass.prototype.notify = function(eventName, data) {
+        jQuery(document).trigger(eventName, data);
+    };
+
     return new EventHandlerClass();
-} )();
+} )(jQuery);
 
 UserInterface = ( function() {
     var loggedin = false;
