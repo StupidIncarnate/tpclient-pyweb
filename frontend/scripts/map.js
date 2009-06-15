@@ -231,21 +231,38 @@ Logger = ( function() {
     return new LoggerClass();
 } )();
 
+/**
+ * A simple Event handler
+ * Following the subscribe and publish pattern
+ */
 EventHandler = ( function(jQuery) {
     var EventHandlerClass = function(){};
 
+    /**
+     * Handler can be:
+     *  - a function
+     *  - an array [object, method, arg]
+     */
     EventHandlerClass.prototype.subscribe = function(eventName, handler, data) {
-        if(typeof(handler) == 'function') {            
-            jQuery(document).bind(eventName, data, handler);                        
+        if(jQuery.isArray(handler)) {
+            newhandler = function(event, data) {
+                return handler[0][handler[1]](handler[2], data);
+            }
+            jQuery(document).bind(eventName, data, newhandler);
+        } else {
+            jQuery(document).bind(eventName, data, handler);
         }
+        return this;
     };
 
     EventHandlerClass.prototype.unsubscribe = function(eventName) {
         jQuery(document).unbind(eventName);
+        return this;
     };
 
     EventHandlerClass.prototype.notify = function(eventName, data) {
         jQuery(document).trigger(eventName, data);
+        return this;
     };
 
     return new EventHandlerClass();
@@ -525,6 +542,3 @@ UserInterface = ( function() {
 
     return new constructor();
 } )();
-
-
-
