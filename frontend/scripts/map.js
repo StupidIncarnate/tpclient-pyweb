@@ -40,8 +40,6 @@ Map = ( function() {
         var xpos = page[0] - parseInt(e.data.scroll.css('left'), 10);
         var ypos = parseInt(e.data.scroll.css('top'), 10) - page[1];
 
-        console.log(xpos, ypos);
-
         if(!e.data.moving) {
             e.data.posx = page[0];
             e.data.posy = page[1];
@@ -365,7 +363,7 @@ UserInterface = ( function() {
         UILock.create().notice('Please wait while loading user interface <img src="/images/loading.gif" />');
         $('#loginbox').hide();
         $('#ui').show();
-        this.getObjects();
+        UserInterface.getObjects();
         Map.init("#mapdiv", 0, 0);
         Map.draw();
         UILock.clear();
@@ -376,7 +374,6 @@ UserInterface = ( function() {
             error: function(data, textstatus) { }, 
             success: function(data, textstatus) {
                 if(data.auth === true) {
-                    console.dir(this);
                     TurnHandler.setTime(data.time);
                     Map.addObjects(data.objects);
                     objects = data.objects;
@@ -403,7 +400,7 @@ UserInterface = ( function() {
             success: function(data, textstatus) {
                 if(data.auth === true && data.cache === true) {
                     if(forceRedraw === true) {
-                        this.drawUI();
+                        UserInterface.drawUI();
                     } else {
                         TurnHandler.notice();   
                     }
