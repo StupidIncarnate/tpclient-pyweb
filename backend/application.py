@@ -70,7 +70,8 @@ def cache_update(environ, start_response):
         conn, cache = middleman.connect(host, port, username, password)
         cache.update(conn, middleman.callback)
         cache.save()
-        data = {'auth': True, 'cache': True, 'time': conn.time()}
+        turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
+        data = {'auth': True, 'cache': True, 'turn': turn}
     else:
         data = {'auth': False}
 
@@ -107,7 +108,9 @@ def get_objects(environ, start_response):
         host, port, username, password, now = session['uid']
         conn, cache = middleman.connect(host, port, username, password)
         #cache = middleman.cache(session['uid'][0], session['uid'][2])
-        data = {'auth': True, 'objects': middleman.FriendlyObjects(cache).build(), 'time': conn.time()}
+
+        turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
+        data = {'auth': True, 'objects': middleman.FriendlyObjects(cache).build(), 'turn': turn}
     else:
         data = {'auth': False}
 

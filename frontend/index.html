@@ -16,14 +16,16 @@
         #panel { position: absolute; top: 0px; left: 0px; background-color: green; width: 300px; z-index: 100; height: 100%; }
         #panel h2 { margin: 0; padding: 0; }
 
-        #header { height: 63px; padding: 1em; margin: 0; background-color: black; }
+        #header { height: 63px; padding: 1em; margin: 0; }
         #header h1 { width: 381px; height: 63px; background: transparent url('/images/logo.png') no-repeat scroll 0 0; } 
         #header h1 span { display: none; }
 
-        #turn { background-color: red; position: absolute; right: 1em; top: 1em; width: 25em; height: 5.5em; text-align: right; }
-        #turn p { margin: 0; padding: 0; }
-        #turn ul { margin: 0; padding: 0; position: relative; bottom: 0px; }
-        #turn ul li { margin: 0; padding: 0; list-style-type: none; display: inline; }
+        #turn-component { background-color: #eee; position: absolute; right: 1em; width: 18em; top: 1em; text-align: right; text-align: center; z-index: 100; }
+        #turn-component p { margin: 0; padding: 0; }
+        #turn-component p.counter { margin: 0.5em; }
+        #turn-component span.timeleft, #turn-component span.turn { font-size: 1.5em; }
+        #turn-component ul { margin: 0; padding: 0; position: relative; bottom: 0px; }
+        #turn-component ul li { margin: 0; padding: 0; list-style-type: none; display: inline; }
 
         #loginbox { position: absolute; top: 40px; left: 50%; width: 440px; margin-left: -220px; z-index: 1001; color: orange; background-color: #222; }
         #loginbox h1 { color: orange; text-align: center; margin: 0.4em 0; padding: 0; width: 440px; height: 63px; background: transparent url('/images/logo.png') no-repeat scroll center; }
@@ -88,8 +90,8 @@
     <div id="ui" style="display: none;">
         <div id="header">
             <h1><span>Thousand Parsec Web Client</span></h1>
-            <div id="turn">
-                <p class="turn">Turn ends in <span class="time">60</span> seconds</p>
+            <div id="turn-component" class="transparent">
+                <p class="counter"></p>
                 <p class="info"></p>
                 <!--<ul>
                     <li><a href="#">Download the Universe</a></li>

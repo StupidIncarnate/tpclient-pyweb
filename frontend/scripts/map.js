@@ -188,6 +188,18 @@ EventHandler = ( function(jQuery) {
         return this;
     };
 
+    EventHandlerClass.prototype.subscribeOnce = function(eventName, handler, data) {
+         if(jQuery.isArray(handler)) {
+            newhandler = function(event, data) {
+                return handler[0][handler[1]](handler[2], data);
+            }
+            jQuery(document).one(eventName, data, newhandler);
+        } else {
+            jQuery(document).one(eventName, data, handler);
+        }
+        return this;
+    };      
+
     EventHandlerClass.prototype.unsubscribe = function(eventName) {
         jQuery(document).unbind(eventName);
         return this;
@@ -259,34 +271,28 @@ UserInterface = ( function() {
      * End of Turn Handler
      */
     var TurnHandler = ( function() {
-        var TurnHandlerClass = function(){};
+        var TurnHandler = function(){};
+        var timeleft = 0;
+        TurnHandler.prototype.setup = function(time, turn) {
+            timeleft = parseInt(time);
+            $("#turn-component .counter").html('End of turn <span class="turn">'+turn+'</span> in <span class="timeleft">'+timeleft+'</span> s');
 
-        var turntime = 0;
-        var element = null;
-        var callback = null;
-
-        TurnHandlerClass.prototype.register = function(elem, cb) {
-            element = $(elem);
-            callback = cb;
+            $(window).stopTime("turntimer");
+            $(window).oneTime(timeleft * 1000, "turntimer", function() {
+                $("#turn-component .counter").text("Downloading the new Universe...");
+                UserInterface.cache_update(false, function() {
+                    $("#turn-component .info").text("Finished downloading the Universe, click here if you want the change!");
+                    $("#turn-component .info").one("click", function(e) {
+                        $("#turn-component .info").text("");
+                        UserInterface.drawUI();
+                    });
+                });
+            });
+            $(window).everyTime("1s", "turntimer", function() {
+                $("#turn-component .timeleft").text(--timeleft);
+            }, timeleft);
         };
-
-        TurnHandlerClass.prototype.setTime = function(time) {
-            turntime = parseInt(time); 
-            element.text(turntime);
-
-            $(window).stopTime('turnhandler');
-            $(window).oneTime(time*1000, 'turnhandler', callback);
-            $(window).everyTime("1s", 'turnhandler', function() {
-                turntime--;
-                element.text(turntime);
-            }, turntime);
-        };
-
-        TurnHandlerClass.prototype.notice = function() {
-            $('#turn .info').text('Finished downloading the Universe, click here if you want the changes');
-        };
-
-        return new TurnHandlerClass();
+        return new TurnHandler();
     } )();
 
 
@@ -340,7 +346,7 @@ UserInterface = ( function() {
                 error: function(data, textstatus) { }, 
                 success: function(data, textstatus) {
                     if(data.auth === true) {
-                        TurnHandler.setTime(data.time);
+                        TurnHandler.setup(data.turn.time, data.turn.current);
                         objects = data.objects;
                         UILock.clear();
                     } else {
@@ -363,10 +369,11 @@ UserInterface = ( function() {
         UILock.create().notice('Please wait while loading user interface <img src="/images/loading.gif" />');
         $('#loginbox').hide();
         $('#ui').show();
+        EventHandler.subscribeOnce('objects.load', function() {
+            Map.draw();
+            UILock.clear();
+        });
         UserInterface.getObjects();
-        Map.init("#mapdiv", 0, 0);
-        Map.draw();
-        UILock.clear();
     };
 
     constructor.prototype.getObjects = function() {
@@ -374,9 +381,10 @@ UserInterface = ( function() {
             error: function(data, textstatus) { }, 
             success: function(data, textstatus) {
                 if(data.auth === true) {
-                    TurnHandler.setTime(data.time);
+                    TurnHandler.setup(data.turn.time, data.turn.current);
                     Map.addObjects(data.objects);
                     objects = data.objects;
+                    EventHandler.notify('objects.load');
                 } else {
                     this.logout();
                 }
@@ -392,7 +400,7 @@ UserInterface = ( function() {
         }
     };
 
-    constructor.prototype.cache_update = function(forceRedraw) {
+    constructor.prototype.cache_update = function(forceRedraw, callback) {
         $.ajax({type: "GET", dataType: 'json', url: "/json/cache_update/", 
             error: function(data, textstatus) { 
                 this.logout();
@@ -401,10 +409,9 @@ UserInterface = ( function() {
                 if(data.auth === true && data.cache === true) {
                     if(forceRedraw === true) {
                         UserInterface.drawUI();
-                    } else {
-                        TurnHandler.notice();   
                     }
-                    TurnHandler.setTime(data.time);
+                    callback();
+                    TurnHandler.setup(data.turn.time, data.turn.current);
                  } else {
                     this.logout();
                 }
@@ -444,13 +451,15 @@ UserInterface = ( function() {
     };
 
     constructor.prototype.setup = function() {
-
+    
+        // Hack (fix later)
+        $("#ui").show();
+        Map.init("#mapdiv", 0, 0);
+        $("#ui").hide();
 
         // Setup event subscribers
         EventHandler.subscribe("login.complete", [this, 'cache_update', true]);
         EventHandler.subscribe("login.complete", function() { UILock.notice('Please wait while the user interface is loading <img src="/images/loading.gif" />'); });
-
-        TurnHandler.register("#turn span.time", this.cache_update);
 
         $('#logout').bind("click", this, logout);
         $('#loginform').bind("submit", this, login);
