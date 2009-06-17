@@ -280,7 +280,7 @@ UserInterface = ( function() {
             $(window).stopTime("turntimer");
             $(window).oneTime(timeleft * 1000, "turntimer", function() {
                 $("#turn-component .counter").text("Downloading the new Universe...");
-                UserInterface.cache_update(false, function() {
+                UserInterface.cache_update(function() {
                     $("#turn-component .info").text("Finished downloading the Universe, click here if you want the change!");
                     $("#turn-component .info").one("click", function(e) {
                         $("#turn-component .info").text("");
@@ -315,7 +315,10 @@ UserInterface = ( function() {
                 }, 
                 success: function(data, textstatus) { 
                     if(data.auth === true) {
-                        EventHandler.notify("login.complete");
+                        UILock.notice('Please wait while loading user interface <img src="/images/loading.gif" />');
+                        UserInterface.cache_update(function(data) {
+                            UserInterface.drawUI();
+                        });
                     } else {
                         UILock.error(data.error, true);
                     }
@@ -369,22 +372,21 @@ UserInterface = ( function() {
         UILock.create().notice('Please wait while loading user interface <img src="/images/loading.gif" />');
         $('#loginbox').hide();
         $('#ui').show();
-        EventHandler.subscribeOnce('objects.load', function() {
+        UserInterface.getObjects(function(data) {
+            Map.addObjects(data.objects);
             Map.draw();
             UILock.clear();
         });
-        UserInterface.getObjects();
     };
 
-    constructor.prototype.getObjects = function() {
+    constructor.prototype.getObjects = function(callback) {
         $.ajax({async: false, type: "GET", dataType: 'json', url: "/json/get_objects/", 
             error: function(data, textstatus) { }, 
             success: function(data, textstatus) {
                 if(data.auth === true) {
+                    callback(data);
                     TurnHandler.setup(data.turn.time, data.turn.current);
-                    Map.addObjects(data.objects);
                     objects = data.objects;
-                    EventHandler.notify('objects.load');
                 } else {
                     this.logout();
                 }
@@ -400,17 +402,14 @@ UserInterface = ( function() {
         }
     };
 
-    constructor.prototype.cache_update = function(forceRedraw, callback) {
+    constructor.prototype.cache_update = function(callback) {
         $.ajax({type: "GET", dataType: 'json', url: "/json/cache_update/", 
             error: function(data, textstatus) { 
                 this.logout();
             }, 
             success: function(data, textstatus) {
                 if(data.auth === true && data.cache === true) {
-                    if(forceRedraw === true) {
-                        UserInterface.drawUI();
-                    }
-                    callback();
+                    callback(data);
                     TurnHandler.setup(data.turn.time, data.turn.current);
                  } else {
                     this.logout();
@@ -456,10 +455,6 @@ UserInterface = ( function() {
         $("#ui").show();
         Map.init("#mapdiv", 0, 0);
         $("#ui").hide();
-
-        // Setup event subscribers
-        EventHandler.subscribe("login.complete", [this, 'cache_update', true]);
-        EventHandler.subscribe("login.complete", function() { UILock.notice('Please wait while the user interface is loading <img src="/images/loading.gif" />'); });
 
         $('#logout').bind("click", this, logout);
         $('#loginform').bind("submit", this, login);
