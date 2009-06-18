@@ -275,21 +275,21 @@ UserInterface = ( function() {
         var timeleft = 0;
         TurnHandler.prototype.setup = function(time, turn) {
             timeleft = parseInt(time);
-            $("#turn-component .counter").html('End of turn <span class="turn">'+turn+'</span> in <span class="timeleft">'+timeleft+'</span> s');
+            $(".turn-component").html('Turn <span class="turn">'+turn+'</span> will end in <span class="timeleft">'+timeleft+'</span> s');
 
             $(window).stopTime("turntimer");
             $(window).oneTime(timeleft * 1000, "turntimer", function() {
-                $("#turn-component .counter").text("Downloading the new Universe...");
+                //$("#turn-component .counter").text("Downloading the new Universe...");
                 UserInterface.cache_update(function() {
-                    $("#turn-component .info").text("Finished downloading the Universe, click here if you want the change!");
-                    $("#turn-component .info").one("click", function(e) {
+                    //$("#turn-component .info").text("Finished downloading the Universe, click here if you want the change!");
+                    /*$("#turn-component .info").one("click", function(e) {
                         $("#turn-component .info").text("");
                         UserInterface.drawUI();
-                    });
+                    });*/
                 });
             });
             $(window).everyTime("1s", "turntimer", function() {
-                $("#turn-component .timeleft").text(--timeleft);
+                $(".turn-component .timeleft").text(--timeleft);
             }, timeleft);
         };
         return new TurnHandler();
@@ -375,6 +375,8 @@ UserInterface = ( function() {
         UserInterface.getObjects(function(data) {
             Map.addObjects(data.objects);
             Map.draw();
+            jQuery('#overlay-content').css('height', (jQuery(window).height() - jQuery('#overlay-content').offset().top));
+            jQuery('#overlay-content').css('width', jQuery(window).width());
             UILock.clear();
         });
     };
@@ -455,6 +457,34 @@ UserInterface = ( function() {
         $("#ui").show();
         Map.init("#mapdiv", 0, 0);
         $("#ui").hide();
+
+        // Sets width and height correctly on resize
+        jQuery(window).bind('resize', function(e) {
+            jQuery('#overlay-content').css('height', (jQuery(window).height() - jQuery('#overlay-content').offset().top));
+            jQuery('#overlay-content').css('width', jQuery(window).width());       
+        });
+
+        // Setup draggables
+        jQuery('#order-component').draggable({
+            containment: '#overlay-content',
+            handle: 'h3',
+            cursor: 'move',
+            stack: { group: '.component', min: 50 }
+        });
+
+        jQuery('#message-component').draggable({
+            containment: '#overlay-content',
+            handle: 'h3',
+            cursor: 'move',
+            stack: { group: '.component', min: 50 }
+        });
+
+        jQuery('#info-comp').draggable({
+            containment: '#overlay-content',
+            handle: 'h3',
+            cursor: 'move',
+            stack: { group: '.component', min: 50 }
+        });
 
         $('#logout').bind("click", this, logout);
         $('#loginform').bind("submit", this, login);

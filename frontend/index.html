@@ -10,22 +10,16 @@
     <![endif]-->
     <style type="text/css">
         html, body { background: black url('/images/background.jpg') repeat; }
+        
     	#map-viewport { position: relative; overflow: hidden; width: 100%; }
-        #mapdiv { margin: 0; padding: 0; width: 100%; }
-        #container { position: relative; }
-        #panel { position: absolute; top: 0px; left: 0px; background-color: green; width: 300px; z-index: 100; height: 100%; }
-        #panel h2 { margin: 0; padding: 0; }
+        #mapdiv { position: absolute; top: 0; left: 0; margin: 0; padding: 0; width: 100%; height: 100%; }
 
-        #header { height: 63px; padding: 1em; margin: 0; }
-        #header h1 { width: 381px; height: 63px; background: transparent url('/images/logo.png') no-repeat scroll 0 0; } 
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #overlay-content { position: absolute; top: 113px; width: 100%; height: 100%; }
+
+        #header { position: relative; height: 93px; padding: 10px; margin: 0; z-index: 100; background-color: rgba(0,0,0,0.8); }
+        #header h1 { width: 381px; height: 63px; background: rgba(0, 0, 0, 0.8) url('/images/logo.png') no-repeat scroll 0 0; z-index: 100; } 
         #header h1 span { display: none; }
-
-        #turn-component { background-color: #eee; position: absolute; right: 1em; width: 18em; top: 1em; text-align: right; text-align: center; z-index: 100; }
-        #turn-component p { margin: 0; padding: 0; }
-        #turn-component p.counter { margin: 0.5em; }
-        #turn-component span.timeleft, #turn-component span.turn { font-size: 1.5em; }
-        #turn-component ul { margin: 0; padding: 0; position: relative; bottom: 0px; }
-        #turn-component ul li { margin: 0; padding: 0; list-style-type: none; display: inline; }
 
         #loginbox { position: absolute; top: 40px; left: 50%; width: 440px; margin-left: -220px; z-index: 1001; color: orange; background-color: #222; }
         #loginbox h1 { color: orange; text-align: center; margin: 0.4em 0; padding: 0; width: 440px; height: 63px; background: transparent url('/images/logo.png') no-repeat scroll center; }
@@ -45,16 +39,34 @@
         #uilock-content.error { color: red; }
         #uilock-content.notice { color: orange; }
 
+        #info-comp { background-color: rgba(255, 165, 0, 0.8); z-index: 100; }
+        #info-comp-container { width: 100%;  }
         #info-comp h4 { margin: 0; padding: 0; }
         #info-comp dl { }
         #info-comp dt { float: left; clear: left; width: 5em; text-align: left; }
         #info-comp dt:after { content: ":"; }
-        #info-comp dd { margin: 0 0 0 5.5em; padding: 0 0 0.2em 0; }
+        #info-comp dd { margin: 0 0 0 5.5em; padding: 0 0 0.0em 0; }
+
+        .component { width: 30em; height: 100%; margin: 0; padding: 0; height: 12em; }
+        .component .container { width: 100%; height: 100%; margin: 0; padding: 0; }
+        .component .container h3 { font-size: 1em; margin: 0; padding: 0.5em; background-color: red; cursor: move; }
+        .component .content { margin: 0; padding: 0.5em; height: 9em; overflow: auto; }
+        #message-component { background-color: rgba(150, 150, 150, 0.8); z-index: 100;}
+        #message-component-container { width: 100%; }
+        #order-component { background-color: rgba(255, 165, 0, 0.8); z-index: 100; }
+        #order-component-container { width: 100%; }
+
+        #menu-bar { position: absolute; bottom: 0; right: 0; background-color: #eee; width: 100%; height: 2.6em;}
+        #menu-bar ul { margin: 0; padding: 0; }
+        #menu-bar ul li { margin: 0; padding: 0 1em; display: inline; list-style-type: none; line-height: 2.6em; }
+        #menu-bar .windows, #menu-bar .download-universe, #menu-bar .request-eot, #menu-bar .settings, #menu-bar .logout { float: left; }
+        #menu-bar .turn-component { float: right; }
+        #menu-bar .turn-component .timeleft, #menu-bar .turn-component .turn { font-size: 1.2em; font-weight: bold; }
     </style>
     <script type="text/javascript" src="scripts/jquery-dev.js"></script>
     <script type="text/javascript" src="scripts/jquery-timers.js"></script>
     <script type="text/javascript" src="scripts/jquery.cookies.2.1.0.min.js"></script>
-    <script type="text/javascript" src="scripts/jquery.history.js"></script>
+    <script type="text/javascript" src="scripts/jquery-ui.js"></script>
     <script type="text/javascript" src="scripts/map.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -63,7 +75,6 @@
             if(UserInterface.isLoggedin() === true) {
                 UserInterface.drawUI();
             }
-            Logger.info('Finished loading document.ready');
         });
     </script>
 </head>
@@ -88,38 +99,57 @@
     </div>
     
     <div id="ui" style="display: none;">
-        <div id="header">
-            <h1><span>Thousand Parsec Web Client</span></h1>
-            <div id="turn-component" class="transparent">
-                <p class="counter"></p>
-                <p class="info"></p>
-                <!--<ul>
-                    <li><a href="#">Download the Universe</a></li>
-                    <li><a href="#">Request End of Turn</a></li>
-                </ul>-->
-            </div>
-        </div>
-        <div id="container">
-            <div id="panel">
-                <div style="margin: 5px;">
-                    <h2>Information panel</h2>
-                    <a id="logout" href="#">Logout</a>
-                    <div id="info"></div>
-                    <div id="info-comp">
-                        <h3>Information component</h3>
-                        <h4>My epic star</h4>
-                        <dl></dl>
+        <div id="overlay">
+            <div id="header">
+                <h1><span>Thousand Parsec Web Client</span></h1>
+                <div id="turn-component" class="transparent">
+                    <div id="turn-component-content">
+                        <p class="counter"></p>
+                        <p class="info"></p>
                     </div>
                 </div>
+                <div id="menu-bar" class="transparent">
+                    <ul>
+                        <li class="windows"><a href="#">Windows</a></li>
+                        <li class="download-universe"><a href="#">Download the Universe</a></li>
+                        <li class="request-eot"><a href="#">Request End of Turn</a></li>
+                        <li class="settings"><a href="#">Settings</a></li>
+                        <li class="logout"><a href="#" id="logout">Logout</a></li>
+                        <li class="turn-component">Turn <span class="turn">1234</span> will end in <span class="timeleft">23</span> s</li>
+                    </ul>
+                </div>
             </div>
-            <div id="mapdiv"></div>
-        </div>
 
-        <div id="debug" style="position: absolute; top: 10px; left: 10px; width: 280px; background-color: orange; display: none;">
-            <div id="debug-1" style="margin: 8px; background-color: white; padding: 5px;">Postion (256, 256)</div>
-            <div id="debug-2" style="margin: 8px; background-color: white; padding: 5px;">Tile X: 1 [256, 511]</div>
-            <div id="debug-3" style="margin: 8px; background-color: white; padding: 5px;">Tile Y: 1 [256, 511]</div>
+            <div id="overlay-content">
+            
+                <div id="order-component" class="component">
+                    <div id="order-component-container" class="container">
+                        <h3>Orders</h3>
+                        <div id="order-component-content" class="content"></div>
+                    </div>
+                </div>
+
+                <div id="message-component" class="component">
+                    <div id="message-component-container" class="container">
+                        <h3>Messages</h3>
+                        <div id="message-component-content" class="content"></div>
+                    </div>
+                </div>
+
+                <div id="info-comp" class="component">
+                    <div id="info-comp-container" class="container">
+                        <h3>Information</h3>
+                        <div id="info-comp-content" class="content">
+                            <h4></h4>
+                            <dl></dl>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
+        <div id="mapdiv"></div>
     </div>
 </body>
 </html>
