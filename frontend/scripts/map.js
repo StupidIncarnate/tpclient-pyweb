@@ -424,31 +424,55 @@ UserInterface = ( function() {
         id = parseInt(e.target.id);
         object = objects[id];
 
-        infoComp = $("#info-comp");
-        $("h4", infoComp).text(object.name);
-        dl = $("dl", infoComp).html("");
+        infoComponent = $("#info-component-content").html("");
+        h4 = $(document.createElement("h4")).text(object.name);
+        dl = $(document.createElement("dl"));
+        infoComponent.append(h4).append(dl);
 
         base = {'name': 'Name', 'id': 'Id', 'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size'}
         for(var attr in base) {
             dt = $(document.createElement('dt')).text(base[attr]);
-            dd = $(document.createElement('dd')).text(object[attr].toString());
+            if(attr == 'parent') {
+                o = objects[object[attr]];
+                if(o.id > 0) {
+                    a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).text(o.name);
+                    a.one('click', UserInterface.objclicked);
+                    dd = $(document.createElement('dd')).append(a);
+                } else {
+                    dd = $(document.createElement('dd')).text(o.name);
+                }
+            } else {
+                dd = $(document.createElement('dd')).text(object[attr].toString());
+            }
             dl.append(dt).append(dd);
         }
 
-
-        dt = $(document.createElement('dt')).text('Contains');
-        dd = $(document.createElement('dd'));
-        text = "";
-        for(var i in object.contains) {
-            lone = objects[object.contains[i]];
-            text += lone.name + "<br />";
-            for(var j in lone.contains) {
-                ltwo = objects[lone.contains[j]];
-                text += "&nbsp;&nbsp;" + ltwo.name + "<br />";
+        // What objects are contained inside this object
+        if(object.contains.length > 0) {
+            dt = $(document.createElement('dt')).text('Contains');
+            dd = $(document.createElement('dd'));
+            ul = $(document.createElement('ul'));
+            for(var i in object.contains) {
+                toplevel = objects[object.contains[i]];
+                li = $(document.createElement('li'));
+                a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id}).text(toplevel.name);
+                a.one('click', UserInterface.objclicked);
+                ul.append(li.append(a));
+                if(toplevel.contains.length > 0) {
+                    subul = $(document.createElement('ul'));
+                    li.append(subul);
+                    for(var j in toplevel.contains) {
+                        sublevel = objects[toplevel.contains[j]];
+                        subli = $(document.createElement('li'));
+                        a = $(document.createElement('a')).attr({'href': '#info/' + sublevel.id, 'id': sublevel.id}).text(sublevel.name);
+                        a.one('click', UserInterface.objclicked);
+                        subul.append(subli.append(a));
+                    }
+                }
             }
+            dl.append(dt).append(dd.append(ul));
         }
-        dd.html(text);
-        dl.append(dt).append(dd);
+        return false;
     };
 
     constructor.prototype.setup = function() {
@@ -479,7 +503,7 @@ UserInterface = ( function() {
             stack: { group: '.component', min: 50 }
         });
 
-        jQuery('#info-comp').draggable({
+        jQuery('#info-component').draggable({
             containment: '#overlay-content',
             handle: 'h3',
             cursor: 'move',
