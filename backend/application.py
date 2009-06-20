@@ -87,7 +87,8 @@ def get_orders(environ, start_response):
         host, port, username, password, now = session['uid']
         conn, cache = middleman.connect(host, port, username, password)
 
-        data = {'auth': True, 'orders': middleman.Orders(cache).build(), 'time': conn.time()}
+        turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
+        data = {'auth': True, 'orders': middleman.Orders(cache).build(), 'turn': turn}
     else:
         data = {'auth': False}
 
