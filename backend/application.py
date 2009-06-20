@@ -87,14 +87,11 @@ def get_orders(environ, start_response):
         host, port, username, password, now = session['uid']
         conn, cache = middleman.connect(host, port, username, password)
 
-        data = {'auth': True, 'orders': cache.orders, 'time': conn.time()}
+        data = {'auth': True, 'orders': middleman.Orders(cache).build(), 'time': conn.time()}
     else:
         data = {'auth': False}
 
-    def test(obj):
-        return str(obj).encode('utf-8')
-
-    output = json.dumps(data, encoding='utf-8', ensure_ascii=False, default=test)
+    output = json.dumps(data, encoding='utf-8', ensure_ascii=False)
 
     start_response('200 OK', [('Content-Type', 'application/json')])
     return [output]
