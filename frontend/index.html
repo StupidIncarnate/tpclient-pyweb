@@ -10,16 +10,23 @@
     <![endif]-->
     <style type="text/css">
         html, body { background: black url('/images/background.jpg') repeat; }
-        
+
     	#map-viewport { position: relative; overflow: hidden; width: 100%; }
         #mapdiv { position: absolute; top: 0; left: 0; margin: 0; padding: 0; width: 100%; height: 100%; }
 
-        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        #overlay-content { position: absolute; top: 113px; width: 100%; height: 100%; }
+        #overlay { top: 0; left: 0; width: 100%; height: 100%; }
+        #overlay-content { top: 113px; width: 100%; height: 100%; }
 
-        #header { position: relative; height: 93px; padding: 10px; margin: 0; z-index: 100; background-color: rgba(0,0,0,0.8); }
-        #header h1 { width: 381px; height: 63px; background: rgba(0, 0, 0, 0.8) url('/images/logo.png') no-repeat scroll 0 0; z-index: 100; } 
+        #header { position: relative; padding: 10px; margin: 0; z-index: 100; background-color: rgba(0,0,0,0.8); }
+        #header h1 { width: 381px; height: 63px; margin: 0; background: url('/images/logo.png') no-repeat scroll 0 0; z-index: 100; } 
         #header h1 span { display: none; }
+
+        #menu-bar { position: relative; background-color: rgba(238, 238, 238, 0.95); width: 100%; height: 30px; z-index: 100; }
+        #menu-bar ul { margin: 0; padding: 0; }
+        #menu-bar ul li { margin: 0; padding: 0 1em; display: inline; list-style-type: none; line-height: 30px; }
+        #menu-bar .windows, #menu-bar .download-universe, #menu-bar .request-eot, #menu-bar .settings, #menu-bar .logout { float: left; }
+        #menu-bar .turn-component { float: right; }
+        #menu-bar .turn-component .timeleft, #menu-bar .turn-component .turn { font-size: 1.2em; font-weight: bold; }
 
         #loginbox { position: absolute; top: 40px; left: 50%; width: 440px; margin-left: -220px; z-index: 1001; color: orange; background-color: #222; }
         #loginbox h1 { color: orange; text-align: center; margin: 0.4em 0; padding: 0; width: 440px; height: 63px; background: transparent url('/images/logo.png') no-repeat scroll center; }
@@ -56,12 +63,20 @@
         #order-component { background-color: rgba(255, 165, 0, 0.8); z-index: 100; }
         #order-component-container { width: 100%; }
 
-        #menu-bar { position: absolute; bottom: 0; right: 0; background-color: #eee; width: 100%; height: 2.6em;}
-        #menu-bar ul { margin: 0; padding: 0; }
-        #menu-bar ul li { margin: 0; padding: 0 1em; display: inline; list-style-type: none; line-height: 2.6em; }
-        #menu-bar .windows, #menu-bar .download-universe, #menu-bar .request-eot, #menu-bar .settings, #menu-bar .logout { float: left; }
-        #menu-bar .turn-component { float: right; }
-        #menu-bar .turn-component .timeleft, #menu-bar .turn-component .turn { font-size: 1.2em; font-weight: bold; }
+        #system-component { position: absolute; top: 113px; right: 0; width: 280px; z-index: 100; background-color: rgba(187, 187, 187, 0.8); }
+        #system-component-search { height: 30px; }
+        #system-component-search input { margin: 0; padding: 5px; border: 0; float: left; width: 270px; height: 20px; font-size: 1em; }
+        #system-component-search input:focus { border: 0; outline: none; }
+        #system-component-content { overflow: auto; } 
+        #system-component-content ul { margin: 2px 0 2px 0; list-style-type: none; }
+        #system-component-content li { margin: 0; padding: 0 0 1px 20px; line-height: 16px; }
+        #system-component-content li.universe { background-image: url(/images/universe.png); background-repeat: no-repeat; background-position: 0 0; }
+        #system-component-content li.galaxy { background-image: url(/images/galaxy.png); background-repeat: no-repeat; background-position: 0 0; }
+        #system-component-content li.starsystem { background-image: url(/images/starsystem.png); background-repeat: no-repeat; background-position: 0 0; }
+        #system-component-content li.planet { background-image: url(/images/planet.png); background-repeat: no-repeat; background-position: 0 0; }
+        #system-component-content li.fleet { background-image: url(/images/fleet.png); background-repeat: no-repeat; background-position: 0 0; }
+        #system-component-content ul ul { margin-left: 2px 0 2px 16px; }
+        #system-component-content ul ul ul { margin-left: 2px 0 2px 16px; }
     </style>
     <script type="text/javascript" src="scripts/jquery-dev.js"></script>
     <script type="text/javascript" src="scripts/jquery-timers.js"></script>
@@ -70,7 +85,6 @@
     <script type="text/javascript" src="scripts/map.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
-            Logger.setup();
             UserInterface.setup();
             if(UserInterface.isLoggedin() === true) {
                 UserInterface.drawUI();
@@ -102,22 +116,16 @@
         <div id="overlay">
             <div id="header">
                 <h1><span>Thousand Parsec Web Client</span></h1>
-                <div id="turn-component" class="transparent">
-                    <div id="turn-component-content">
-                        <p class="counter"></p>
-                        <p class="info"></p>
-                    </div>
-                </div>
-                <div id="menu-bar" class="transparent">
-                    <ul>
-                        <li class="windows"><a href="#">Windows</a></li>
-                        <li class="download-universe"><a href="#">Download the Universe</a></li>
-                        <li class="request-eot"><a href="#">Request End of Turn</a></li>
-                        <li class="settings"><a href="#">Settings</a></li>
-                        <li class="logout"><a href="#" id="logout">Logout</a></li>
-                        <li class="turn-component"></li>
-                    </ul>
-                </div>
+            </div>
+            <div id="menu-bar">
+                <ul>
+                    <li class="windows"><a href="#">Windows</a></li>
+                    <li class="download-universe"><a href="#">Download the Universe</a></li>
+                    <li class="request-eot"><a href="#">Request End of Turn</a></li>
+                    <li class="settings"><a href="#">Settings</a></li>
+                    <li class="logout"><a href="#" id="logout">Logout</a></li>
+                    <li class="turn-component"></li>
+                </ul>
             </div>
 
             <div id="overlay-content">
@@ -144,7 +152,6 @@
                 </div>
 
             </div>
-
         </div>
         <div id="mapdiv"></div>
     </div>

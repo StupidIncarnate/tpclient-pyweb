@@ -20,7 +20,7 @@ class FriendlyObjects(object):
         node.update({
             'name': safestr(obj.name),
             'id': obj.id,
-            'type': object_type[obj.subtype],
+            'type': {'id': obj.subtype, 'name': object_type[obj.subtype]},
             'size': obj.size,
             'contains': obj.contains
         })

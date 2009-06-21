@@ -85,9 +85,9 @@ Map = ( function() {
                     obj = this.objects[galaxy.contains[j]];
                     var x = (obj.pos[0] / universe.size) * 120000;
                     var y = (obj.pos[1] / universe.size) * 120000;
-                    if(obj.type == 'Star System') {
+                    if(obj.type.name == 'Star System') {
                         this.drawstarsystem(x, y, obj.id);
-                    } else if(obj.type == 'Fleet') {
+                    } else if(obj.type.name == 'Fleet') {
                         this.drawfleet(x, y, obj.id);
                     }
                 }
@@ -297,6 +297,118 @@ UserInterface = ( function() {
 
 
     /**
+     * System component
+     */
+    var SystemComponent = ( function() {
+        var SystemComponent = function(){};
+
+        var createList = function(object, ul, match) {
+            for(var i in object.contains) {
+                var temp = SystemComponent.objects[object.contains[i]];
+
+                if(match) {
+                    if(temp.name.toLowerCase().indexOf(match) == 0) {
+                        ul.append(
+                            $(document.createElement('li')).addClass(UserInterface.classes[temp.type.id]).append(
+                                $(document.createElement('a'))
+                                    .attr({'href': '#info/'+temp.id, 'id': temp.id})
+                                    .addClass(UserInterface.classes[temp.type.id])
+                                    .text(temp.name)
+                                    //.bind('click', UserInterface.objclicked)
+                            )
+                        );
+                    }
+                    if(temp.contains.length > 0) {
+                        createList(temp, ul, match);
+                    }
+                } else {
+                    li = $(document.createElement('li')).addClass(UserInterface.classes[temp.type.id]).append(
+                        $(document.createElement('a'))
+                            .attr({'href': '#info/'+temp.id, 'id': temp.id})
+                            .addClass(UserInterface.classes[temp.type.id])
+                            .text(temp.name)
+                            //.bind('click', UserInterface.objclicked)
+                    );
+                    ul.append(li);
+
+                    if(temp.contains.length > 0) {
+                        subul = $(document.createElement('ul'));
+                        li.append(subul);
+                        createList(temp, subul, match);
+                    }
+                }
+            }
+        };
+
+        var onResize = function(e) {
+            $('#system-component').css('height', jQuery(window).height() - jQuery('#overlay-content').offset().top);
+            $('#system-component-content').css('height', jQuery(window).height() - jQuery('#overlay-content').offset().top - 30);
+        };
+
+
+        /**
+         * onSearch
+         * search through all objects that match text in search input field
+         * TODO: Needs optimization, if you write fast you still get lots of searches where one only is needed
+         */
+        var searchString = '';
+        var searchActive = false;
+        var onSearch = function(e) {
+            searchString = $('#system-component-search input').attr('value');
+            if(searchString.length > 0) {
+                searchActive = true;
+            }
+            if(searchActive) {
+                $('#system-component-content a').unbind('click');
+                $('#system-component-content').html('');
+                ul = $(document.createElement('ul'));
+                createList(objects[0], ul, searchString.toLowerCase());
+                $('a', ul).bind('click', UserInterface.objclicked);
+                $('#system-component-content').append(ul);
+            }
+            if(searchString.length <= 0 && searchActive == true) {
+                searchActive = false;
+            }
+        };
+
+        SystemComponent.prototype.setup = function(objects) {
+            console.log(UserInterface);
+
+            $(window).bind('resize', onResize);
+
+            SystemComponent.objects = objects;
+            var system = $(document.createElement('div')).attr('id', 'system-component').css({
+                'height': jQuery(window).height() - jQuery('#overlay-content').offset().top});
+
+            var systemsearch = $(document.createElement('div')).attr('id', 'system-component-search');
+            var input = $(document.createElement('input')).attr({'id': 'system-search-input', 'type': 'text'});
+            input.bind('keyup', onSearch);
+            systemsearch.append(input);
+
+            var systemcontent = $(document.createElement('div')).attr('id', 'system-component-content').css({
+                'height': (jQuery(window).height() - jQuery('#overlay-content').offset().top) - 30});
+
+            ul = $(document.createElement('ul'));
+            createList(objects[0], ul);
+            $('a', ul).bind('click', UserInterface.objclicked);
+            
+            $('#overlay-content').append(system.append(systemsearch).append(systemcontent.append(ul)));
+
+            // Make it resizable
+            $('#system-component').resizable({
+                handles: 'w,n,e,s',
+                maxWidth: 400,
+                maxHeight: jQuery(window).height() - jQuery('#overlay-content').offset().top,
+                minWidth: 200,
+                minHeight: jQuery(window).height() - jQuery('#overlay-content').offset().top
+            });
+        };
+
+        return new SystemComponent();
+    } )();
+
+
+    /**
      * Login handler
      */
     var login = function(e) {
@@ -368,6 +480,10 @@ UserInterface = ( function() {
 
     var constructor = function(){};
 
+    constructor.prototype.objects = null;
+
+    constructor.prototype.classes = ['universe', 'galaxy', 'starsystem', 'planet', 'fleet'];
+
     constructor.prototype.drawUI = function() {
         UILock.create().notice('Please wait while loading user interface <img src="/images/loading.gif" />');
         $('#loginbox').hide();
@@ -377,6 +493,9 @@ UserInterface = ( function() {
             Map.draw();
             jQuery('#overlay-content').css('height', (jQuery(window).height() - jQuery('#overlay-content').offset().top));
             jQuery('#overlay-content').css('width', jQuery(window).width());
+
+            SystemComponent.setup(data.objects);
+
             UILock.clear();
         });
     };
@@ -389,6 +508,7 @@ UserInterface = ( function() {
                     callback(data);
                     TurnHandler.setup(data.turn.time, data.turn.current);
                     objects = data.objects;
+                    UserInterface.objects = data.objects;
                 } else {
                     this.logout();
                 }
@@ -421,6 +541,7 @@ UserInterface = ( function() {
     };
 
     constructor.prototype.objclicked = function(e) {
+        console.log(e);
         id = parseInt(e.target.id);
         object = objects[id];
 
@@ -485,7 +606,7 @@ UserInterface = ( function() {
         // Sets width and height correctly on resize
         jQuery(window).bind('resize', function(e) {
             jQuery('#overlay-content').css('height', (jQuery(window).height() - jQuery('#overlay-content').offset().top));
-            jQuery('#overlay-content').css('width', jQuery(window).width());       
+            jQuery('#overlay-content').css('width', jQuery(window).width());
         });
 
         // Setup draggables
@@ -512,7 +633,7 @@ UserInterface = ( function() {
 
         $('#logout').bind("click", this, logout);
         $('#loginform').bind("submit", this, login);
-        $('.starsystem, .fleet').live("click", this.objclicked);
+        $('#mapdiv .starsystem, #mapdiv .fleet').live("click", this.objclicked);
     };
 
     return new constructor();
