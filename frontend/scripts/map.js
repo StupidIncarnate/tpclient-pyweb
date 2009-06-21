@@ -347,7 +347,7 @@ UserInterface = ( function() {
 
 
         /**
-         * onSearch
+         * onSearch event
          * search through all objects that match text in search input field
          * TODO: Needs optimization, if you write fast you still get lots of searches where one only is needed
          */
@@ -372,8 +372,6 @@ UserInterface = ( function() {
         };
 
         SystemComponent.prototype.setup = function(objects) {
-            console.log(UserInterface);
-
             $(window).bind('resize', onResize);
 
             SystemComponent.objects = objects;
@@ -481,7 +479,7 @@ UserInterface = ( function() {
     var constructor = function(){};
 
     constructor.prototype.objects = null;
-
+    constructor.prototype.orders = null;
     constructor.prototype.classes = ['universe', 'galaxy', 'starsystem', 'planet', 'fleet'];
 
     constructor.prototype.drawUI = function() {
@@ -496,12 +494,29 @@ UserInterface = ( function() {
 
             SystemComponent.setup(data.objects);
 
-            UILock.clear();
+            UserInterface.getOrders(function(data) { 
+                UILock.clear();    
+            });
         });
     };
 
+    constructor.prototype.getOrders = function(callback) {
+         $.ajax({type: "GET", dataType: 'json', url: "/json/get_orders/", 
+            error: function(data, textstatus) { }, 
+            success: function(data, textstatus) {
+                if(data.auth === true) {
+                    callback(data);
+                    TurnHandler.setup(data.turn.time, data.turn.current);
+                    UserInterface.orders = data.orders;
+                } else {
+                    this.logout();
+                }
+            }
+        });      
+    };
+
     constructor.prototype.getObjects = function(callback) {
-        $.ajax({async: false, type: "GET", dataType: 'json', url: "/json/get_objects/", 
+        $.ajax({type: "GET", dataType: 'json', url: "/json/get_objects/", 
             error: function(data, textstatus) { }, 
             success: function(data, textstatus) {
                 if(data.auth === true) {
@@ -541,9 +556,29 @@ UserInterface = ( function() {
     };
 
     constructor.prototype.objclicked = function(e) {
-        console.log(e);
         id = parseInt(e.target.id);
         object = objects[id];
+
+
+        orderComponent = $('#order-component-content').html('');
+        if(UserInterface.orders[id]) {
+            dl = $(document.createElement('dl'));
+            for(var i in UserInterface.orders[id]['orders']) {
+                order = UserInterface.orders[id]['orders'][i];
+                dt = $(document.createElement('dt')).text(order.turns + ' turns');
+                dd = $(document.createElement('dd')).html(order.name + '<br />' + order.description);
+                dl.append(dt).append(dd);
+            }
+            orderComponent.append(dl);
+
+            select = $(document.createElement('select'));
+            for(var i in UserInterface.orders[id].order_type) {
+                order_type = UserInterface.orders[id].order_type[i];
+                option = $(document.createElement('option')).text(order_type.name);
+                select.append(option);
+            }
+            orderComponent.append(select);
+        }
 
         infoComponent = $("#info-component-content").html("");
         h4 = $(document.createElement("h4")).text(object.name);
@@ -622,7 +657,7 @@ UserInterface = ( function() {
             handle: 'h3',
             cursor: 'move',
             stack: { group: '.component', min: 50 }
-        });
+        })
 
         jQuery('#info-component').draggable({
             containment: '#overlay-content',
