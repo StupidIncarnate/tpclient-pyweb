@@ -37,7 +37,7 @@ class FriendlyObjects(object):
         self._galaxy(obj, node, level)
         node.update({
             'owner': obj.owner,
-            'resource': obj.resources
+            'resources': obj.resources
         })
 
     def _fleet(self, obj, node, level):

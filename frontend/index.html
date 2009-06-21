@@ -48,7 +48,13 @@
 
         #info-component { background-color: rgba(255, 165, 0, 0.8); z-index: 100; }
         #info-component-container { width: 100%;  }
-        #info-component-content h4 { margin: 0; padding: 0; }
+        #info-component-content h4 { margin: 0; padding: 0 0 0 20px; }
+        #info-component-content h4.universe { background-image: url(/images/universe.png); background-repeat: no-repeat; background-position: 0 0; }
+        #info-component-content h4.galaxy { background-image: url(/images/galaxy.png); background-repeat: no-repeat; background-position: 0 0; }
+        #info-component-content h4.starsystem { background-image: url(/images/starsystem.png); background-repeat: no-repeat; background-position: 0 0; }
+        #info-component-content h4.planet { background-image: url(/images/planet.png); background-repeat: no-repeat; background-position: 0 0; }
+        #info-component-content h4.fleet { background-image: url(/images/fleet.png); background-repeat: no-repeat; background-position: 0 0; }
+        #info-component-content h4.starsystem { background-image: url(/images/starsystem.png); background-repeat: no-repeat; background-position: 0 0; }
         #info-component-content dl { }
         #info-component-content dt { float: left; clear: left; width: 5em; text-align: left; }
         #info-component-content dt:after { content: ":"; }
@@ -71,15 +77,15 @@
         #system-component-search input { margin: 0; padding: 5px; border: 0; float: left; width: 270px; height: 20px; font-size: 1em; }
         #system-component-search input:focus { border: 0; outline: none; }
         #system-component-content { overflow: auto; } 
-        #system-component-content ul { margin: 2px 0 2px 0; list-style-type: none; }
-        #system-component-content li { margin: 0; padding: 0 0 1px 20px; line-height: 16px; }
-        #system-component-content li.universe { background-image: url(/images/universe.png); background-repeat: no-repeat; background-position: 0 0; }
-        #system-component-content li.galaxy { background-image: url(/images/galaxy.png); background-repeat: no-repeat; background-position: 0 0; }
-        #system-component-content li.starsystem { background-image: url(/images/starsystem.png); background-repeat: no-repeat; background-position: 0 0; }
-        #system-component-content li.planet { background-image: url(/images/planet.png); background-repeat: no-repeat; background-position: 0 0; }
-        #system-component-content li.fleet { background-image: url(/images/fleet.png); background-repeat: no-repeat; background-position: 0 0; }
-        #system-component-content ul ul { margin-left: 2px 0 2px 16px; }
-        #system-component-content ul ul ul { margin-left: 2px 0 2px 16px; }
+
+        ul.tree-list { margin: 2px 0 2px 0; list-style-type: none; }
+        ul.tree-list ul { margin: 2px 0 2px 0px; list-style-type: none; }
+        ul.tree-list li { margin: 0; padding: 0 0 1px 20px; line-height: 16px; }
+        ul.tree-list li.universe { background-image: url(/images/universe.png); background-repeat: no-repeat; background-position: 0 0; }
+        ul.tree-list li.galaxy { background-image: url(/images/galaxy.png); background-repeat: no-repeat; background-position: 0 0; }
+        ul.tree-list li.starsystem { background-image: url(/images/starsystem.png); background-repeat: no-repeat; background-position: 0 0; }
+        ul.tree-list li.planet { background-image: url(/images/planet.png); background-repeat: no-repeat; background-position: 0 0; }
+        ul.tree-list li.fleet { background-image: url(/images/fleet.png); background-repeat: no-repeat; background-position: 0 0; }
     </style>
     <script type="text/javascript" src="scripts/jquery-dev.js"></script>
     <script type="text/javascript" src="scripts/jquery-timers.js"></script>

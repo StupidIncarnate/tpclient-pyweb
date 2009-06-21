@@ -361,7 +361,7 @@ UserInterface = ( function() {
             if(searchActive) {
                 $('#system-component-content a').unbind('click');
                 $('#system-component-content').html('');
-                ul = $(document.createElement('ul'));
+                ul = $(document.createElement('ul')).addClass('tree-list');
                 createList(objects[0], ul, searchString.toLowerCase());
                 $('a', ul).bind('click', UserInterface.objclicked);
                 $('#system-component-content').append(ul);
@@ -386,7 +386,7 @@ UserInterface = ( function() {
             var systemcontent = $(document.createElement('div')).attr('id', 'system-component-content').css({
                 'height': (jQuery(window).height() - jQuery('#overlay-content').offset().top) - 30});
 
-            ul = $(document.createElement('ul'));
+            ul = $(document.createElement('ul')).addClass('tree-list');
             createList(objects[0], ul);
             $('a', ul).bind('click', UserInterface.objclicked);
             
@@ -581,17 +581,27 @@ UserInterface = ( function() {
         }
 
         infoComponent = $("#info-component-content").html("");
-        h4 = $(document.createElement("h4")).text(object.name);
+        h4 = $(document.createElement("h4")).text(object.name).addClass(UserInterface.classes[object.type.id]);
         dl = $(document.createElement("dl"));
         infoComponent.append(h4).append(dl);
 
-        base = {'name': 'Name', 'id': 'Id', 'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size'}
+        if(object.type.name == 'Fleet') {
+            base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size', 'owner': 'Owner', 'damage': 'Damage', 'ships': 'Ships'}
+        } else if(object.type.name == 'Planet') {
+            base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size', 'owner': 'Owner', 'resources': 'Resources'}
+        } else if(object.type.name == 'Star System') {
+            base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size'}
+        } else if(object.type.name == 'Galaxy') {
+            base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size'}
+        } else {
+            base = {'parent': 'Parent', 'size': 'Size'}
+        }
         for(var attr in base) {
             dt = $(document.createElement('dt')).text(base[attr]);
             if(attr == 'parent') {
                 o = objects[object[attr]];
                 if(o.id > 0) {
-                    a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).text(o.name);
+                    a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).addClass(UserInterface.classes[o.type.id]).text(o.name);
                     a.one('click', UserInterface.objclicked);
                     dd = $(document.createElement('dd')).append(a);
                 } else {
@@ -607,21 +617,21 @@ UserInterface = ( function() {
         if(object.contains.length > 0) {
             dt = $(document.createElement('dt')).text('Contains');
             dd = $(document.createElement('dd'));
-            ul = $(document.createElement('ul'));
+            ul = $(document.createElement('ul')).addClass('tree-list');
             for(var i in object.contains) {
                 toplevel = objects[object.contains[i]];
-                li = $(document.createElement('li'));
-                a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id}).text(toplevel.name);
-                a.one('click', UserInterface.objclicked);
+                li = $(document.createElement('li')).addClass(UserInterface.classes[toplevel.type.id]);
+                a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id})
+                    .addClass(UserInterface.classes[toplevel.type.id]).text(toplevel.name).one('click', UserInterface.objclicked);
                 ul.append(li.append(a));
                 if(toplevel.contains.length > 0) {
                     subul = $(document.createElement('ul'));
                     li.append(subul);
                     for(var j in toplevel.contains) {
                         sublevel = objects[toplevel.contains[j]];
-                        subli = $(document.createElement('li'));
-                        a = $(document.createElement('a')).attr({'href': '#info/' + sublevel.id, 'id': sublevel.id}).text(sublevel.name);
-                        a.one('click', UserInterface.objclicked);
+                        subli = $(document.createElement('li')).addClass(UserInterface.classes[sublevel.type.id]);
+                        a = $(document.createElement('a')).attr({'href': '#info/' + sublevel.id, 'id': sublevel.id}).text(sublevel.name)
+                            .addClass(UserInterface.classes[sublevel.type.id]).one('click', UserInterface.objclicked);
                         subul.append(subli.append(a));
                     }
                 }
