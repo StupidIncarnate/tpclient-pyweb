@@ -49,10 +49,10 @@ class FriendlyObjects(object):
         })
 
     def build(self):
-        ret = [None] * len(self.cache.objects)
+        ret = {}
         for i in self.cache.objects:
             obj = self.cache.objects[i]
-            ret.insert(obj.id, {})
+            ret[obj.id] = {}
             self._object_chain[obj.subtype](obj, ret[obj.id], 0)
         return ret
 
