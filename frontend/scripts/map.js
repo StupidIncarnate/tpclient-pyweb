@@ -608,7 +608,11 @@ UserInterface = ( function() {
                     dd = $(document.createElement('dd')).text(o.name);
                 }
             } else {
-                dd = $(document.createElement('dd')).text(object[attr].toString());
+                if(object[attr].length == 0) {
+                    dd = $(document.createElement('dd')).text('-');
+                } else {
+                    dd = $(document.createElement('dd')).text(object[attr].toString());
+                }
             }
             dl.append(dt).append(dd);
         }
