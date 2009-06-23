@@ -120,6 +120,25 @@ def get_objects(environ, start_response):
     start_response('200 OK', [('Content-Type', 'application/json')])
     return [output]
 
+def get_messages(environ, start_response):
+    """Get all messages from cache"""
+
+    session = environ.get('session')
+    if 'uid' in session:
+        host, port, username, password, now = session['uid']
+        #conn, cache = middleman.connect(host, port, username, password)
+        cache = middleman.cache(host, username)
+
+        #turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
+        data = {'auth': True, 'objects': middleman.Messages(cache).build()}
+    else:
+        data = {'auth': False}
+
+    output = json.dumps(data, encoding='utf-8', ensure_ascii=False)
+
+    start_response('200 OK', [('Content-Type', 'application/json')])
+    return [output]
+
 def not_found(environ, start_response):
     """A simple not found handler"""
     start_response('404 NOT FOUND', [('Content-Type', 'text/plain')])
@@ -130,6 +149,7 @@ urls = [
     (r'^logout/$', logout),
     (r'^get_objects/$', get_objects),
     (r'^get_orders/$', get_orders),
+    (r'^get_messages/$', get_messages),
     (r'^cache_update/$', cache_update),
     (r'^login/$', login),
 ]

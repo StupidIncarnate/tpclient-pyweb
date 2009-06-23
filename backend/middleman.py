@@ -148,7 +148,39 @@ class Orders(object):
                         'args': args})
 
         return return_data
-            
+
+
+class Messages(object):
+    def __init__(self, cache):
+        self.cache = cache
+
+    def build(self):
+        return_data = {}
+        for i in self.cache.boards:
+            board = self.cache.boards[i]
+
+            return_data[board.id] = {
+                'id': board.id,
+                'name': safestr(board.name),
+                'description': safestr(board.description),
+                'modify_time': safestr(board.modify_time),
+                'messages': []
+            }
+
+            messages = self.cache.messages[i]
+            for listpos, node in enumerate(messages):
+                message = node.CurrentOrder
+                return_data[board.id]['messages'].append({
+                    'slot': message.slot,
+                    'subject': safestr(message.subject),
+                    'body': safestr(message.body),
+                    'turn': message.turn,
+                    #'references': str(message.references)
+                })
+
+        return return_data
+
+
 class ConnectionError(Exception):
     """Exception used in connect"""
     def __init__(self, value):
