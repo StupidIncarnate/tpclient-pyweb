@@ -480,6 +480,7 @@ UserInterface = ( function() {
 
     constructor.prototype.objects = null;
     constructor.prototype.orders = null;
+    constructor.prototype.messages = null;
     constructor.prototype.classes = ['universe', 'galaxy', 'starsystem', 'planet', 'fleet'];
 
     constructor.prototype.drawUI = function() {
@@ -494,12 +495,33 @@ UserInterface = ( function() {
 
             SystemComponent.setup(data.objects);
 
-            UserInterface.getOrders(function(data) { 
-                UILock.clear();    
+            UserInterface.getOrders(function(data) {
+                UserInterface.getMessages(function(data) {
+
+                    // Handle messages here
+                    messageComponent = $('#message-component-content').html('');
+                    messageComponent.html('<h5>' + data.messages[0].messages[0].subject + '</h5>' + data.messages[0].messages[0].body);
+
+                    UILock.clear();
+                });
             });
         });
     };
 
+    constructor.prototype.getMessages = function(callback) {
+         $.ajax({type: "GET", dataType: 'json', url: "/json/get_messages/", 
+            error: function(data, textstatus) { }, 
+            success: function(data, textstatus) {
+                if(data.auth === true) {
+                    callback(data);
+                    UserInterface.messages = data.orders;
+                } else {
+                    this.logout();
+                }
+            }
+        });      
+    };
+     
     constructor.prototype.getOrders = function(callback) {
          $.ajax({type: "GET", dataType: 'json', url: "/json/get_orders/", 
             error: function(data, textstatus) { }, 

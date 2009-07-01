@@ -130,7 +130,7 @@ def get_messages(environ, start_response):
         cache = middleman.cache(host, username)
 
         #turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
-        data = {'auth': True, 'objects': middleman.Messages(cache).build()}
+        data = {'auth': True, 'messages': middleman.Messages(cache).build()}
     else:
         data = {'auth': False}
 
