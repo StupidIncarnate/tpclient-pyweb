@@ -360,6 +360,7 @@ UserInterface = ( function() {
     var SystemComponent = ( function() {
         var SystemComponent = function(){};
 
+        var systemElement = null;
         var searchString = '';
         var searchActive = false;
 
@@ -436,6 +437,12 @@ UserInterface = ( function() {
         };
 
         SystemComponent.prototype.setup = function(objects) {
+
+            // Remove previous system component
+            if(systemElement) {
+                systemElement.remove();
+            }
+
             $(window).bind('resize', onResize);
 
             SystemComponent.objects = objects;
@@ -454,7 +461,7 @@ UserInterface = ( function() {
             createList(objects[0], ul);
             $('a', ul).bind('click', UserInterface.objclicked);
             
-            $('#overlay-content').append(system.append(systemsearch).append(systemcontent.append(ul)));
+            $('#overlay-content').append(system.append(systemsearch, systemcontent.append(ul)));
 
             // Make it resizable
             $('#system-component').resizable({
@@ -464,6 +471,9 @@ UserInterface = ( function() {
                 minWidth: 200,
                 minHeight: jQuery(window).height() - jQuery('#overlay-content').offset().top
             });
+
+            // Store this system component
+            systemElement = system;
         };
 
         return new SystemComponent();
@@ -580,7 +590,7 @@ UserInterface = ( function() {
                     $(document.createElement('a')).text('Next').bind('click', onNext)
                 ));
             messageBodyElement = $(document.createElement('p')).text(messages[0].messages[messageNumber].body);
-            $('#message-component-content').append(messageNav).append(messageBodyElement);
+            $('#message-component-content').empty().append(messageNav, messageBodyElement);
         };
 
         return new MessageComponentClass();
