@@ -851,7 +851,7 @@ UserInterface = ( function() {
             stack: { group: '.component', min: 50 }
         });
 
-        $('#logout').bind("click", this, logout);
+        $('#logout').bind('click', UserInterface.logout);
         $('#loginform').bind("submit", this, login);
         $('#mapdiv .starsystem, #mapdiv .fleet').live("click", this.objclicked);
 
