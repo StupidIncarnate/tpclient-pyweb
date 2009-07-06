@@ -60,12 +60,20 @@
         #info-component-content dt:after { content: ":"; }
         #info-component-content dd { margin: 0 0 0 5.5em; padding: 0; }
 
-        .component { width: 30em; height: 100%; margin: 0; padding: 0; height: 12em; }
+        .component { width: 30em; height: 100%; margin: 0; padding: 0; height: 150px; }
         .component .container { width: 100%; height: 100%; margin: 0; padding: 0; }
         .component .container h3 { font-size: 1em; margin: 0; padding: 0.5em; background-color: red; cursor: move; }
-        .component .content { margin: 0; padding: 0.5em; height: 9em; overflow: auto; }
+        .component .content { margin: 0; padding: 0.5em; height: 120px; overflow: auto; }
+
         #message-component { background-color: rgba(150, 150, 150, 0.8); z-index: 100;}
         #message-component-container { width: 100%; }
+        #message-component-container ul { list-style-type: none; margin: 0; padding: 0; }
+        #message-component-container li a { display: block; width: 5em; color: #000; background-color: #666; text-align: center; text-decoration: none; }
+        #message-component-container li a:hover { }
+        #message-component-container .left { float: left; }
+        #message-component-container .center { float: left; text-align: center; width: 20em; }
+        #message-component-container .right { float: right; }
+        #message-component-content { clear: both; }
 
         #order-component { background-color: rgba(255, 165, 0, 0.8); z-index: 100; }
         #order-component-container { width: 100%; }

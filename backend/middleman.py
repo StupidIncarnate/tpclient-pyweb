@@ -167,8 +167,9 @@ class Messages(object):
             #    'messages': []
             #}
 
-            return_data[0] = {'messages': []}
+            return_data[0] = {'number': 0, 'messages': []}
 
+            count = 0
             messages = self.cache.messages[i]
             for listpos, node in enumerate(messages):
                 message = node.CurrentOrder
@@ -179,6 +180,9 @@ class Messages(object):
                     'turn': message.turn,
                     #'references': str(message.references)
                 })
+                count = count + 1
+
+            return_data[0]['number'] = count
 
         return return_data
 

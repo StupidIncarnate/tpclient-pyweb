@@ -472,15 +472,66 @@ UserInterface = ( function() {
     } )();
 
     /**
+     * Message component
+     */
+    var MessageComponent = ( function() {
+        var MessageComponentClass = function(){};
+        var messages = null;
+        var messageNumber = 0;
+
+        var onNext = function() {
+            messageNumber++;
+            if(messageNumber > (messages[0].number - 1)) {
+                messageNumber = 0;
+            }
+            redraw();
+        };
+
+        var onPrev = function() {
+            messageNumber--;
+            if(messageNumber < 0) {
+                messageNumber = messages[0].number-1;
+            }
+            redraw();
+        };
+
+        var redraw = function() {
+            $('#message-component-container li.center span').text(messages[0].messages[messageNumber].subject + ' (' + (messageNumber+1) + '/' + messages[0].number + ')');
+            $('#message-component-content').text(messages[0].messages[messageNumber].body);
+        };           
+
+        MessageComponentClass.prototype.setup = function(data) {
+            messages = data;
+
+            messageComponent = $('#message-component');
+
+            messageNav = $(document.createElement('ul'))
+                .append($(document.createElement('li')).addClass('left').append(
+                    $(document.createElement('a')).text('Previous').bind('click', onPrev)
+                ))
+                .append($(document.createElement('li')).addClass('center').append(
+                    $(document.createElement('span')).text(messages[0].messages[messageNumber].subject + ' (' + (messageNumber+1) + '/' + messages[0].number + ')')
+                ))
+                .append($(document.createElement('li')).addClass('right').append(
+                    $(document.createElement('a')).text('Next').bind('click', onNext)
+                ));
+            $('#message-component-container h3', messageComponent).after(messageNav);
+            $('#message-component-content', messageComponent).text(messages[0].messages[messageNumber].body);
+
+        };
+        return new MessageComponentClass();
+    } )();
+
+    /**
      * Store all objects
      */
     var objects = null;
 
     var constructor = function(){};
 
+    constructor.prototype.MessageComponent = MessageComponent;
     constructor.prototype.objects = null;
     constructor.prototype.orders = null;
-    constructor.prototype.messages = null;
     constructor.prototype.classes = ['universe', 'galaxy', 'starsystem', 'planet', 'fleet'];
 
     constructor.prototype.drawUI = function() {
@@ -493,15 +544,19 @@ UserInterface = ( function() {
             jQuery('#overlay-content').css('height', (jQuery(window).height() - jQuery('#overlay-content').offset().top));
             jQuery('#overlay-content').css('width', jQuery(window).width());
 
+            // Setup SystemComponent
             SystemComponent.setup(data.objects);
 
+            // Get orders with ajax call
             UserInterface.getOrders(function(data) {
+
+                // Get messages with ajax call
                 UserInterface.getMessages(function(data) {
 
-                    // Handle messages here
-                    messageComponent = $('#message-component-content').html('');
-                    messageComponent.html('<h5>' + data.messages[0].messages[0].subject + '</h5>' + data.messages[0].messages[0].body);
+                    // Setup MessageComponent
+                    UserInterface.MessageComponent.setup(data.messages)
 
+                    // Clear UI Lock
                     UILock.clear();
                 });
             });
@@ -514,7 +569,6 @@ UserInterface = ( function() {
             success: function(data, textstatus) {
                 if(data.auth === true) {
                     callback(data);
-                    UserInterface.messages = data.orders;
                 } else {
                     this.logout();
                 }
@@ -527,9 +581,9 @@ UserInterface = ( function() {
             error: function(data, textstatus) { }, 
             success: function(data, textstatus) {
                 if(data.auth === true) {
-                    callback(data);
                     TurnHandler.setup(data.turn.time, data.turn.current);
                     UserInterface.orders = data.orders;
+                    callback(data);
                 } else {
                     this.logout();
                 }
@@ -542,10 +596,10 @@ UserInterface = ( function() {
             error: function(data, textstatus) { }, 
             success: function(data, textstatus) {
                 if(data.auth === true) {
-                    callback(data);
                     TurnHandler.setup(data.turn.time, data.turn.current);
                     objects = data.objects;
                     UserInterface.objects = data.objects;
+                    callback(data);
                 } else {
                     this.logout();
                 }
