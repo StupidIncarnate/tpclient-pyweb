@@ -512,18 +512,6 @@ UserInterface = ( function() {
         return false;
     };
 
-    /**
-     * Logout handler
-     */
-    var logout = function(e) {
-        $.ajax({type: "GET", dataType: "json", url: "/json/logout/",
-            complete: function() {
-                $.cookies.del('tpclient-pyweb');
-                window.location.reload();
-            }
-        });
-        return false;
-    };
 
     var ObjectHandler = ( function() {
         var ObjectHandlerClass = function(){};
@@ -610,6 +598,19 @@ UserInterface = ( function() {
     constructor.prototype.classes = ['universe', 'galaxy', 'starsystem', 'planet', 'fleet'];
 
     /**
+     * Logout handler
+     */
+    constructor.prototype.logout = function() {
+        $.ajax({type: "GET", dataType: "json", url: "/json/logout/",
+            complete: function() {
+                $.cookies.del('tpclient-pyweb');
+                window.location.reload();
+            }
+        });
+        return false;
+    };
+
+    /**
      * Draw UI
      */
     constructor.prototype.drawUI = function() {
@@ -662,7 +663,7 @@ UserInterface = ( function() {
                 if(data.auth === true) {
                     callback(data);
                 } else {
-                    this.logout();
+                    UserInterface.logout();
                 }
             }
         });      
@@ -677,7 +678,7 @@ UserInterface = ( function() {
                     UserInterface.orders = data.orders;
                     callback(data);
                 } else {
-                    this.logout();
+                    UserInterface.logout();
                 }
             }
         });      
@@ -693,7 +694,7 @@ UserInterface = ( function() {
                     UserInterface.objects = data.objects;
                     callback(data);
                 } else {
-                    this.logout();
+                    UserInterface.logout();
                 }
             }
         });
@@ -710,14 +711,14 @@ UserInterface = ( function() {
     constructor.prototype.cache_update = function(callback) {
         $.ajax({type: "GET", dataType: 'json', url: "/json/cache_update/", 
             error: function(data, textstatus) { 
-                this.logout();
+                UserInterface.logout();
             }, 
             success: function(data, textstatus) {
                 if(data.auth === true && data.cache === true) {
                     callback(data);
                     TurnHandler.setup(data.turn.time, data.turn.current);
                  } else {
-                    this.logout();
+                    UserInterface.logout();
                 }
             }
         });
@@ -855,6 +856,7 @@ UserInterface = ( function() {
         $('#loginform').bind("submit", this, login);
         $('#mapdiv .starsystem, #mapdiv .fleet').live("click", this.objclicked);
 
+        // Menu - download universe
         $('#menu-bar li.download-universe').bind('click', function() {
             NotifyComponent.notify('Started downloading the Universe', 'Universe');
             UserInterface.cache_update(function() {
