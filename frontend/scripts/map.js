@@ -1,3 +1,10 @@
+/**
+ * Z-index table
+ * 100 - UI
+ * 1000 - login
+ * 10000 - UI Lock
+ */
+
 Map = ( function() {
 
     var MapCreator = function() {};
@@ -287,13 +294,11 @@ UserInterface = ( function() {
 
             $(window).stopTime("turntimer");
             $(window).oneTime(timeleft * 1000, "turntimer", function() {
-                //$("#turn-component .counter").text("Downloading the new Universe...");
+                NotifyComponent.notify('Started downloading the Universe', 'Universe');
                 UserInterface.cache_update(function() {
-                    //$("#turn-component .info").text("Finished downloading the Universe, click here if you want the change!");
-                    /*$("#turn-component .info").one("click", function(e) {
-                        $("#turn-component .info").text("");
-                        UserInterface.drawUI();
-                    });*/
+                    NotifyComponent.notify('Finished downloading the Universe, click here to reload the UI', 'Universe', function() {
+                        UserInterface.drawUI();   
+                    });
                 });
             });
             $(window).everyTime("1s", "turntimer", function() {
@@ -303,6 +308,49 @@ UserInterface = ( function() {
         return new TurnHandler();
     } )();
 
+
+    /**
+     * Notify component
+     */
+    var NotifyComponent = ( function() {
+
+        var rows = 0;
+        var notify = null;
+
+        var NotifyComponentClass = function(){};
+
+        NotifyComponentClass.prototype.notify = function(text, category, callback) {
+            var date = new Date();
+            var hours = date.getHours();
+            var mins = date.getMinutes();
+            console.log(mins, mins.length)
+            if(mins < 10) {
+                mins = '0' + mins;
+            }
+
+            if(!callback) {
+                var callback = function(){};
+            }
+
+            notify.append($(document.createElement('div')).one('click', callback).append(
+                $(document.createElement('span')).addClass('category').text(hours + ':' + mins + ' ' + category),
+                $(document.createElement('span')).addClass('text').text(text)
+            ));
+
+            rows++;
+            if(rows >= 4) {
+                notify.find('div:first').animate({'margin-top': '-18px'}, 600, function() { $(this).remove(); });
+                rows = 3;
+            }
+        };
+
+        NotifyComponentClass.prototype.setup = function() {
+            notify = $(document.createElement('div')).attr('id', 'notify-component');
+            $('body').append(notify);
+        };
+
+        return new NotifyComponentClass();
+    } )();
 
     /**
      * System component
@@ -589,6 +637,9 @@ UserInterface = ( function() {
 
                     // We are done, clear UI Lock
                     UILock.clear();
+
+                    // Notify user that we are done
+                    NotifyComponent.notify('Finished drawing user interface', 'User Interface');
                 });
             });
         });
@@ -753,6 +804,9 @@ UserInterface = ( function() {
     };
 
     constructor.prototype.setup = function() {
+
+        // Setup notify component
+        NotifyComponent.setup();
     
         // Hack (fix later)
         $("#ui").show();
@@ -790,6 +844,15 @@ UserInterface = ( function() {
         $('#logout').bind("click", this, logout);
         $('#loginform').bind("submit", this, login);
         $('#mapdiv .starsystem, #mapdiv .fleet').live("click", this.objclicked);
+
+        $('#menu-bar li.download-universe').bind('click', function() {
+            NotifyComponent.notify('Started downloading the Universe', 'Universe');
+            UserInterface.cache_update(function() {
+                NotifyComponent.notify('Finished downloading the Universe, click here to reload the UI', 'Universe', function() {
+                    UserInterface.drawUI();   
+                });
+            });
+        });
     };
 
     return new constructor();
