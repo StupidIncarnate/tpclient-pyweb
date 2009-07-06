@@ -323,7 +323,6 @@ UserInterface = ( function() {
             var date = new Date();
             var hours = date.getHours();
             var mins = date.getMinutes();
-            console.log(mins, mins.length)
             if(mins < 10) {
                 mins = '0' + mins;
             }
