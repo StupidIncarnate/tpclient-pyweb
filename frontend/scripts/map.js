@@ -214,12 +214,22 @@ EventHandler = ( function(jQuery) {
     return new EventHandlerClass();
 } )(jQuery);
 
+
+/**
+ * User Interface
+ *
+ * A container for all User Interface functionality
+ */
 UserInterface = ( function() {
+
     /**
      * User Interface Lock
+     *
+     * Creates a div elemenet over the whole screen making it impossible to
+     * click on any elements below the ui lock.
      */
     var UILock = ( function() {
-
+        
         var UILockClass = function(){};
 
         var active = false;
@@ -245,8 +255,8 @@ UserInterface = ( function() {
                 this.create();
             }
             if(remove === true) {
-                this.lock.one("click", this, function(e) { e.data.clear(); });
-                this.content.one("click", this, function(e) { e.data.clear(); });
+                this.lock.one("click", function(e) { UILock.clear(); });
+                this.content.one("click", function(e) { UILock.clear(); });
                 text = text + " Click anywhere to go back.";
             }
             this.content.html(text);
@@ -261,9 +271,7 @@ UserInterface = ( function() {
             this.content.attr('class', 'notice');
             this.text(notice, remove);
         };
-
         return new UILockClass();
-
     } )();
 
 
@@ -298,10 +306,16 @@ UserInterface = ( function() {
 
     /**
      * System component
+     *
+     * A list of objects in the universe, searchable.
      */
     var SystemComponent = ( function() {
         var SystemComponent = function(){};
 
+        var searchString = '';
+        var searchActive = false;
+
+        // Helper method, recursivly create the list of objects
         var createList = function(object, ul, match) {
             for(var i in object.contains) {
                 var temp = SystemComponent.objects[object.contains[i]];
@@ -314,7 +328,6 @@ UserInterface = ( function() {
                                     .attr({'href': '#info/'+temp.id, 'id': temp.id})
                                     .addClass(UserInterface.classes[temp.type.id])
                                     .text(temp.name)
-                                    //.bind('click', UserInterface.objclicked)
                             )
                         );
                     }
@@ -327,7 +340,6 @@ UserInterface = ( function() {
                             .attr({'href': '#info/'+temp.id, 'id': temp.id})
                             .addClass(UserInterface.classes[temp.type.id])
                             .text(temp.name)
-                            //.bind('click', UserInterface.objclicked)
                     );
                     ul.append(li);
 
@@ -340,6 +352,11 @@ UserInterface = ( function() {
             }
         };
 
+        /**
+         * Event: onResize
+         *
+         * Updates the height of the component on resize events.
+         */
         var onResize = function(e) {
             $('#system-component').css('height', jQuery(window).height() - jQuery('#overlay-content').offset().top);
             $('#system-component-content').css('height', jQuery(window).height() - jQuery('#overlay-content').offset().top - 30);
@@ -347,12 +364,11 @@ UserInterface = ( function() {
 
 
         /**
-         * onSearch event
-         * search through all objects that match text in search input field
+         * Event: onSearch
+         *
+         * Search through all objects that match text in search input field
          * TODO: Needs optimization, if you write fast you still get lots of searches where one only is needed
          */
-        var searchString = '';
-        var searchActive = false;
         var onSearch = function(e) {
             searchString = $('#system-component-search input').attr('value');
             if(searchString.length > 0) {
@@ -475,7 +491,7 @@ UserInterface = ( function() {
      * Message component
      */
     var MessageComponent = ( function() {
-        var MessageComponentClass = function(){};
+        
         var messages = null;
         var messageNumber = 0;
         var messageBodyElement = null;
@@ -499,13 +515,12 @@ UserInterface = ( function() {
         var redraw = function() {
             $('#message-component-container li.center span').text(messages[0].messages[messageNumber].subject + ' (' + (messageNumber+1) + '/' + messages[0].number + ')');
             messageBodyElement.text(messages[0].messages[messageNumber].body);
-        };           
+        };
+
+        var MessageComponentClass = function(){};
 
         MessageComponentClass.prototype.setup = function(data) {
             messages = data;
-
-            messageComponent = $('#message-component');
-
             messageNav = $(document.createElement('ul'))
                 .append($(document.createElement('li')).addClass('left').append(
                     $(document.createElement('a')).text('Previous').bind('click', onPrev)
@@ -516,12 +531,12 @@ UserInterface = ( function() {
                 .append($(document.createElement('li')).addClass('right').append(
                     $(document.createElement('a')).text('Next').bind('click', onNext)
                 ));
-
             messageBodyElement = $(document.createElement('p')).text(messages[0].messages[messageNumber].body);
-            $('#message-component-content', messageComponent).append(messageNav).append(messageBodyElement);
-
+            $('#message-component-content').append(messageNav).append(messageBodyElement);
         };
+
         return new MessageComponentClass();
+
     } )();
 
     /**
@@ -536,13 +551,27 @@ UserInterface = ( function() {
     constructor.prototype.orders = null;
     constructor.prototype.classes = ['universe', 'galaxy', 'starsystem', 'planet', 'fleet'];
 
+    /**
+     * Draw UI
+     */
     constructor.prototype.drawUI = function() {
+        // Create UI Lock
         UILock.create().notice('Please wait while loading user interface <img src="/images/loading.gif" />');
+
+        // Hide loginbox and show UI
         $('#loginbox').hide();
         $('#ui').show();
+
+        // Get objects with ajax call
         UserInterface.getObjects(function(data) {
+
+            // Add objects to map
             Map.addObjects(data.objects);
+
+            // Draw Map
             Map.draw();
+
+            // Hack to fix height and width
             jQuery('#overlay-content').css('height', (jQuery(window).height() - jQuery('#overlay-content').offset().top));
             jQuery('#overlay-content').css('width', jQuery(window).width());
 
@@ -558,7 +587,7 @@ UserInterface = ( function() {
                     // Setup MessageComponent
                     UserInterface.MessageComponent.setup(data.messages)
 
-                    // Clear UI Lock
+                    // We are done, clear UI Lock
                     UILock.clear();
                 });
             });
