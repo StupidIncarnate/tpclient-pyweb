@@ -478,6 +478,7 @@ UserInterface = ( function() {
         var MessageComponentClass = function(){};
         var messages = null;
         var messageNumber = 0;
+        var messageBodyElement = null;
 
         var onNext = function() {
             messageNumber++;
@@ -497,7 +498,7 @@ UserInterface = ( function() {
 
         var redraw = function() {
             $('#message-component-container li.center span').text(messages[0].messages[messageNumber].subject + ' (' + (messageNumber+1) + '/' + messages[0].number + ')');
-            $('#message-component-content').text(messages[0].messages[messageNumber].body);
+            messageBodyElement.text(messages[0].messages[messageNumber].body);
         };           
 
         MessageComponentClass.prototype.setup = function(data) {
@@ -515,8 +516,9 @@ UserInterface = ( function() {
                 .append($(document.createElement('li')).addClass('right').append(
                     $(document.createElement('a')).text('Next').bind('click', onNext)
                 ));
-            $('#message-component-container h3', messageComponent).after(messageNav);
-            $('#message-component-content', messageComponent).text(messages[0].messages[messageNumber].body);
+
+            messageBodyElement = $(document.createElement('p')).text(messages[0].messages[messageNumber].body);
+            $('#message-component-content', messageComponent).append(messageNav).append(messageBodyElement);
 
         };
         return new MessageComponentClass();
