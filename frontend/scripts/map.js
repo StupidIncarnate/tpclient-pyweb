@@ -121,107 +121,6 @@ Map = ( function() {
     return new MapCreator();
 } )();
 
-Logger = ( function() {
-    var LoggerClass = function(){};
-
-    var container = null;
-    var content = null;
-    var active = false;
-
-    LoggerClass.prototype.info = function(message) {
-        if(active) {
-            var d = new Date();
-            var date = d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() + ':' + d.getMilliseconds();
-            message = date + ' ' + message + "\n";
-            if(window.console) {
-                console.info(message);
-            } else {
-                $('pre', content).prepend(message);
-            }
-        }
-    };
-
-    LoggerClass.prototype.setup = function() {
-        active = true;
-
-        if(!window.console) {
-            container = $(document.createElement('div'));
-            container.attr('id', 'log-container').css({
-                'position': 'absolute',
-                'bottom': '3em',
-                'right': '3em',
-                'width': '400px',
-                'height': '150px',
-                'background-color': 'red'
-            });
-            content = $(document.createElement('div'));
-            content.attr('id', 'log-content').css({
-                'width': '380px',
-                'height': '130px',
-                'margin': '10px',
-                'overflow': 'auto'
-            }).html("<pre style=\"margin: 0;\"></pre>");
-            container.append(content);
-            $('body').append(container);
-        }
-
-        this.info('Starting Logger');
-    };
-
-    return new LoggerClass();
-} )();
-
-/**
- * A simple Event handler
- * Following the subscribe and publish pattern
- */
-EventHandler = ( function(jQuery) {
-    var EventHandlerClass = function(){};
-
-    /**
-     * Handler can be:
-     *  - a function
-     *  - an array [object, method, arg]
-     */
-    EventHandlerClass.prototype.subscribe = function(eventName, handler, data) {
-        if(jQuery.isArray(handler)) {
-            newhandler = function(event, data) {
-                return handler[0][handler[1]](handler[2], data);
-            }
-            jQuery(document).bind(eventName, data, newhandler);
-        } else {
-            jQuery(document).bind(eventName, data, handler);
-        }
-        return this;
-    };
-
-    EventHandlerClass.prototype.subscribeOnce = function(eventName, handler, data) {
-         if(jQuery.isArray(handler)) {
-            newhandler = function(event, data) {
-                return handler[0][handler[1]](handler[2], data);
-            }
-            jQuery(document).one(eventName, data, newhandler);
-        } else {
-            jQuery(document).one(eventName, data, handler);
-        }
-        return this;
-    };      
-
-    EventHandlerClass.prototype.unsubscribe = function(eventName) {
-        jQuery(document).unbind(eventName);
-        return this;
-    };
-
-    EventHandlerClass.prototype.notify = function(eventName, data) {
-        Logger.info("Triggered event: " + eventName);
-        jQuery(document).trigger(eventName, data);
-        return this;
-    };
-
-    return new EventHandlerClass();
-} )(jQuery);
-
-
 /**
  * User Interface
  *
@@ -311,6 +210,8 @@ UserInterface = ( function() {
 
     /**
      * Notify component
+     *
+     * Notify the users of actions running in the background.
      */
     var NotifyComponent = ( function() {
 
@@ -511,27 +412,6 @@ UserInterface = ( function() {
         return false;
     };
 
-
-    var ObjectHandler = ( function() {
-        var ObjectHandlerClass = function(){};
-        var objects = null;
-        ObjectHandlerClass.prototype.load = function() {
-            $.ajax({type: "GET", dataType: 'json', url: "/json/get_objects/", 
-                error: function(data, textstatus) { }, 
-                success: function(data, textstatus) {
-                    if(data.auth === true) {
-                        TurnHandler.setup(data.turn.time, data.turn.current);
-                        objects = data.objects;
-                        UILock.clear();
-                    } else {
-                        this.logout();
-                    }
-                }
-            });
-        };
-        return new ObjectHandlerClass();
-    } )();
-
     /**
      * Message component
      */
@@ -655,6 +535,11 @@ UserInterface = ( function() {
         });
     };
 
+    /**
+     * getMessages
+     *
+     * Get messages from server using a ajax call to backend.
+     */
     constructor.prototype.getMessages = function(callback) {
          $.ajax({type: "GET", dataType: 'json', url: "/json/get_messages/", 
             error: function(data, textstatus) { }, 
@@ -668,6 +553,11 @@ UserInterface = ( function() {
         });      
     };
      
+    /**
+     * getOrders
+     *
+     * Get orders from server using a ajax call to backend.
+     */
     constructor.prototype.getOrders = function(callback) {
          $.ajax({type: "GET", dataType: 'json', url: "/json/get_orders/", 
             error: function(data, textstatus) { }, 
@@ -683,6 +573,11 @@ UserInterface = ( function() {
         });      
     };
 
+    /**
+     * getObjects
+     *
+     * Get objects from server using a ajax call to backend.
+     */
     constructor.prototype.getObjects = function(callback) {
         $.ajax({type: "GET", dataType: 'json', url: "/json/get_objects/", 
             error: function(data, textstatus) { }, 
@@ -699,6 +594,12 @@ UserInterface = ( function() {
         });
     };
 
+    /**
+     * isLoggedin
+     *
+     * Check if the user is logged in or not.
+     * TODO: is it enough to check cookie?
+     */
     constructor.prototype.isLoggedin = function() {
         if($.cookies.get('tpclient-pyweb') == null) {
             return false;
@@ -707,6 +608,11 @@ UserInterface = ( function() {
         }
     };
 
+    /**
+     * cache_update
+     *
+     * Tell the backend to update the cache
+     */
     constructor.prototype.cache_update = function(callback) {
         $.ajax({type: "GET", dataType: 'json', url: "/json/cache_update/", 
             error: function(data, textstatus) { 
