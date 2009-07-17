@@ -328,7 +328,7 @@ UserInterface = ( function() {
                 $('#system-component-content').html('');
                 ul = $(document.createElement('ul')).addClass('tree-list');
                 createList(objects[0], ul, searchString.toLowerCase());
-                $('a', ul).bind('click', UserInterface.objclicked);
+                $('a', ul).bind('click', ObjectComponent.onMapClick);
                 $('#system-component-content').append(ul);
             }
             if(searchString.length <= 0 && searchActive == true) {
@@ -359,7 +359,7 @@ UserInterface = ( function() {
 
             ul = $(document.createElement('ul')).addClass('tree-list');
             createList(objects[0], ul);
-            $('a', ul).bind('click', UserInterface.objclicked);
+            $('a', ul).bind('click', ObjectComponent.onMapClick);
             
             $('#overlay-content').append(system.append(systemsearch, systemcontent.append(ul)));
 
@@ -465,6 +465,100 @@ UserInterface = ( function() {
     } )();
 
     /**
+     * Object component
+     * Handles all object business
+     */
+    var ObjectComponent = (function() {
+        var ObjectComponentClass = function(){};
+
+        // Types of object classes
+        ObjectComponentClass.prototype.classes = ['universe', 'galaxy', 'starsystem', 'planet', 'fleet'];
+        // List of all objects
+        ObjectComponentClass.prototype.objects = null;
+
+        /**
+         * Setup object component
+         */
+        ObjectComponentClass.prototype.setup = function(data) {
+            ObjectComponent.objects = data
+        };
+           
+        /**
+         * Event: onMapClick
+         */
+        ObjectComponentClass.prototype.onMapClick = function(eventData) {
+            id = parseInt(eventData.target.id);
+            object = ObjectComponent.objects[id];
+
+            infoComponent = $("#info-component-content").html("");
+            h4 = $(document.createElement("h4")).text(object.name).addClass(ObjectComponent.classes[object.type.id]);
+            dl = $(document.createElement("dl"));
+            infoComponent.append(h4).append(dl);
+
+            if(object.type.name == 'Fleet') {
+                base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size', 'owner': 'Owner', 'damage': 'Damage', 'ships': 'Ships'}
+            } else if(object.type.name == 'Planet') {
+                base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size', 'owner': 'Owner', 'resources': 'Resources'}
+            } else if(object.type.name == 'Star System') {
+                base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size'}
+            } else if(object.type.name == 'Galaxy') {
+                base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size'}
+            } else {
+                base = {'parent': 'Parent', 'size': 'Size'}
+            }
+            for(var attr in base) {
+                dt = $(document.createElement('dt')).text(base[attr]);
+                if(attr == 'parent') {
+                    o = objects[object[attr]];
+                    if(o.id > 0) {
+                        a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).addClass(ObjectComponent.classes[o.type.id]).text(o.name);
+                        a.one('click', ObjectComponent.onMapClick);
+                        dd = $(document.createElement('dd')).append(a);
+                    } else {
+                        dd = $(document.createElement('dd')).text(o.name);
+                    }
+                } else {
+                    if(object[attr].length == 0) {
+                        dd = $(document.createElement('dd')).text('-');
+                    } else {
+                        dd = $(document.createElement('dd')).text(object[attr].toString());
+                    }
+                }
+                dl.append(dt).append(dd);
+            }
+
+            // What objects are contained inside this object
+            if(object.contains.length > 0) {
+                dt = $(document.createElement('dt')).text('Contains');
+                dd = $(document.createElement('dd'));
+                ul = $(document.createElement('ul')).addClass('tree-list');
+                for(var i in object.contains) {
+                    toplevel = ObjectComponent.objects[object.contains[i]];
+                    li = $(document.createElement('li')).addClass(ObjectComponent.classes[toplevel.type.id]);
+                    a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id})
+                        .addClass(UserInterface.classes[toplevel.type.id]).text(toplevel.name).one('click', ObjectComponent.onMapClick);
+                    ul.append(li.append(a));
+                    if(toplevel.contains.length > 0) {
+                        subul = $(document.createElement('ul'));
+                        li.append(subul);
+                        for(var j in toplevel.contains) {
+                            sublevel = ObjectComponent.objects[toplevel.contains[j]];
+                            subli = $(document.createElement('li')).addClass(ObjectComponent.classes[sublevel.type.id]);
+                            a = $(document.createElement('a')).attr({'href': '#info/' + sublevel.id, 'id': sublevel.id}).text(sublevel.name)
+                                .addClass(ObjectComponent.classes[sublevel.type.id]).one('click', ObjectComponent.onMapClick);
+                            subul.append(subli.append(a));
+                        }
+                    }
+                }
+                dl.append(dt).append(dd.append(ul));
+            }
+            return false;
+        };
+
+        return new ObjectComponentClass();
+    } )();
+
+    /**
      * Store all objects
      */
     var objects = null;
@@ -502,6 +596,9 @@ UserInterface = ( function() {
 
         // Get objects with ajax call
         UserInterface.getObjects(function(data) {
+
+            // Setup ObjectComponent
+            ObjectComponent.setup(data.objects);
 
             // Add objects to map
             Map.addObjects(data.objects);
@@ -654,68 +751,6 @@ UserInterface = ( function() {
             orderComponent.append(select);
         }
 
-        infoComponent = $("#info-component-content").html("");
-        h4 = $(document.createElement("h4")).text(object.name).addClass(UserInterface.classes[object.type.id]);
-        dl = $(document.createElement("dl"));
-        infoComponent.append(h4).append(dl);
-
-        if(object.type.name == 'Fleet') {
-            base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size', 'owner': 'Owner', 'damage': 'Damage', 'ships': 'Ships'}
-        } else if(object.type.name == 'Planet') {
-            base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size', 'owner': 'Owner', 'resources': 'Resources'}
-        } else if(object.type.name == 'Star System') {
-            base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size'}
-        } else if(object.type.name == 'Galaxy') {
-            base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size'}
-        } else {
-            base = {'parent': 'Parent', 'size': 'Size'}
-        }
-        for(var attr in base) {
-            dt = $(document.createElement('dt')).text(base[attr]);
-            if(attr == 'parent') {
-                o = objects[object[attr]];
-                if(o.id > 0) {
-                    a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).addClass(UserInterface.classes[o.type.id]).text(o.name);
-                    a.one('click', UserInterface.objclicked);
-                    dd = $(document.createElement('dd')).append(a);
-                } else {
-                    dd = $(document.createElement('dd')).text(o.name);
-                }
-            } else {
-                if(object[attr].length == 0) {
-                    dd = $(document.createElement('dd')).text('-');
-                } else {
-                    dd = $(document.createElement('dd')).text(object[attr].toString());
-                }
-            }
-            dl.append(dt).append(dd);
-        }
-
-        // What objects are contained inside this object
-        if(object.contains.length > 0) {
-            dt = $(document.createElement('dt')).text('Contains');
-            dd = $(document.createElement('dd'));
-            ul = $(document.createElement('ul')).addClass('tree-list');
-            for(var i in object.contains) {
-                toplevel = objects[object.contains[i]];
-                li = $(document.createElement('li')).addClass(UserInterface.classes[toplevel.type.id]);
-                a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id})
-                    .addClass(UserInterface.classes[toplevel.type.id]).text(toplevel.name).one('click', UserInterface.objclicked);
-                ul.append(li.append(a));
-                if(toplevel.contains.length > 0) {
-                    subul = $(document.createElement('ul'));
-                    li.append(subul);
-                    for(var j in toplevel.contains) {
-                        sublevel = objects[toplevel.contains[j]];
-                        subli = $(document.createElement('li')).addClass(UserInterface.classes[sublevel.type.id]);
-                        a = $(document.createElement('a')).attr({'href': '#info/' + sublevel.id, 'id': sublevel.id}).text(sublevel.name)
-                            .addClass(UserInterface.classes[sublevel.type.id]).one('click', UserInterface.objclicked);
-                        subul.append(subli.append(a));
-                    }
-                }
-            }
-            dl.append(dt).append(dd.append(ul));
-        }
         return false;
     };
 
@@ -759,7 +794,10 @@ UserInterface = ( function() {
 
         $('#logout').bind('click', UserInterface.logout);
         $('#loginform').bind("submit", this, login);
-        $('#mapdiv .starsystem, #mapdiv .fleet').live("click", this.objclicked);
+        $('#mapdiv .starsystem, #mapdiv .fleet').live('click', function(eventData) {
+            UserInterface.objclicked(eventData);
+            ObjectComponent.onMapClick(eventData);
+        });
 
         // Menu - download universe
         $('#menu-bar li.download-universe').bind('click', function() {
