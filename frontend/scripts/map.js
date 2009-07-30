@@ -328,7 +328,10 @@ UserInterface = ( function() {
                 $('#system-component-content').html('');
                 ul = $(document.createElement('ul')).addClass('tree-list');
                 createList(objects[0], ul, searchString.toLowerCase());
-                $('a', ul).bind('click', ObjectComponent.onMapClick);
+                $('a', ul).bind('click', function(eventData) {
+                    ObjectComponent.onMapClick(eventData);
+                    OrderComponent.onMapClick(eventData);
+                });
                 $('#system-component-content').append(ul);
             }
             if(searchString.length <= 0 && searchActive == true) {
@@ -359,7 +362,10 @@ UserInterface = ( function() {
 
             ul = $(document.createElement('ul')).addClass('tree-list');
             createList(objects[0], ul);
-            $('a', ul).bind('click', ObjectComponent.onMapClick);
+            $('a', ul).bind('click', function(eventData) {
+                ObjectComponent.onMapClick(eventData);
+                OrderComponent.onMapClick(eventData);
+            });
             
             $('#overlay-content').append(system.append(systemsearch, systemcontent.append(ul)));
 
@@ -462,6 +468,117 @@ UserInterface = ( function() {
 
         return new MessageComponentClass();
 
+    } )();
+
+    /**
+     * Order component
+     */
+    var OrderComponent = (function() {
+
+        /**
+         * Inline class: coordinate panel
+         */
+        var OrderCoordinatePanel = ( function() {
+            var OrderCoordinatePanelClass = function(){};
+            var pos1 = null;
+            var pos2 = null;
+            var pos3 = null;
+
+            OrderCoordinatePanelClass.prototype.build = function(name, description) {
+                pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
+                pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
+                pos3 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
+    
+                $('#order-component-content').append(name, description, pos1, pos2, pos3);
+            };
+
+            OrderCoordinatePanelClass.prototype.getValue = function() {
+                return [pos1.val(), pos2.val(), pos3.val()];
+            };
+
+            return new OrderCoordinatePanelClass();
+        } )();
+
+        // ID
+        var id = null;
+        // TYPE
+        var type = null;
+
+        var OrderComponentClass = function(){};
+        OrderComponentClass.prototype.orders = null;
+
+        OrderComponentClass.prototype.setup = function(data) {
+            OrderComponent.orders = data;
+        };
+
+        OrderComponentClass.prototype.sendOrder = function() {
+            pos = OrderCoordinatePanel.getValue();
+
+            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': parseInt(id), 'type': parseInt(type), 'args': pos}, url: "/json/order/", 
+                error: function(req, textstatus) { 
+                    UILock.error('Something went wrong, contact administrator or try again later.', true);
+                }, 
+                success: function(data, textstatus) { 
+                    if(data.auth === true) {
+                        UserInterface.getOrders(function(data) {
+                            OrderComponent.setup(data.orders);
+                        });
+                    } else {
+                        UILock.error(data.error, true);
+                    }
+                }
+            });
+        };
+
+        OrderComponentClass.prototype.buildOrder = function() {
+            if(id == null || type == null) {
+                
+            } else {
+                var orderType = OrderComponent.orders[id].order_type[type];
+                for(var i in orderType.args) {
+                    // If argument type is coordinate, build a coordinate panel
+                    if(orderType.args[i].type == 'coordinate') {
+                        OrderCoordinatePanel.build(orderType.args[i].name, orderType.args[i].description);
+                    }
+                }
+
+                submit = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Send order'}).click(function(eventData) {
+                    OrderComponent.sendOrder();
+                });
+                $('#order-component-content').append(submit);
+            }
+        };
+
+        OrderComponentClass.prototype.onMapClick = function(eventData) {
+            id = parseInt(eventData.target.id);
+            object = ObjectComponent.objects[id];
+
+            orderComponent = $('#order-component-content').html('');
+            if(UserInterface.orders[id]) {
+                dl = $(document.createElement('dl'));
+                for(var i in OrderComponent.orders[id]['orders']) {
+                    order = OrderComponent.orders[id]['orders'][i];
+                    dt = $(document.createElement('dt')).text(order.turns + ' turns');
+                    dd = $(document.createElement('dd')).html(order.name + '<br />' + order.description);
+                    dl.append(dt).append(dd);
+                }
+                orderComponent.append(dl);
+
+                select = $(document.createElement('select')).attr('id', 'order_list');
+                for(var i in OrderComponent.orders[id].order_type) {
+                    order_type = OrderComponent.orders[id].order_type[i];
+                    option = $(document.createElement('option')).attr('value', order_type.type).text(order_type.name);
+                    select.append(option);
+                }
+                select.change(function() {
+                    type = $('#order_list').val();
+                    OrderComponent.buildOrder();
+                });
+                orderComponent.append(select);
+            }
+        };
+
+        return new OrderComponentClass();
     } )();
 
     /**
@@ -616,6 +733,8 @@ UserInterface = ( function() {
             // Get orders with ajax call
             UserInterface.getOrders(function(data) {
 
+                OrderComponent.setup(data.orders);
+
                 // Get messages with ajax call
                 UserInterface.getMessages(function(data) {
 
@@ -726,34 +845,6 @@ UserInterface = ( function() {
         });
     };
 
-    constructor.prototype.objclicked = function(e) {
-        id = parseInt(e.target.id);
-        object = objects[id];
-
-
-        orderComponent = $('#order-component-content').html('');
-        if(UserInterface.orders[id]) {
-            dl = $(document.createElement('dl'));
-            for(var i in UserInterface.orders[id]['orders']) {
-                order = UserInterface.orders[id]['orders'][i];
-                dt = $(document.createElement('dt')).text(order.turns + ' turns');
-                dd = $(document.createElement('dd')).html(order.name + '<br />' + order.description);
-                dl.append(dt).append(dd);
-            }
-            orderComponent.append(dl);
-
-            select = $(document.createElement('select'));
-            for(var i in UserInterface.orders[id].order_type) {
-                order_type = UserInterface.orders[id].order_type[i];
-                option = $(document.createElement('option')).text(order_type.name);
-                select.append(option);
-            }
-            orderComponent.append(select);
-        }
-
-        return false;
-    };
-
     constructor.prototype.setup = function() {
 
         // Setup notify component
@@ -795,7 +886,7 @@ UserInterface = ( function() {
         $('#logout').bind('click', UserInterface.logout);
         $('#loginform').bind("submit", this, login);
         $('#mapdiv .starsystem, #mapdiv .fleet').live('click', function(eventData) {
-            UserInterface.objclicked(eventData);
+            OrderComponent.onMapClick(eventData);
             ObjectComponent.onMapClick(eventData);
         });
 

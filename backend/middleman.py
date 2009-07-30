@@ -7,9 +7,19 @@ import tp.client.threads
 from tp.netlib.client import url2bits
 from tp.netlib import Connection
 from tp.netlib import failed, constants, objects
-from tp.client.cache import Cache
+from tp.client.cache import Cache, apply
 
 object_type = ['Universe', 'Galaxy', 'Star System', 'Planet', 'Fleet']
+
+defaults = {
+    constants.ARG_ABS_COORD: [0,0,0],
+    constants.ARG_TIME: [0, 0],
+    constants.ARG_OBJECT: [0],
+    constants.ARG_PLAYER: [0,0],
+    constants.ARG_STRING: [0, ""],
+    constants.ARG_LIST: [[], []],
+    constants.ARG_RANGE: [-1, -1, -1, -1],
+}
 
 class FriendlyObjects(object):
     def __init__(self, cache):
@@ -61,6 +71,34 @@ class Orders(object):
     def __init__(self, cache):
         """Initialize"""
         self.cache = cache
+
+    def sendMove(self, conn, id, type, pos):
+
+        pos = map(int, pos)
+
+        od = objects.OrderDescs()[type]
+        
+        # sequence, id, slot, type, turns, resources
+        args = [0, id, -1, type, 0, []]
+        for name, type in od.names:
+            args += defaults[type]
+
+        # Create the new order
+        new = objects.Order(*args)
+        new._dirty = True
+        new.pos = tuple(pos)
+
+        # Insert order after
+        node = self.cache.orders[id].last
+        assert not node is None
+
+        # Do some sanity checking
+        d = self.cache.orders[id]
+        assert node in d
+
+        evt = self.cache.apply("orders", "create after", id, node, new)
+        apply(conn, evt, self.cache)
+        self.cache.save()
 
     def get_args(self, orderdesc, order=None):
         args = []
