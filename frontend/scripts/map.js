@@ -484,27 +484,30 @@ UserInterface = ( function() {
             var pos2 = null;
             var pos3 = null;
 
-            OrderCoordinatePanelClass.prototype.build = function(name, description) {
-                pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
-                pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
-                pos3 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
-    
-                $('#order-component-content').append(name, description, pos1, pos2, pos3);
+            OrderCoordinatePanelClass.prototype.build = function(name, description, value) {
+                if(value != null) {
+                    pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': value[0], 'size': 12});
+                    pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': value[1], 'size': 12});
+                    pos3 = $(document.createElement('input')).attr({'type': 'text', 'value': value[2], 'size': 12});
+                } else {
+                    pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
+                    pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
+                    pos3 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
+                }
+                $('#order-component-create-order').append(name, description, pos1, pos2, pos3);
             };
 
             OrderCoordinatePanelClass.prototype.getValue = function() {
                 return [pos1.val(), pos2.val(), pos3.val()];
             };
-
             return new OrderCoordinatePanelClass();
         } )();
 
-        // ID
-        var id = null;
         // TYPE
         var type = null;
 
         var OrderComponentClass = function(){};
+        OrderComponentClass.prototype.id = null;
         OrderComponentClass.prototype.orders = null;
 
         OrderComponentClass.prototype.setup = function(data) {
@@ -514,7 +517,7 @@ UserInterface = ( function() {
         OrderComponentClass.prototype.sendOrder = function() {
             pos = OrderCoordinatePanel.getValue();
 
-            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': parseInt(id), 'type': parseInt(type), 'args': pos}, url: "/json/order/", 
+            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': self.id, 'type': parseInt(type), 'args': pos}, url: "/json/order/", 
                 error: function(req, textstatus) { 
                     UILock.error('Something went wrong, contact administrator or try again later.', true);
                 }, 
@@ -530,51 +533,70 @@ UserInterface = ( function() {
             });
         };
 
-        OrderComponentClass.prototype.buildOrder = function() {
-            if(id == null || type == null) {
-                
-            } else {
-                var orderType = OrderComponent.orders[id].order_type[type];
+        OrderComponentClass.prototype.buildOrder = function(subid) {
+            $('#order-component-create-order').html('').append('Create a new order of type: ', OrderComponent.buildOrderList());
+            if(subid == null && type != null) {
+                var orderType = OrderComponent.orders[self.id].order_type[type];
+            } else if(subid != null) {
+                var orderType = OrderComponent.orders[self.id].orders[subid];
+            }
+            if(orderType != null) {
                 for(var i in orderType.args) {
                     // If argument type is coordinate, build a coordinate panel
                     if(orderType.args[i].type == 'coordinate') {
-                        OrderCoordinatePanel.build(orderType.args[i].name, orderType.args[i].description);
+                        OrderCoordinatePanel.build(orderType.args[i].name, orderType.args[i].description, orderType.args[i].value);
                     }
                 }
-
-                submit = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Send order'}).click(function(eventData) {
+            }
+            
+            if(subid != null || type != null) {
+                submit = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Create Order'}).click(function(eventData) {
                     OrderComponent.sendOrder();
                 });
-                $('#order-component-content').append(submit);
+                $('#order-component-create-order').append(submit);
             }
         };
 
+        OrderComponentClass.prototype.buildOrderList = function() {
+            select = $(document.createElement('select')).attr('id', 'order_list').change(function(eventData) {
+                type = $('#order_list').val();
+                OrderComponent.buildOrder();
+            });
+            for(var i in OrderComponent.orders[self.id].order_type) {
+                order_type = OrderComponent.orders[self.id].order_type[i];
+                option = $(document.createElement('option')).attr('value', order_type.type).text(order_type.name);
+                select.append(option);
+            }
+            return select;
+        };
+
         OrderComponentClass.prototype.onMapClick = function(eventData) {
-            id = parseInt(eventData.target.id);
-            object = ObjectComponent.objects[id];
+            type = null;
+            self.id = parseInt(eventData.target.id);
+            object = ObjectComponent.objects[self.id];
 
             orderComponent = $('#order-component-content').html('');
-            if(UserInterface.orders[id]) {
+            if(OrderComponent.orders[self.id]) {
                 dl = $(document.createElement('dl'));
-                for(var i in OrderComponent.orders[id]['orders']) {
-                    order = OrderComponent.orders[id]['orders'][i];
+                for(var i in OrderComponent.orders[self.id]['orders']) {
+                    order = OrderComponent.orders[self.id]['orders'][i];
                     dt = $(document.createElement('dt')).text(order.turns + ' turns');
-                    dd = $(document.createElement('dd')).html(order.name + '<br />' + order.description);
+                    //dd = $(document.createElement('dd')).html('<a id="' + id + '" href="#">' + order.name + '</a><br />' + order.description);
+                    dd = $(document.createElement('dd')).append(
+                        $(document.createElement('a')).attr({'id': i, 'href': '#'}).text(order.name).click(function(eventData) {
+                            OrderComponent.buildOrder(eventData.currentTarget.id);
+                        }),
+                        $(document.createElement('br')),
+                        order.description);
                     dl.append(dt).append(dd);
                 }
                 orderComponent.append(dl);
 
-                select = $(document.createElement('select')).attr('id', 'order_list');
-                for(var i in OrderComponent.orders[id].order_type) {
-                    order_type = OrderComponent.orders[id].order_type[i];
-                    option = $(document.createElement('option')).attr('value', order_type.type).text(order_type.name);
-                    select.append(option);
-                }
-                select.change(function() {
-                    type = $('#order_list').val();
-                    OrderComponent.buildOrder();
-                });
-                orderComponent.append(select);
+                var createOrder = $(document.createElement('div')).attr('id', 'order-component-create-order');
+                orderComponent.append(createOrder);
+                OrderComponent.buildOrder();
+            } else {
+                orderComponent.text('No orders for this object');
             }
         };
 
