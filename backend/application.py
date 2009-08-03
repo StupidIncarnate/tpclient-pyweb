@@ -117,6 +117,26 @@ def send_orders(environ, start_response):
         start_response('200 OK', [('Content-Type', 'application/json')])
         return [output]
 
+def remove_orders(environ, start_response):
+    if environ['REQUEST_METHOD'].lower() == 'post':
+        postdata = parse_qs(environ['wsgi.input'].read())
+
+        session = environ.get('session')
+        if 'uid' in session:
+            host, port, username, password, now = session['uid']
+            conn, cache = middleman.connect(host, port, username, password)
+
+            middleman.Orders(cache).removeOrder(conn, int(postdata['id'][0]), int(postdata['order_id'][0])) 
+
+            turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
+            data = {'auth': True, 'removed': True, 'turn': turn}
+        else:
+            data = {'auth': False}
+
+        output = json.dumps(data, encoding='utf-8', ensure_ascii=False)
+
+        start_response('200 OK', [('Content-Type', 'application/json')])
+        return [output]
 
 def get_objects(environ, start_response):
     """Get all objects from cache"""
@@ -170,7 +190,8 @@ urls = [
     (r'^get_objects/$', get_objects),
     (r'^get_orders/$', get_orders),
     (r'^get_messages/$', get_messages),
-    (r'^order/$', send_orders),
+    (r'^order/send/$', send_orders),
+    (r'^order/remove/$', remove_orders),
     (r'^cache_update/$', cache_update),
     (r'^login/$', login),
 ]

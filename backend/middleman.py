@@ -72,6 +72,12 @@ class Orders(object):
         """Initialize"""
         self.cache = cache
 
+    def removeOrder(self, conn, id, order_id):
+        node = self.cache.orders[id][order_id]
+        evt = self.cache.apply('orders', 'remove', id, nodes=[node])
+        apply(conn, evt, self.cache)
+        self.cache.save()
+
     def sendMove(self, conn, id, type, pos):
 
         pos = map(int, pos)
@@ -156,6 +162,7 @@ class Orders(object):
                     args = self.get_args(orderdesc, order)
 
                     return_data[i]['orders'].append({
+                        'order_id': int(node.id),
                         'name': safestr(order._name),
                         'description': safestr(desc),
                         'type': order.subtype,

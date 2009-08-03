@@ -517,7 +517,7 @@ UserInterface = ( function() {
         OrderComponentClass.prototype.sendOrder = function() {
             pos = OrderCoordinatePanel.getValue();
 
-            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': self.id, 'type': parseInt(type), 'args': pos}, url: "/json/order/", 
+            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': self.id, 'type': parseInt(type), 'args': pos}, url: "/json/order/send/", 
                 error: function(req, textstatus) { 
                     UILock.error('Something went wrong, contact administrator or try again later.', true);
                 }, 
@@ -531,6 +531,24 @@ UserInterface = ( function() {
                     }
                 }
             });
+        };
+
+        OrderComponentClass.prototype.removeOrder = function(order_id) {
+             $.ajax({type: "POST", dataType: 'json', data: {'action': 'remove', 'id': self.id, 'order_id': parseInt(order_id)}, url: "/json/order/remove/", 
+                error: function(req, textstatus) { 
+                    UILock.error('Something went wrong, contact administrator or try again later.', true);
+                }, 
+                success: function(data, textstatus) { 
+                    if(data.auth === true) {
+                        UserInterface.getOrders(function(data) {
+                            OrderComponent.setup(data.orders);
+                            OrderComponent.onMapClick(null, self.id);
+                        });
+                    } else {
+                        UILock.error(data.error, true);
+                    }
+                }
+            });          
         };
 
         OrderComponentClass.prototype.buildOrder = function(subid) {
@@ -549,11 +567,18 @@ UserInterface = ( function() {
                 }
             }
             
-            if(subid != null || type != null) {
+            if(subid == null && type != null) {
                 submit = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Create Order'}).click(function(eventData) {
                     OrderComponent.sendOrder();
+                    return false;
                 });
                 $('#order-component-create-order').append(submit);
+            } else if(subid != null) {
+                remove = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Remove Order'}).click(function(eventData) {
+                    OrderComponent.removeOrder(orderType.order_id);
+                    return false;
+                });
+                $('#order-component-create-order').append(remove);
             }
         };
 
@@ -570,9 +595,13 @@ UserInterface = ( function() {
             return select;
         };
 
-        OrderComponentClass.prototype.onMapClick = function(eventData) {
+        OrderComponentClass.prototype.onMapClick = function(eventData, id) {
+            if(eventData == null && id != null) {
+                self.id = id
+            } else {
+                self.id = parseInt(eventData.target.id);
+            }
             type = null;
-            self.id = parseInt(eventData.target.id);
             object = ObjectComponent.objects[self.id];
 
             orderComponent = $('#order-component-content').html('');
