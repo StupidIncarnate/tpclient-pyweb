@@ -483,8 +483,15 @@ UserInterface = ( function() {
             var pos1 = null;
             var pos2 = null;
             var pos3 = null;
+            CoordinateArgumentPanelClass.name = null;
+            CoordinateArgumentPanelClass.description = null;
+            CoordinateArgumentPanelClass.value = null;
 
             CoordinateArgumentPanelClass.prototype.build = function(name, description, value) {
+                self.name = name;
+                self.description = description;
+                self.value = value;
+
                 if(value != null) {
                     pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': value[0], 'size': 12});
                     pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': value[1], 'size': 12});
@@ -509,8 +516,15 @@ UserInterface = ( function() {
         var TimeArgumentPanel = ( function() {
             var TimeArgumentPanelClass = function(){};
             TimeArgumentPanelClass.time = null;
+            TimeArgumentPanelClass.name = null;
+            TimeArgumentPanelClass.description = null;
+            TimeArgumentPanelClass.value = null;
 
             TimeArgumentPanelClass.prototype.build = function(name, description, value) {
+                self.name = name;
+                self.description = description;
+                self.value = value;
+
                 if(value != null) {
                     self.time = $(document.createElement('input')).attr({'type': 'text', 'value': value[0], 'size': 12});
                 } else {
@@ -520,7 +534,11 @@ UserInterface = ( function() {
             };
 
             TimeArgumentPanelClass.prototype.getValue = function() {
-                return [parseInt(self.time.val()), 100];
+                if(self.value != null) {
+                    return [parseInt(self.time.val()), self.value[1]];
+                } else {
+                    return [parseInt(self.time.val()), 1000];
+                }
             };
             return new TimeArgumentPanelClass();
         } )();
@@ -577,6 +595,8 @@ UserInterface = ( function() {
         };
 
         OrderComponentClass.prototype.buildOrder = function(subid) {
+            self.args = new Array();
+
             $('#order-component-create-order').html('').append('Create a new order: ', OrderComponent.buildOrderList());
             if(subid == null && self.type != null) {
                 var orderType = OrderComponent.orders[self.id].order_type[self.type];
