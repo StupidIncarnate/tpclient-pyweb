@@ -525,6 +525,7 @@ UserInterface = ( function() {
                     if(data.auth === true) {
                         UserInterface.getOrders(function(data) {
                             OrderComponent.setup(data.orders);
+                            OrderComponent.onMapClick(null, self.id);
                         });
                     } else {
                         UILock.error(data.error, true);
