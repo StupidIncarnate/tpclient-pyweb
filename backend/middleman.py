@@ -78,21 +78,29 @@ class Orders(object):
         apply(conn, evt, self.cache)
         self.cache.save()
 
-    def sendMove(self, conn, id, type, pos):
-
-        pos = map(int, pos)
-
+    def sendOrder(self, conn, id, type, moreargs):
         od = objects.OrderDescs()[type]
         
         # sequence, id, slot, type, turns, resources
         args = [0, id, -1, type, 0, []]
-        for name, type in od.names:
-            args += defaults[type]
+        #for name, type in od.names:
+        #    args += defaults[type]
+
+        # Really stupid hack that makes me crazy, http post forms converts
+        # everything into strings and I dont want to process the args seperatly
+        # on the backend side.
+        temp = []
+        for stupid in moreargs:
+            try:
+                temp.append(int(stupid))
+            except ValueError:
+                temp.append(stupid)
+
+        args += temp
 
         # Create the new order
         new = objects.Order(*args)
         new._dirty = True
-        new.pos = tuple(pos)
 
         # Insert order after
         node = self.cache.orders[id].last

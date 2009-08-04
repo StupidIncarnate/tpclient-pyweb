@@ -105,7 +105,7 @@ def send_orders(environ, start_response):
             host, port, username, password, now = session['uid']
             conn, cache = middleman.connect(host, port, username, password)
 
-            middleman.Orders(cache).sendMove(conn, int(postdata['id'][0]), int(postdata['type'][0]), postdata['args']) 
+            middleman.Orders(cache).sendOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), postdata['args']) 
 
             turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
             data = {'auth': True, 'sent': True, 'turn': turn}
