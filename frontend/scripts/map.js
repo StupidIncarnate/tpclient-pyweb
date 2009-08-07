@@ -576,6 +576,29 @@ UserInterface = ( function() {
             });
         };
 
+        OrderComponentClass.prototype.updateOrder = function(order) {
+            var temp = new Array();
+            for(var i in self.args) {
+                temp = temp.concat(self.args[i].getValue());
+            }
+
+            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': self.id, 'type': parseInt(order.type), 'order_id': parseInt(order.order_id), 'args': temp}, url: "/json/order/update/", 
+                error: function(req, textstatus) { 
+                    UILock.error('Something went wrong, contact administrator or try again later.', true);
+                }, 
+                success: function(data, textstatus) { 
+                    if(data.auth === true) {
+                        UserInterface.getOrders(function(data) {
+                            OrderComponent.setup(data.orders);
+                            OrderComponent.buildOrderPanel(self.id);
+                        });
+                    } else {
+                        UILock.error(data.error, true);
+                    }
+                }
+            });
+        };
+
         OrderComponentClass.prototype.removeOrder = function(order_id) {
              $.ajax({type: "POST", dataType: 'json', data: {'action': 'remove', 'id': self.id, 'order_id': parseInt(order_id)}, url: "/json/order/remove/", 
                 error: function(req, textstatus) { 
@@ -632,11 +655,15 @@ UserInterface = ( function() {
                 });
                 $('#order-component-create-order').append(submit);
             } else if(subid != null) {
+                update = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Update Order'}).click(function(eventData) {
+                    OrderComponent.updateOrder(orderType);
+                    return false;
+                });
                 remove = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Remove Order'}).click(function(eventData) {
                     OrderComponent.removeOrder(orderType.order_id);
                     return false;
                 });
-                $('#order-component-create-order').append(remove);
+                $('#order-component-create-order').append(update, remove);
             }
         };
 

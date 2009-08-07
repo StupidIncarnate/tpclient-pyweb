@@ -78,9 +78,37 @@ class Orders(object):
         apply(conn, evt, self.cache)
         self.cache.save()
 
+    def updateOrder(self, conn, id, type, order_id, moreargs):
+        """Not sure if this is the correct way, but it works"""
+        args = [0, id, -1, type, 0, []]
+        # Really stupid hack that makes me crazy, http post forms converts
+        # everything into strings and I dont want to process the args seperatly
+        # on the backend side.
+        temp = []
+        for stupid in moreargs:
+            try:
+                temp.append(int(stupid))
+            except ValueError:
+                temp.append(stupid)
+
+        args += temp
+
+        # Create the new order
+        new = objects.Order(*args)
+        new._dirty = True
+
+        node = self.cache.orders[id][order_id]
+        assert not node is None
+
+        # Do some sanity checking
+        d = self.cache.orders[id]
+        assert node in d
+
+        evt = self.cache.apply('orders', 'change', id, node, new)
+        apply(conn, evt, self.cache)
+        self.cache.save()
+
     def sendOrder(self, conn, id, type, moreargs):
-        od = objects.OrderDescs()[type]
-        
         # sequence, id, slot, type, turns, resources
         args = [0, id, -1, type, 0, []]
         #for name, type in od.names:

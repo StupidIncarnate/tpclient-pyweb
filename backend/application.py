@@ -117,6 +117,28 @@ def send_orders(environ, start_response):
         start_response('200 OK', [('Content-Type', 'application/json')])
         return [output]
 
+def update_orders(environ, start_response):
+    if environ['REQUEST_METHOD'].lower() == 'post':
+        postdata = parse_qs(environ['wsgi.input'].read())
+
+        session = environ.get('session')
+        if 'uid' in session:
+            host, port, username, password, now = session['uid']
+            conn, cache = middleman.connect(host, port, username, password)
+
+            middleman.Orders(cache).updateOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), int(postdata['order_id'][0]), postdata['args']) 
+
+            turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
+            data = {'auth': True, 'sent': True, 'turn': turn}
+        else:
+            data = {'auth': False}
+
+        output = json.dumps(data, encoding='utf-8', ensure_ascii=False)
+
+        start_response('200 OK', [('Content-Type', 'application/json')])
+        return [output]
+
+
 def remove_orders(environ, start_response):
     if environ['REQUEST_METHOD'].lower() == 'post':
         postdata = parse_qs(environ['wsgi.input'].read())
@@ -192,6 +214,7 @@ urls = [
     (r'^get_messages/$', get_messages),
     (r'^order/send/$', send_orders),
     (r'^order/remove/$', remove_orders),
+    (r'^order/update/$', update_orders),
     (r'^cache_update/$', cache_update),
     (r'^login/$', login),
 ]
