@@ -476,73 +476,88 @@ UserInterface = ( function() {
     var OrderComponent = (function() {
 
         /**
+         * Inline class: string argument panel
+         */
+        function StringArgumentPanel() {
+            this.string = null;
+            this.order_type = null;
+
+            this.build = function(order_type) {
+                this.order_type = order_type;
+                
+                if(this.order_type.value != null) {
+                    var value = this.order_type.value[0];
+                } else {
+                    var value = '';
+                }
+                this.string = $(document.createElement('input')).attr({'type': 'text', 'value': value});
+                $('#order-component-create-order').append(this.order_type.name, this.order_type.description, this.string);
+            };
+
+            this.getValue = function() {
+                return [0, this.string.val()];
+            };
+        };
+
+        /**
          * Inline class: coordinate argument panel
          */
-        var CoordinateArgumentPanel = ( function() {
-            var CoordinateArgumentPanelClass = function(){};
-            var pos1 = null;
-            var pos2 = null;
-            var pos3 = null;
-            CoordinateArgumentPanelClass.name = null;
-            CoordinateArgumentPanelClass.description = null;
-            CoordinateArgumentPanelClass.value = null;
+        function CoordinateArgumentPanel() {
+            this.pos1 = null;
+            this.pos2 = null;
+            this.pos3 = null;
+            this.order_type = null;
 
-            CoordinateArgumentPanelClass.prototype.build = function(name, description, value) {
-                self.name = name;
-                self.description = description;
-                self.value = value;
+            this.build = function(order_type) {
+                this.order_type = order_type;
 
-                if(value != null) {
-                    pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': value[0], 'size': 12});
-                    pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': value[1], 'size': 12});
-                    pos3 = $(document.createElement('input')).attr({'type': 'text', 'value': value[2], 'size': 12});
+                if(this.order_type.value != null) {
+                    this.pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[0], 'size': 12});
+                    this.pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[1], 'size': 12});
+                    this.pos3 = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[2], 'size': 12});
                 } else {
-                    pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
-                    pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
-                    pos3 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
+                    this.pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
+                    this.pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
+                    this.pos3 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
                 }
-                $('#order-component-create-order').append(name, description, pos1, pos2, pos3);
+                $('#order-component-create-order').append(this.order_type.name, this.order_type.description, this.pos1, this.pos2, this.pos3);
             };
 
-            CoordinateArgumentPanelClass.prototype.getValue = function() {
-                return [pos1.val(), pos2.val(), pos3.val()];
+            this.getValue = function() {
+                return [this.pos1.val(), this.pos2.val(), this.pos3.val()];
             };
-            return new CoordinateArgumentPanelClass();
-        } )();
+        };
 
         /**
          * Inline class: time argument panel
          */
-        var TimeArgumentPanel = ( function() {
-            var TimeArgumentPanelClass = function(){};
-            TimeArgumentPanelClass.time = null;
-            TimeArgumentPanelClass.name = null;
-            TimeArgumentPanelClass.description = null;
-            TimeArgumentPanelClass.value = null;
+        function TimeArgumentPanel() {
+            this.time = null;
+            this.order_type = null;
 
-            TimeArgumentPanelClass.prototype.build = function(name, description, value) {
-                self.name = name;
-                self.description = description;
-                self.value = value;
+            this.build = function(order_type) {
+                this.order_type = order_type;
 
-                if(value != null) {
-                    self.time = $(document.createElement('input')).attr({'type': 'text', 'value': value[0], 'size': 12});
+                if(this.order_type.value != null) {
+                    this.time = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[0], 'size': 12});
                 } else {
-                    self.time = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
+                    this.time = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
                 }
-                $('#order-component-create-order').append(name, description, self.time);
+                $('#order-component-create-order').append(this.order_type.name, this.order_type.description, this.time);
             };
 
-            TimeArgumentPanelClass.prototype.getValue = function() {
-                if(self.value != null) {
-                    return [parseInt(self.time.val()), self.value[1]];
+            this.getValue = function() {
+                if(this.value != null) {
+                    return [parseInt(this.time.val()), this.order_type.value[1]];
                 } else {
-                    return [parseInt(self.time.val()), 1000];
+                    return [parseInt(this.time.val()), 1000];
                 }
             };
-            return new TimeArgumentPanelClass();
-        } )();
+        };
 
+        /**
+         * Main order component
+         */
         var OrderComponentClass = function(){};
         OrderComponentClass.prototype.id = null;
         OrderComponentClass.prototype.type = null;
@@ -555,11 +570,12 @@ UserInterface = ( function() {
 
         OrderComponentClass.prototype.sendOrder = function() {
             var temp = new Array();
-            for(var i in self.args) {
-                temp = temp.concat(self.args[i].getValue());
+            for(var i in this.args) {
+                temp = temp.concat(this.args[i].getValue());
             }
 
-            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': self.id, 'type': self.type, 'args': temp}, url: "/json/order/send/", 
+            var sendType = OrderComponent.orders[OrderComponentClass.id].order_type[OrderComponentClass.type].type;
+            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponentClass.id, 'type': sendType, 'args': temp}, url: "/json/order/send/", 
                 error: function(req, textstatus) { 
                     UILock.error('Something went wrong, contact administrator or try again later.', true);
                 }, 
@@ -567,7 +583,7 @@ UserInterface = ( function() {
                     if(data.auth === true) {
                         UserInterface.getOrders(function(data) {
                             OrderComponent.setup(data.orders);
-                            OrderComponent.buildOrderPanel(self.id);
+                            OrderComponent.buildOrderPanel(OrderComponentClass.id);
                         });
                     } else {
                         UILock.error(data.error, true);
@@ -578,11 +594,11 @@ UserInterface = ( function() {
 
         OrderComponentClass.prototype.updateOrder = function(order) {
             var temp = new Array();
-            for(var i in self.args) {
-                temp = temp.concat(self.args[i].getValue());
+            for(var i in this.args) {
+                temp = temp.concat(this.args[i].getValue());
             }
 
-            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': self.id, 'type': parseInt(order.type), 'order_id': parseInt(order.order_id), 'args': temp}, url: "/json/order/update/", 
+            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponentClass.id, 'type': parseInt(order.type), 'order_id': parseInt(order.order_id), 'args': temp}, url: "/json/order/update/", 
                 error: function(req, textstatus) { 
                     UILock.error('Something went wrong, contact administrator or try again later.', true);
                 }, 
@@ -590,7 +606,7 @@ UserInterface = ( function() {
                     if(data.auth === true) {
                         UserInterface.getOrders(function(data) {
                             OrderComponent.setup(data.orders);
-                            OrderComponent.buildOrderPanel(self.id);
+                            OrderComponent.buildOrderPanel(OrderComponentClass.id);
                         });
                     } else {
                         UILock.error(data.error, true);
@@ -600,7 +616,7 @@ UserInterface = ( function() {
         };
 
         OrderComponentClass.prototype.removeOrder = function(order_id) {
-             $.ajax({type: "POST", dataType: 'json', data: {'action': 'remove', 'id': self.id, 'order_id': parseInt(order_id)}, url: "/json/order/remove/", 
+             $.ajax({type: "POST", dataType: 'json', data: {'action': 'remove', 'id': OrderComponentClass.id, 'order_id': parseInt(order_id)}, url: "/json/order/remove/", 
                 error: function(req, textstatus) { 
                     UILock.error('Something went wrong, contact administrator or try again later.', true);
                 }, 
@@ -608,7 +624,7 @@ UserInterface = ( function() {
                     if(data.auth === true) {
                         UserInterface.getOrders(function(data) {
                             OrderComponent.setup(data.orders);
-                            OrderComponent.buildOrderPanel(self.id);
+                            OrderComponent.buildOrderPanel(OrderComponentClass.id);
                         });
                     } else {
                         UILock.error(data.error, true);
@@ -618,37 +634,42 @@ UserInterface = ( function() {
         };
 
         OrderComponentClass.prototype.buildOrder = function(subid) {
-            self.args = new Array();
+            this.args = new Array();
 
             $('#order-component-create-order').html('').append('Create a new order: ', OrderComponent.buildOrderList());
-            if(subid == null && self.type != null) {
-                var orderType = OrderComponent.orders[self.id].order_type[self.type];
+            if(subid == null && OrderComponentClass.type != null) {
+                var orderType = OrderComponent.orders[OrderComponentClass.id].order_type[OrderComponentClass.type];
             } else if(subid != null) {
-                var orderType = OrderComponent.orders[self.id].orders[subid];
+                var orderType = OrderComponent.orders[OrderComponentClass.id].orders[subid];
             }
+    
             if(orderType != null) {
                 for(var i in orderType.args) {
                     var argument = null;
 
                     // If argument type is coordinate, build a coordinate panel
                     if(orderType.args[i].type == 'coordinate') {
-                        CoordinateArgumentPanel.build(orderType.args[i].name, orderType.args[i].description, orderType.args[i].value);
-                        console.log(orderType.args[i]);
-                        argument = CoordinateArgumentPanel;
+                        argument = new CoordinateArgumentPanel();
+                        argument.build(orderType.args[i]);
 
                     // Else if argument type is time, build a time panel
                     } else if(orderType.args[i].type == 'time') {
-                        TimeArgumentPanel.build(orderType.args[i].name, orderType.args[i].description, orderType.args[i].value);
-                        argument = TimeArgumentPanel;
+                        argument = new TimeArgumentPanel();
+                        argument.build(orderType.args[i]);
+
+                    // Else if argument type is string, build a string panel
+                    } else if(orderType.args[i].type == 'string') {
+                        argument = new StringArgumentPanel();
+                        argument.build(orderType.args[i]);
                     }
 
                     if(argument != null) {
-                        self.args.push(argument);
+                        this.args.push(argument);
                     }
                 }
             }
             
-            if(subid == null && self.type != null) {
+            if(subid == null && OrderComponentClass.type != null) {
                 submit = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Create Order'}).click(function(eventData) {
                     OrderComponent.sendOrder();
                     return false;
@@ -669,14 +690,14 @@ UserInterface = ( function() {
 
         OrderComponentClass.prototype.buildOrderList = function() {
             select = $(document.createElement('select')).attr('id', 'order_list');
-            for(var i in OrderComponent.orders[self.id].order_type) {
-                order_type = OrderComponent.orders[self.id].order_type[i];
-                option = $(document.createElement('option')).attr('value', order_type.type).text(order_type.name);
+            for(var i in OrderComponent.orders[OrderComponentClass.id].order_type) {
+                order_type = OrderComponent.orders[OrderComponentClass.id].order_type[i];
+                option = $(document.createElement('option')).attr('value', i).text(order_type.name);
                 select.append(option);
             }
             return $(document.createElement('div')).append(select,
                 $(document.createElement('input')).attr({'type': 'submit', 'value': 'New order'}).click(function(eventData) {
-                    self.type = $('#order_list').val();
+                    OrderComponentClass.type = $('#order_list').val();
                     OrderComponent.buildOrder();
                 }));
         };
@@ -687,21 +708,21 @@ UserInterface = ( function() {
 
         OrderComponentClass.prototype.buildOrderPanel = function(id) {
             // Store selected object id
-            self.id = id;
+            OrderComponentClass.id = id;
 
             // Reset selected order
-            self.type = null;
+            OrderComponentClass.type = null;
 
-            self.args = new Array();
+            OrderComponentClass.args = new Array();
 
             // Reset order component content
             orderComponent = $('#order-component-content').html('');
 
             // If this object has orders continue
-            if(OrderComponent.orders[self.id]) {
+            if(OrderComponent.orders[OrderComponentClass.id]) {
                 dl = $(document.createElement('dl'));
-                for(var i in OrderComponent.orders[self.id]['orders']) {
-                    order = OrderComponent.orders[self.id]['orders'][i];
+                for(var i in OrderComponent.orders[OrderComponentClass.id]['orders']) {
+                    order = OrderComponent.orders[OrderComponentClass.id]['orders'][i];
                     dt = $(document.createElement('dt')).text(order.turns + ' turns');
                     dd = $(document.createElement('dd')).append(
                         $(document.createElement('a')).attr({'id': i, 'href': '#'}).text(order.name).click(function(eventData) {
