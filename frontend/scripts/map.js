@@ -920,7 +920,9 @@ UserInterface = ( function() {
      */
     constructor.prototype.getMessages = function(callback) {
          $.ajax({type: "GET", dataType: 'json', url: "/json/get_messages/", 
-            error: function(data, textstatus) { }, 
+            error: function(data, textstatus) { 
+                UserInterface.logout();
+            }, 
             success: function(data, textstatus) {
                 if(data.auth === true) {
                     callback(data);
@@ -938,7 +940,9 @@ UserInterface = ( function() {
      */
     constructor.prototype.getOrders = function(callback) {
          $.ajax({type: "GET", dataType: 'json', url: "/json/get_orders/", 
-            error: function(data, textstatus) { }, 
+            error: function(data, textstatus) { 
+                UserInterface.logout();
+            }, 
             success: function(data, textstatus) {
                 if(data.auth === true) {
                     TurnHandler.setup(data.turn.time, data.turn.current);
@@ -958,10 +962,14 @@ UserInterface = ( function() {
      */
     constructor.prototype.getObjects = function(callback) {
         $.ajax({type: "GET", dataType: 'json', url: "/json/get_objects/", 
-            error: function(data, textstatus) { }, 
+            error: function(data, textstatus) { 
+                UserInterface.logout();
+            }, 
             success: function(data, textstatus) {
                 if(data.auth === true) {
                     TurnHandler.setup(data.turn.time, data.turn.current);
+
+                    console.log(data);
                     objects = data.objects;
                     UserInterface.objects = data.objects;
                     callback(data);

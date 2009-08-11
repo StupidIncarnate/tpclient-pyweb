@@ -9,7 +9,7 @@ from tp.netlib import Connection
 from tp.netlib import failed, constants, objects
 from tp.client.cache import Cache, apply
 
-object_type = ['Universe', 'Galaxy', 'Star System', 'Planet', 'Fleet']
+object_type = ['Universe', 'Galaxy', 'Star System', 'Planet', 'Fleet', 'Wormhole']
 
 defaults = {
     constants.ARG_ABS_COORD: [0,0,0],
@@ -22,48 +22,39 @@ defaults = {
 }
 
 class FriendlyObjects(object):
-    def __init__(self, cache):
-        self.cache = cache
-        self._object_chain = [self._base, self._galaxy, self._galaxy, self._planet, self._fleet]
-
-    def _base(self, obj, node, level):
-        node.update({
-            'name': safestr(obj.name),
-            'id': obj.id,
-            'type': {'id': obj.subtype, 'name': object_type[obj.subtype]},
-            'size': obj.size,
-            'contains': obj.contains
-        })
-
-    def _galaxy(self, obj, node, level):
-        self._base(obj, node, level)
-        node.update({
-            'pos': obj.pos,
-            'vel': obj.vel,
-            'parent': obj.parent
-        })
-
-    def _planet(self, obj, node, level):
-        self._galaxy(obj, node, level)
-        node.update({
-            'owner': obj.owner,
-            'resources': obj.resources
-        })
-
-    def _fleet(self, obj, node, level):
-        self._galaxy(obj, node, level)
-        node.update({
-            'owner': obj.owner,
-            'damage': obj.damage,
-            'ships': obj.ships
-        })
-
     def build(self):
         ret = {}
         for i in self.cache.objects:
             obj = self.cache.objects[i]
-            ret[obj.id] = {}
-            self._object_chain[obj.subtype](obj, ret[obj.id], 0)
+            ret[obj.id] = {
+                'name': safestr(obj.name),
+                'id': obj.id,
+                'type': {'id': obj.subtype, 'name': object_type[obj.subtype]},
+                'size': obj.size,
+                'contains': obj.contains
+            }
+
+            if hasattr(obj, 'pos'):
+                ret[obj.id]['pos'] = obj.pos
+
+            if hasattr(obj, 'vel'):
+                ret[obj.id]['vel'] = obj.vel
+
+            if hasattr(obj, 'parent'):
+                ret[obj.id]['parent'] = obj.parent
+
+            if hasattr(obj, 'owner'):
+                ret[obj.id]['owner'] = obj.owner
+
+            if hasattr(obj, 'resources'):
+                ret[obj.id]['resources'] = obj.resources
+
+            if hasattr(obj, 'damage'):
+                ret[obj.id]['damage'] = obj.damage
+
+            if hasattr(obj, 'ships'):
+                ret[obj.id]['ships'] = obj.ships
+
         return ret
 
 class Orders(object):
