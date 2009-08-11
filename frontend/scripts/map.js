@@ -751,7 +751,7 @@ UserInterface = ( function() {
         var ObjectComponentClass = function(){};
 
         // Types of object classes
-        ObjectComponentClass.prototype.classes = ['universe', 'galaxy', 'starsystem', 'planet', 'fleet'];
+        ObjectComponentClass.prototype.classes = ['universe', 'galaxy', 'starsystem', 'planet', 'fleet', 'wormhole'];
         // List of all objects
         ObjectComponentClass.prototype.objects = null;
 
@@ -778,7 +778,7 @@ UserInterface = ( function() {
                 base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size', 'owner': 'Owner', 'damage': 'Damage', 'ships': 'Ships'}
             } else if(object.type.name == 'Planet') {
                 base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size', 'owner': 'Owner', 'resources': 'Resources'}
-            } else if(object.type.name == 'Star System') {
+            } else if(object.type.name == 'Star System' || object.type.name == 'Wormhole') {
                 base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size'}
             } else if(object.type.name == 'Galaxy') {
                 base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size'}
