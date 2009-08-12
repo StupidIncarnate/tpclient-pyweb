@@ -476,6 +476,36 @@ UserInterface = ( function() {
     var OrderComponent = (function() {
 
         /**
+         * Inline class: object argument panel
+         */
+        function ObjectArgumentPanel() {
+            this.object = null;
+            this.order_type = null;
+
+            this.build = function(order_type) {
+                this.order_type = order_type;
+                
+                if(this.order_type.value != null) {
+                    var value = this.order_type.value[0];
+                } else {
+                    var value = -1;
+                }
+                this.object = $(document.createElement('select'));
+                for(var i in ObjectComponent.objects) {
+                    if(ObjectComponent.objects[i].id == value) {
+                        this.object.append($(document.createElement('option')).attr({'selected': 'selected', 'value': ObjectComponent.objects[i].id}));
+                    } else {
+                        this.object.append($(document.createElement('option')).attr({'value': ObjectComponent.objects[i].id}));
+                    }
+                }
+                $('#order-component-create-order').append(this.order_type.name, this.order_type.description, this.object);
+            };
+
+            this.getValue = function() {
+                return [parseInt(this.object.val())];
+            };
+        };
+        /**
          * Inline class: string argument panel
          */
         function StringArgumentPanel() {
@@ -660,6 +690,11 @@ UserInterface = ( function() {
                     // Else if argument type is string, build a string panel
                     } else if(orderType.args[i].type == 'string') {
                         argument = new StringArgumentPanel();
+                        argument.build(orderType.args[i]);
+
+                    // Else if argument type is object, build a object panel
+                    } else if(orderType.args[i].type == 'object') {
+                        argument = new ObjectArgumentPanel();
                         argument.build(orderType.args[i]);
                     }
 
