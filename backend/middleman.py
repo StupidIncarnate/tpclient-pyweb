@@ -1,5 +1,9 @@
 # Python imports
 import time, socket
+try:
+    import json
+except ImportError, e:
+    import simplejson as json
 
 # Local imports
 from backend.utils import safestr
@@ -22,6 +26,9 @@ defaults = {
 }
 
 class FriendlyObjects(object):
+    def __init__(self, cache):
+        self.cache = cache
+
     def build(self):
         ret = {}
         for i in self.cache.objects:
@@ -54,7 +61,6 @@ class FriendlyObjects(object):
 
             if hasattr(obj, 'ships'):
                 ret[obj.id]['ships'] = obj.ships
-
         return ret
 
 class Orders(object):
@@ -75,14 +81,17 @@ class Orders(object):
         # Really stupid hack that makes me crazy, http post forms converts
         # everything into strings and I dont want to process the args seperatly
         # on the backend side.
-        temp = []
-        for stupid in moreargs:
-            try:
-                temp.append(int(stupid))
-            except ValueError:
-                temp.append(stupid)
+        def recur_map(func, data):
+            if hasattr(data, '__iter__'):
+                return [recur_map(func, elem) for elem in data]
+            else:
+                try:
+                    return func(data)
+                except ValueError:
+                    return data
 
-        args += temp
+        for arg in moreargs:
+            args += recur_map(int, json.loads(arg))
 
         # Create the new order
         new = objects.Order(*args)
@@ -102,20 +111,21 @@ class Orders(object):
     def sendOrder(self, conn, id, type, moreargs):
         # sequence, id, slot, type, turns, resources
         args = [0, id, -1, type, 0, []]
-        #for name, type in od.names:
-        #    args += defaults[type]
 
         # Really stupid hack that makes me crazy, http post forms converts
         # everything into strings and I dont want to process the args seperatly
         # on the backend side.
-        temp = []
-        for stupid in moreargs:
-            try:
-                temp.append(int(stupid))
-            except ValueError:
-                temp.append(stupid)
+        def recur_map(func, data):
+            if hasattr(data, '__iter__'):
+                return [recur_map(func, elem) for elem in data]
+            else:
+                try:
+                    return func(data)
+                except ValueError:
+                    return data
 
-        args += temp
+        for arg in moreargs:
+            args += recur_map(int, json.loads(arg))
 
         # Create the new order
         new = objects.Order(*args)
@@ -157,6 +167,14 @@ class Orders(object):
             if order:
                 value = list(getattr(order, name))
 
+                def recur_map(func, data):
+                    if hasattr(data, '__iter__'):
+                        return [recur_map(func, elem) for elem in data]
+                    else:
+                        return func(data) 
+
+                value = recur_map(safestr, value)
+
             args.append({'name': safestr(name_text), 'type': type, 'description': safestr(getattr(orderdesc, name+'__doc__')), 'value': value})
         return args
         
@@ -193,7 +211,7 @@ class Orders(object):
                         'name': safestr(order._name),
                         'description': safestr(desc),
                         'type': order.subtype,
-                        'turns': order.turns, 
+                        'turns': order.turns,
                         'args': args})
 
                 # Go through all possible orders this object can receive

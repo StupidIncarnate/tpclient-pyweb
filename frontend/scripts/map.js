@@ -1,4 +1,40 @@
 /**
+ * Converts the given data structure to a JSON string.
+ * Argument: arr - The data structure that must be converted to JSON
+ * Example: var json_string = array2json(['e', {pluribus: 'unum'}]);
+ *          var json = array2json({"success":"Sweet","failure":false,"empty_array":[],"numbers":[1,2,3],"info":{"name":"Binny","site":"http:\/\/www.openjs.com\/"}});
+ * http://www.openjs.com/scripts/data/json_encode.php
+ */
+function array2json(arr) {
+    var parts = [];
+    var is_list = (Object.prototype.toString.apply(arr) === '[object Array]');
+
+    for(var key in arr) {
+        var value = arr[key];
+        if(typeof value == "object") { //Custom handling for arrays
+            if(is_list) parts.push(array2json(value)); /* :RECURSION: */
+            else parts[key] = array2json(value); /* :RECURSION: */
+        } else {
+            var str = "";
+            if(!is_list) str = '"' + key + '":';
+
+            //Custom handling for multiple data types
+            if(typeof value == "number") str += value; //Numbers
+            else if(value === false) str += 'false'; //The booleans
+            else if(value === true) str += 'true';
+            else str += '"' + value + '"'; //All other things
+            // :TODO: Is there any more datatype we should be in the lookout for? (Functions?)
+
+            parts.push(str);
+        }
+    }
+    var json = parts.join(",");
+    
+    if(is_list) return '[' + json + ']';//Return numerical JSON
+    return '{' + json + '}';//Return associative JSON
+}
+
+/**
  * Z-index table
  * 100 - UI
  * 1000 - login
@@ -502,9 +538,146 @@ UserInterface = ( function() {
             };
 
             this.getValue = function() {
-                return [parseInt(this.object.val())];
+                return array2json([parseInt(this.object.val())]);
             };
         };
+
+        /**
+         * Inline class: list argument panel
+         */
+        function ListArgumentPanel() {
+            this.order_type = null;
+            this.type = null;
+
+            this.buildSelect = function(type) {
+                this.type = type;
+
+                var optionsElement = $(document.createElement('select'));
+                for(var i in this.__options) {
+                    if(type == i) {
+                        optionsElement.append($(document.createElement('option')).attr({'value': i, 'selected': 'selected'}).text(this.__options[i][0]));
+                    } else {
+                        optionsElement.append($(document.createElement('option')).attr({'value': i}).text(this.__options[i][0]));
+                    }
+                }
+
+                this.numberElement = $(document.createElement('input')).attr({'type': 'text', 'size': 3, 'value': 1});
+
+                // Add button
+                var helper = this;
+                var add = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Add'}).click(function(eventData) {
+                    var amount = parseInt(helper.numberElement.val());
+                    if(amount <= 0) {
+                        return false;
+                    }
+
+                    var type = parseInt(optionsElement.val());
+                    if(helper.__selections[type] == null || helper.__selections[type] == undefined) {
+                        helper.__selections[type] = 0;
+
+                        var dt = $(document.createElement('dt')).text(amount);
+                        var dd = $(document.createElement('dd')).append(
+                            $(document.createElement('a')).attr({'id': type, 'href': '#'}).text(helper.__options[type][0]).click(function(eventData) {
+                                $('#list-argument-panel-options').html('').append(
+                                    helper.buildSelect(this.id)
+                                );
+                            }));
+                        helper.selectionsElement.append(dt, dd);
+                        helper.choices[type] = [dt, dd];
+                    }
+
+                    helper.__selections[type] = parseInt(helper.__selections[type]);
+                    helper.__selections[type] += parseInt(amount);
+                    helper.__selections[type] = Math.max(Math.min(helper.__selections[type], helper.__options[type][1]), 0);
+
+                    if(helper.__selections[type] == 0) {
+                        helper.__selections.splice(type, 1);
+                        $(helper.choices[type][0]).remove();
+                        $(helper.choices[type][1]).remove();
+                    } else {
+                        $(helper.choices[type][0]).text(helper.__selections[type]);
+                    }
+                });
+
+                // Del button
+                var del = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Del'}).data('hack', this).click(function(eventData) {
+                    var hack = $(this).data('hack'); 
+                    $(hack.choices[hack.type][0]).remove();
+                    $(hack.choices[hack.type][1]).remove();
+                    hack.__selections.splice(hack.type, 1);
+                });
+
+                if(this.type == null) {
+                    del.attr('disabled', 'disabled');
+                }
+
+                return $(document.createElement('div')).append(optionsElement, this.numberElement, add, del);
+            };
+
+
+            this.build = function(order_type) {
+                this.order_type = order_type;
+
+                this.choices = [];
+
+                this.options_list = order_type.value[0];
+                this.selections_list = order_type.value[1];
+
+                var options = [];
+                for(var i in this.options_list) {
+                    options[this.options_list[i][0]] = [this.options_list[i][1], this.options_list[i][2]];
+                }
+
+                var selections = [];
+                for(var i in this.selections_list) {
+                    selections[this.selections_list[i][0]] = this.selections_list[i][1];
+                }
+
+
+                if(this.__options != options) {
+                    this.__options = options;
+
+                    this.optionsElement = $(document.createElement('div')).attr('id', 'list-argument-panel-options');
+                    this.optionsElement.append(this.buildSelect());
+                }
+
+                if(this.__selections != selections) {
+                    this.__selections = selections;
+
+                    this.selectionsElement = $(document.createElement('dl'));
+                    for(var i in selections) {
+                        var dt = $(document.createElement('dt')).text(selections[i]);
+                        var dd = $(document.createElement('dd')).append(
+                            $(document.createElement('a')).attr({'id': i, 'href': '#'}).data('hack', this).text(options[i][0]).click(function(eventData) {
+                                $('#list-argument-panel-options').html('').append(
+                                    $(this).data('hack').buildSelect(this.id)
+                                );
+                            }));
+                        this.selectionsElement.append(dt, dd);
+                        this.choices[i] = [dt, dd];
+                    }
+                }
+
+                $('#order-component-create-order').append(
+                    $(document.createElement('div')).append(this.order_type.name, this.selectionsElement, this.optionsElement)
+                );
+            };
+
+            this.getValue = function() {
+                var options = [];
+                for(var i in this.__options) {
+                    options.push([i, this.__options[i][0], this.__options[i][1]]);
+                }
+
+                var selections = [];
+                for(var i in this.__selections) {
+                    selections.push([i, this.__selections[i]]);
+                }
+
+                return array2json([options, selections]);
+            };
+        };
+
         /**
          * Inline class: string argument panel
          */
@@ -516,16 +689,18 @@ UserInterface = ( function() {
                 this.order_type = order_type;
                 
                 if(this.order_type.value != null) {
-                    var value = this.order_type.value[0];
+                    var value = this.order_type.value[1];
                 } else {
                     var value = '';
                 }
                 this.string = $(document.createElement('input')).attr({'type': 'text', 'value': value});
-                $('#order-component-create-order').append(this.order_type.name, this.order_type.description, this.string);
+                $('#order-component-create-order').append(
+                    $(document.createElement('div')).append(this.order_type.name, this.string)
+                );
             };
 
             this.getValue = function() {
-                return [0, this.string.val()];
+                return array2json([0, this.string.val()]);
             };
         };
 
@@ -554,7 +729,7 @@ UserInterface = ( function() {
             };
 
             this.getValue = function() {
-                return [this.pos1.val(), this.pos2.val(), this.pos3.val()];
+                return array2json([this.pos1.val(), this.pos2.val(), this.pos3.val()]);
             };
         };
 
@@ -578,9 +753,9 @@ UserInterface = ( function() {
 
             this.getValue = function() {
                 if(this.value != null) {
-                    return [parseInt(this.time.val()), this.order_type.value[1]];
+                    return array2json([parseInt(this.time.val()), this.order_type.value[1]]);
                 } else {
-                    return [parseInt(this.time.val()), 1000];
+                    return array2json([parseInt(this.time.val()), 1000]);
                 }
             };
         };
@@ -695,6 +870,11 @@ UserInterface = ( function() {
                     // Else if argument type is object, build a object panel
                     } else if(orderType.args[i].type == 'object') {
                         argument = new ObjectArgumentPanel();
+                        argument.build(orderType.args[i]);
+
+                    // Else if argument type is list, build a list panel
+                    } else if(orderType.args[i].type == 'list') {
+                        argument = new ListArgumentPanel();
                         argument.build(orderType.args[i]);
                     }
 
@@ -823,7 +1003,7 @@ UserInterface = ( function() {
             for(var attr in base) {
                 dt = $(document.createElement('dt')).text(base[attr]);
                 if(attr == 'parent') {
-                    o = objects[object[attr]];
+                    o = ObjectComponent.objects[object[attr]];
                     if(o.id > 0) {
                         a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).addClass(ObjectComponent.classes[o.type.id]).text(o.name);
                         a.one('click', ObjectComponent.onMapClick);
@@ -875,8 +1055,6 @@ UserInterface = ( function() {
     /**
      * Store all objects
      */
-    var objects = null;
-
     var constructor = function(){};
 
     constructor.prototype.MessageComponent = MessageComponent;
@@ -891,7 +1069,7 @@ UserInterface = ( function() {
         $.ajax({type: "GET", dataType: "json", url: "/json/logout/",
             complete: function() {
                 $.cookies.del('tpclient-pyweb');
-                window.location.reload();
+                //window.location.reload();
             }
         });
         return false;
@@ -1003,9 +1181,6 @@ UserInterface = ( function() {
             success: function(data, textstatus) {
                 if(data.auth === true) {
                     TurnHandler.setup(data.turn.time, data.turn.current);
-
-                    console.log(data);
-                    objects = data.objects;
                     UserInterface.objects = data.objects;
                     callback(data);
                 } else {
