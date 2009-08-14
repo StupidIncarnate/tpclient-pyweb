@@ -90,8 +90,9 @@ class Orders(object):
                 except ValueError:
                     return data
 
-        for arg in moreargs:
-            args += recur_map(int, json.loads(arg))
+        if moreargs:
+            for arg in moreargs:
+                args += recur_map(int, json.loads(arg))
 
         # Create the new order
         new = objects.Order(*args)
@@ -123,9 +124,9 @@ class Orders(object):
                     return func(data)
                 except ValueError:
                     return data
-
-        for arg in moreargs:
-            args += recur_map(int, json.loads(arg))
+        if moreargs:
+            for arg in moreargs:
+                args += recur_map(int, json.loads(arg))
 
         # Create the new order
         new = objects.Order(*args)

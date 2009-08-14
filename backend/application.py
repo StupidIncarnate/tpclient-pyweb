@@ -105,7 +105,12 @@ def send_orders(environ, start_response):
             host, port, username, password, now = session['uid']
             conn, cache = middleman.connect(host, port, username, password)
 
-            middleman.Orders(cache).sendOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), postdata['args']) 
+            if 'args' in postdata:
+                args = postdata['args']
+            else:
+                args = None
+
+            middleman.Orders(cache).sendOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), args) 
 
             turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
             data = {'auth': True, 'sent': True, 'turn': turn}
@@ -126,7 +131,12 @@ def update_orders(environ, start_response):
             host, port, username, password, now = session['uid']
             conn, cache = middleman.connect(host, port, username, password)
 
-            middleman.Orders(cache).updateOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), int(postdata['order_id'][0]), postdata['args']) 
+            if 'args' in postdata:
+                args = postdata['args']
+            else:
+                args = None
+
+            middleman.Orders(cache).updateOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), int(postdata['order_id'][0]), args) 
 
             turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
             data = {'auth': True, 'sent': True, 'turn': turn}

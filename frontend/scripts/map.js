@@ -847,7 +847,9 @@ UserInterface = ( function() {
             } else if(subid != null) {
                 var orderType = OrderComponent.orders[OrderComponentClass.id].orders[subid];
             }
-    
+   
+            $('#order-component-create-order').append($(document.createElement('h5')).css({'margin': 0, 'padding': 0}).text(orderType.name));
+
             if(orderType != null) {
                 for(var i in orderType.args) {
                     var argument = null;
