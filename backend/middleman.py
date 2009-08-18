@@ -113,20 +113,10 @@ class Orders(object):
         # sequence, id, slot, type, turns, resources
         args = [0, id, -1, type, 0, []]
 
-        # Really stupid hack that makes me crazy, http post forms converts
-        # everything into strings and I dont want to process the args seperatly
-        # on the backend side.
-        def recur_map(func, data):
-            if hasattr(data, '__iter__'):
-                return [recur_map(func, elem) for elem in data]
-            else:
-                try:
-                    return func(data)
-                except ValueError:
-                    return data
-        if moreargs:
-            for arg in moreargs:
-                args += recur_map(int, json.loads(arg))
+        # get orderdesc so we can get default args for order type
+        orderdesc = objects.OrderDescs()[type]
+        for name, type in orderdesc.names:
+            args += defaults[type]
 
         # Create the new order
         new = objects.Order(*args)
@@ -192,7 +182,7 @@ class Orders(object):
             if object.order_number > 0 or len(object.order_types) > 0:
 
                 # Build the initialize structure for this object and its orders
-                return_data[i] = {'orders': [], 'order_type': []}
+                return_data[i] = {'orders': {}, 'order_type': []}
 
                 # Go through all orders currently on the object
                 for listpos, node in enumerate(orders):
@@ -207,13 +197,13 @@ class Orders(object):
 
                     args = self.get_args(orderdesc, order)
 
-                    return_data[i]['orders'].append({
+                    return_data[i]['orders'][int(node.id)] = {
                         'order_id': int(node.id),
                         'name': safestr(order._name),
                         'description': safestr(desc),
                         'type': order.subtype,
                         'turns': order.turns,
-                        'args': args})
+                        'args': args}
 
                 # Go through all possible orders this object can receive
                 for type in object.order_types:

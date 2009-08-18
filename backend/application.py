@@ -113,7 +113,7 @@ def send_orders(environ, start_response):
             middleman.Orders(cache).sendOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), args) 
 
             turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
-            data = {'auth': True, 'sent': True, 'turn': turn}
+            data = {'auth': True, 'sent': True, 'turn': turn, 'order_id': int(cache.orders[int(postdata['id'][0])].last.id)}
         else:
             data = {'auth': False}
 

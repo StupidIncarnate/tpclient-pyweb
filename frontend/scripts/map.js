@@ -363,7 +363,7 @@ UserInterface = ( function() {
                 $('#system-component-content a').unbind('click');
                 $('#system-component-content').html('');
                 ul = $(document.createElement('ul')).addClass('tree-list');
-                createList(objects[0], ul, searchString.toLowerCase());
+                createList(ObjectComponent.objects[0], ul, searchString.toLowerCase());
                 $('a', ul).bind('click', function(eventData) {
                     ObjectComponent.onMapClick(eventData);
                     OrderComponent.onMapClick(eventData);
@@ -773,30 +773,6 @@ UserInterface = ( function() {
             OrderComponent.orders = data;
         };
 
-        OrderComponentClass.prototype.sendOrder = function() {
-            var temp = new Array();
-            for(var i in this.args) {
-                temp = temp.concat(this.args[i].getValue());
-            }
-
-            var sendType = OrderComponent.orders[OrderComponentClass.id].order_type[OrderComponentClass.type].type;
-            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponentClass.id, 'type': sendType, 'args': temp}, url: "/json/order/send/", 
-                error: function(req, textstatus) { 
-                    UILock.error('Something went wrong, contact administrator or try again later.', true);
-                }, 
-                success: function(data, textstatus) { 
-                    if(data.auth === true) {
-                        UserInterface.getOrders(function(data) {
-                            OrderComponent.setup(data.orders);
-                            OrderComponent.buildOrderPanel(OrderComponentClass.id);
-                        });
-                    } else {
-                        UILock.error(data.error, true);
-                    }
-                }
-            });
-        };
-
         OrderComponentClass.prototype.updateOrder = function(order) {
             var temp = new Array();
             for(var i in this.args) {
@@ -846,6 +822,8 @@ UserInterface = ( function() {
                 var orderType = OrderComponent.orders[OrderComponentClass.id].order_type[OrderComponentClass.type];
             } else if(subid != null) {
                 var orderType = OrderComponent.orders[OrderComponentClass.id].orders[subid];
+            } else {
+                return false;
             }
    
             $('#order-component-create-order').append($(document.createElement('h5')).css({'margin': 0, 'padding': 0}).text(orderType.name));
@@ -886,13 +864,7 @@ UserInterface = ( function() {
                 }
             }
             
-            if(subid == null && OrderComponentClass.type != null) {
-                submit = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Create Order'}).click(function(eventData) {
-                    OrderComponent.sendOrder();
-                    return false;
-                });
-                $('#order-component-create-order').append(submit);
-            } else if(subid != null) {
+            if(subid != null) {
                 update = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Update Order'}).click(function(eventData) {
                     OrderComponent.updateOrder(orderType);
                     return false;
@@ -915,7 +887,23 @@ UserInterface = ( function() {
             return $(document.createElement('div')).append(select,
                 $(document.createElement('input')).attr({'type': 'submit', 'value': 'New order'}).click(function(eventData) {
                     OrderComponentClass.type = $('#order_list').val();
-                    OrderComponent.buildOrder();
+
+                    var sendType = OrderComponent.orders[OrderComponentClass.id].order_type[OrderComponentClass.type].type;
+                    $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponentClass.id, 'type': sendType}, url: "/json/order/send/", 
+                        error: function(req, textstatus) { 
+                            UILock.error('Something went wrong, contact administrator or try again later.', true);
+                        }, 
+                        success: function(data, textstatus) {
+                            if(data.auth === true) {
+                                UserInterface.getOrders(function(data_extra) {
+                                    OrderComponent.setup(data_extra.orders);
+                                    OrderComponent.buildOrder(data.order_id);
+                                });
+                            } else {
+                                UILock.error(data.error, true);
+                            }
+                        }
+                    });
                 }));
         };
 
@@ -939,11 +927,13 @@ UserInterface = ( function() {
             if(OrderComponent.orders[OrderComponentClass.id]) {
                 dl = $(document.createElement('dl'));
                 for(var i in OrderComponent.orders[OrderComponentClass.id]['orders']) {
+                    var order_id = OrderComponent.orders[OrderComponentClass.id]['orders'][i].order_id;
                     order = OrderComponent.orders[OrderComponentClass.id]['orders'][i];
                     dt = $(document.createElement('dt')).text(order.turns + ' turns');
                     dd = $(document.createElement('dd')).append(
-                        $(document.createElement('a')).attr({'id': i, 'href': '#'}).text(order.name).click(function(eventData) {
-                            OrderComponent.buildOrder(eventData.currentTarget.id);
+                        $(document.createElement('a')).attr({'id': order.order_id, 'href': '#'}).text(order.name).click(function(eventData) {
+                            OrderComponent.buildOrder(order_id);
+                            //OrderComponent.buildOrder(eventData.currentTarget.id);
                         }),
                         $(document.createElement('br')),
                         order.description);
@@ -1071,7 +1061,7 @@ UserInterface = ( function() {
         $.ajax({type: "GET", dataType: "json", url: "/json/logout/",
             complete: function() {
                 $.cookies.del('tpclient-pyweb');
-                //window.location.reload();
+                window.location.reload();
             }
         });
         return false;
