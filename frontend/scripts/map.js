@@ -442,6 +442,7 @@ UserInterface = ( function() {
                 success: function(data, textstatus) { 
                     if(data.auth === true) {
                         UILock.notice('Please wait while loading user interface <img src="/images/loading.gif" />');
+								
                         UserInterface.cache_update(function(data) {
                             UserInterface.drawUI();
                         });
@@ -462,7 +463,7 @@ UserInterface = ( function() {
         var messages = null;
         var messageNumber = 0;
         var messageBodyElement = null;
-
+	
         var onNext = function() {
             messageNumber++;
             if(messageNumber > (messages[0].number - 1)) {
@@ -481,7 +482,7 @@ UserInterface = ( function() {
 
         var redraw = function() {
             $('#message-component-container li.center span').text(messages[0].messages[messageNumber].subject + ' (' + (messageNumber+1) + '/' + messages[0].number + ')');
-            messageBodyElement.text(messages[0].messages[messageNumber].body);
+            messageBodyElement.empty().append("<br /><br/>"+messages[0].messages[messageNumber].body);
         };
 
         var MessageComponentClass = function(){};
@@ -498,7 +499,7 @@ UserInterface = ( function() {
                 .append($(document.createElement('li')).addClass('right').append(
                     $(document.createElement('a')).text('Next').bind('click', onNext)
                 ));
-            messageBodyElement = $(document.createElement('p')).text(messages[0].messages[messageNumber].body);
+            messageBodyElement = $(document.createElement('p')).append("<br /><br/>"+messages[0].messages[messageNumber].body);
             $('#message-component-content').empty().append(messageNav, messageBodyElement);
         };
 
@@ -1080,7 +1081,7 @@ UserInterface = ( function() {
 
         // Get objects with ajax call
         UserInterface.getObjects(function(data) {
-
+        
             // Setup ObjectComponent
             ObjectComponent.setup(data.objects);
 

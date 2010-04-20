@@ -1,0 +1,106 @@
+Here is one way to get Tpclient-pyweb working for linux. It requires an array of technologies installed, but hopefully I've covered them all. 
+
+
+1. First and foremost, install Apache & and Wsgi:
+
+sudo aptitude install apache2 apache2.2-common apache2-mpm-prefork apache2-utils libapache2-mod-wsgi libexpat1 ssl-cert python-beaker
+
+1.5. Sometimes an annoying error comes with apache, which reads:
+
+apache2: Could not reliably determine the server's fully qualified domain name,
+
+To get rid of this, edit the apache config file:
+sudo gedit /etc/apache2/apache2.conf
+
+And add this to the very bottom of the file.
+
+ServerName awesome
+
+Also, check to make sure that this line is in there as well and that it does not have a # before it. It was at the bottom of my config file.
+
+# Include the virtual host configurations:
+Include /etc/apache2/sites-enabled/
+
+
+2. Enable Wsgi.
+
+sudo a2enmod mod-wsgi
+
+
+3. It should be mentioned that if you don't already, you should install python as well. 
+
+sudo aptitute install python-dev libpython
+
+
+4. Now to create the virtual host. Navigate to this directory. 
+
+cd /etc/apache2/sites-available/
+
+Then you'll make the virtual host file for the tpweb client. Name it tpweb.conf and add the following text to it:
+
+<VirtualHost *:80>
+    ServerName tpweb.tp
+    ServerAlias tpweb.tp
+    DocumentRoot /home/manny/workspace/tpclient-pyweb/frontend
+
+	#we want specific log file for this server
+	CustomLog /var/log/apache2/tpserver-access.log combined
+	ErrorLog /var/log/apache2/tpserver-error.log
+
+    WSGIScriptAlias /json /home/manny/workspace/tpclient-pyweb/tpclient-pyweb.wsgi
+
+    WSGIDaemonProcess tpclient-pyweb user=manny group=manny python-path=/home/manny/workspace/tpclient-pyweb home=/home/manny/workspace/tpclient-pyweb processes=1 threads=5
+    WSGIProcessGroup tpclient-pyweb
+
+	<Directory /var/www/>
+		Options Indexes FollowSymLinks MultiViews ExecCGI
+
+		AddHandler cgi-script .cgi
+		AddHandler wsgi-script .wsgi
+	
+		AllowOverride None
+		Order allow,deny
+		allow from all
+	</Directory>
+</VirtualHost>
+
+Now, be sure to change any instance that says /home/manny/workspace/tpclient-pyweb/ to the path that points to your tpclient-pyweb folder. Also, change user and group to your username on the WSGIDaemonProcess line. If you've kept the internal structure as is, that should be all you need to change. Be sure also that WSGIScriptAlias begins with "WSGIScriptAlias /json ". 
+
+Another note of interest is that this also creates an error log in /var/log/apache2/. Whenever you have trouble, refer to this, as this will tell you if you're missing any packages or if something is wrong.
+
+
+5. Now you must create a link to this file in the sites-enabled folder. Run one of these commands:
+
+sudo a2ensite tpweb.conf
+	or
+sudo ln -s /etc/apache2/sites-available/tpweb.conf /etc/apache2/sites-enabled/tpweb.conf
+
+
+6. Next, edit your hosts file.
+
+gedit /etc/hosts
+
+After the lines that begin with 127.0.1.1, insert the following line. 
+
+127.0.0.1 localhost.localdomain localhost tpweb.tp www.tpweb.tp
+
+This will allow you to browse to the client from your web browser by calling "www.tpweb.tp".
+
+
+7. Create a folder in /tmp/ called tpclient-pyweb. Inside that, create a folder called cache. Be sure to set the proper chmod permissions once you do. 
+
+
+8. One last thing to check. If you downloaded the tpclient-pyweb source from git, it will be missing the source files for the two libs it needs to run. Cd to the tpclient-pyweb folder and run the following to download the necessary libraries.
+
+git submodule init
+
+
+9. After all that change, restart apache.
+
+sudo /etc/init.d/apache2 restart
+
+Test to make sure everything's working by going to "www.tpweb.tp". You should be able to enter a host/user/pass and join a game at this point. 
+
+
+
+
