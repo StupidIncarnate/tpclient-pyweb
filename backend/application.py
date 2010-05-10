@@ -12,7 +12,7 @@ except ImportError:
     from cgi import parse_qs
 
 # Local imports
-import middleman
+import middleman 
 
 def login(environ, start_response):
     """Login handler"""
@@ -178,7 +178,7 @@ def get_objects(environ, start_response):
         host, port, username, password, now = session['uid']
         conn, cache = middleman.connect(host, port, username, password)
         #cache = middleman.cache(session['uid'][0], session['uid'][2])
-
+        
         turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
         data = {'auth': True, 'objects': middleman.FriendlyObjects(cache).build(), 'turn': turn}
     else:

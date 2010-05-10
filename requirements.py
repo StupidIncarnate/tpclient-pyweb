@@ -25,6 +25,17 @@ if cur_ver[0] == 2 and cur_ver[1] == 5:
 # Beaker (for sessions)
 modules.append(("beaker", "beaker"))
 
+# Check if tmp folder exists
+mainpath = '/tmp/tpclient-pyweb/'
+if not os.path.exists(mainpath) :
+        os.makedirs(mainpath)
+if not os.path.exists(mainpath + 'sessions' ) :
+        os.makedirs(mainpath + 'sessions' )
+if not os.path.exists(mainpath + 'lock' ) :  
+        os.makedirs(mainpath + 'lock' )
+if not os.path.exists(mainpath + 'cache' ):
+        os.makedirs(mainpath + 'cache' )
+
 # Check for our dependencies.
 notfound = []
 for dir, name in modules:

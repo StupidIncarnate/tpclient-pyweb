@@ -124,36 +124,34 @@ Map = ( function() {
             universe = this.objects[0];
             for(var i in universe.contains) {
                 galaxy = this.objects[universe.contains[i]];
+                
                 for(var j in galaxy.contains) {
                     obj = this.objects[galaxy.contains[j]];
                     var x = (obj.pos[0] / universe.size) * 120000;
                     var y = (obj.pos[1] / universe.size) * 120000;
-                    if(obj.type.name == 'Star System') {
-                        this.drawstarsystem(x, y, obj.id);
-                    } else if(obj.type.name == 'Fleet') {
-                        this.drawfleet(x, y, obj.id);
-                    }
+                    
+                    this.drawobject(x, y, obj.id, obj.name, obj.type.name);
                 }
+                
             }
         }
     };
-
-    MapCreator.prototype.drawstarsystem = function(x, y, id) {
-        var test = $(document.createElement('div'));
-        test.attr('id', id).attr('class', 'starsystem');
-        test.css({'position': 'absolute', 'top': -y+'px', 'left': x+'px', 'background-color': 'red', 
-                'width': '10px', 'height': '10px', 'font-size': '8px', 'z-index': '100'});
-        this.canvas.append(test);
+    
+    MapCreator.prototype.drawobject = function(x, y, id, name, type) {
+    	type = type.toLowerCase().replace(" ", "");
+    	var object = $(document.createElement('div'));
+    	object.attr('id', id).attr('class', type);
+    	object.css({'top': -y+'px', 'left': x+'px'});
+    	
+    	var objectText = $(document.createElement('div'));
+    	objectText.attr('class', 'name');
+    	objectText.text(name);
+    	
+    	this.canvas.append(object.append(objectText));
+    	
     };
-
-    MapCreator.prototype.drawfleet = function(x, y, id) {
-        var test = $(document.createElement('div'));
-        test.attr('id', id).attr('class', 'fleet');
-        test.css({'position': 'absolute', 'top': -y+'px', 'left': x+'px', 'background-color': 'green', 
-                'width': '10px', 'height': '10px', 'font-size': '8px', 'z-index': '100'});
-        this.canvas.append(test);
-    };
-
+    
+    
     return new MapCreator();
 } )();
 
@@ -307,7 +305,7 @@ UserInterface = ( function() {
 
                 if(match) {
                     if(temp.name.toLowerCase().indexOf(match) == 0) {
-                        ul.append(
+                    	ul.append(
                             $(document.createElement('li')).addClass(UserInterface.classes[temp.type.id]).append(
                                 $(document.createElement('a'))
                                     .attr({'href': '#info/'+temp.id, 'id': temp.id})
@@ -438,6 +436,7 @@ UserInterface = ( function() {
             $.ajax({type: "POST", dataType: 'json', data: {'host': host, 'user': user, 'pass': pass}, url: "/json/login/", 
                 error: function(req, textstatus) { 
                     UILock.error('Something went wrong, contact administrator or try again later.', true);
+		    alert("req : " + textstatus);
                 }, 
                 success: function(data, textstatus) { 
                     if(data.auth === true) {
@@ -482,7 +481,7 @@ UserInterface = ( function() {
 
         var redraw = function() {
             $('#message-component-container li.center span').text(messages[0].messages[messageNumber].subject + ' (' + (messageNumber+1) + '/' + messages[0].number + ')');
-            messageBodyElement.empty().append("<br /><br/>"+messages[0].messages[messageNumber].body);
+            messageBodyElement.empty().append("<br /><br />"+messages[0].messages[messageNumber].body);
         };
 
         var MessageComponentClass = function(){};
@@ -716,7 +715,7 @@ UserInterface = ( function() {
 
             this.build = function(order_type) {
                 this.order_type = order_type;
-
+                
                 if(this.order_type.value != null) {
                     this.pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[0], 'size': 12});
                     this.pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[1], 'size': 12});
@@ -726,7 +725,7 @@ UserInterface = ( function() {
                     this.pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
                     this.pos3 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
                 }
-                $('#order-component-create-order').append(this.order_type.name, this.order_type.description, this.pos1, this.pos2, this.pos3);
+                $('#order-component-create-order').append(this.order_type.name, this.order_type.description, ("<br />"), this.pos1, ("<br />"), this.pos2, ("<br />"), this.pos3, ("<br />"));
             };
 
             this.getValue = function() {
@@ -1044,6 +1043,78 @@ UserInterface = ( function() {
 
         return new ObjectComponentClass();
     } )();
+    
+    /**
+     * System object component
+     * Handles all the panel for system objects in a galaxy
+     */
+    var SystemObjectComponent = (function() {
+        var SystemObjectComponentClass = function(){};
+
+        // List of all objects
+        SystemObjectComponentClass.prototype.objects = null;
+
+        /**
+         * Setup object component
+         */
+        SystemObjectComponentClass.prototype.setup = function(data) {
+            SystemObjectComponent.objects = data;
+            $("#system-planet-component").hide();
+        };
+           
+        /**
+         * Event: onMapClick
+         */
+        SystemObjectComponentClass.prototype.onMapClick = function(eventData) {
+		    if(eventData.target.id == 'map-viewport') {
+		    	$("#system-planet-component").hide();
+		    }
+		    else {
+		    	id = parseInt(eventData.target.id);
+			    object = SystemObjectComponent.objects[id];
+		    	
+		    	if(object.contains.length > 0) {
+		    		$("#system-planet-component").show();
+				    posX = parseInt(eventData.clientX);
+				    posY = parseInt(eventData.clientY);
+				    $("#system-planet-component").css("top", posY).css("left", posX);
+				    
+				    infoComponent = $("#system-planet-component-content").html("");
+				    //h4 = $(document.createElement("h4")).text(object.name).addClass(ObjectComponent.classes[object.type.id]);
+				    dl = $(document.createElement("dl"));
+				    infoComponent.append(dl);				    
+				    
+					ul = $(document.createElement('ul')).addClass('tree-list');
+					for(var i in object.contains) {
+					    toplevel = SystemObjectComponent.objects[object.contains[i]];
+					    li = $(document.createElement('li')).addClass(UserInterface.classes[toplevel.type.id]);
+					    a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id})
+						.addClass(UserInterface.classes[toplevel.type.id]).text(toplevel.name).one('click', SystemObjectComponent.onMapClick).one('click', ObjectComponent.onMapClick);
+					    ul.append(li.append(a));
+					    if(toplevel.contains.length > 0) {
+							subul = $(document.createElement('ul'));
+							li.append(subul);
+							for(var j in toplevel.contains) {
+							    sublevel = SystemObjectComponent.objects[toplevel.contains[j]];
+							    subli = $(document.createElement('li')).addClass(UserInterface.classes[sublevel.type.id]);
+							    a = $(document.createElement('a')).attr({'href': '#info/' + sublevel.id, 'id': sublevel.id}).text(sublevel.name).one('click', ObjectComponent.onMapClick);
+							    subul.append(subli.append(a));
+							}
+					    }
+					}
+					dl.append(ul);
+		    		
+		    	
+			    }
+		    	else {
+		    		$("#system-planet-component").hide();
+		    	}
+		    }
+        	return false;
+        };
+
+        return new SystemObjectComponentClass();
+    } )();
 
     /**
      * Store all objects
@@ -1084,6 +1155,9 @@ UserInterface = ( function() {
         
             // Setup ObjectComponent
             ObjectComponent.setup(data.objects);
+	    
+            //Setup SystemObjectComponent
+            SystemObjectComponent.setup(data.objects);
 
             // Add objects to map
             Map.addObjects(data.objects);
@@ -1256,20 +1330,32 @@ UserInterface = ( function() {
             stack: { group: '.component', min: 50 }
         });
 
+        jQuery('#system-planet-component').draggable({
+        	containment: '#overlay-content',
+        	handle: 'h3',
+        	cursor: 'move',
+        	stack: {group: '.component', min: 50}
+        });
+	
         $('#logout').bind('click', UserInterface.logout);
         $('#loginform').bind("submit", this, login);
+        $('#mapdiv').live('click', function(eventData) {
+        	SystemObjectComponent.onMapClick(eventData);
+        });
         $('#mapdiv .starsystem, #mapdiv .fleet').live('click', function(eventData) {
             OrderComponent.onMapClick(eventData);
             ObjectComponent.onMapClick(eventData);
+            SystemObjectComponent.onMapClick(eventData);
         });
 
         // Menu - download universe
         $('#menu-bar li.download-universe').bind('click', function() {
             NotifyComponent.notify('Started downloading the Universe', 'Universe');
             UserInterface.cache_update(function() {
-                NotifyComponent.notify('Finished downloading the Universe, click here to reload the UI', 'Universe', function() {
+            	UserInterface.drawUI();
+            	/*NotifyComponent.notify('Finished downloading the Universe, click here to reload the UI', 'Universe', function() {
                     UserInterface.drawUI();   
-                });
+                });*/
             });
         });
     };

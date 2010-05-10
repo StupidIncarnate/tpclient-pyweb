@@ -12,6 +12,10 @@
         html, body { background: black url('/images/background.jpg') repeat; }
 
     	#map-viewport { position: relative; overflow: hidden; width: 100%; }
+		#map-viewport .starsystem {position: absolute; background-color: blue; width: 10px; height: 10px; font-size: 8px; z-index: 100;}
+		#map-viewport .fleet {position: absolute; background-color: green; width: 5px; height: 5px; font-size: 8px; z-index: 100; }
+		#map-viewport .wormhole {position: absolute; background-color: red; width: 5px; height: 5px; font-size: 8px; z-index: 100; }
+		#map-viewport .name {position: relative; top: -6px; left: 15px; font-size: 15px; color: gray; width: 500px; margin: 0; padding: 0;}
         #mapdiv { position: absolute; top: 0; left: 0; margin: 0; padding: 0; width: 100%; height: 100%; }
 
         #overlay { top: 0; left: 0; width: 100%; height: 100%; }
@@ -85,7 +89,23 @@
         #system-component-search input { margin: 0; padding: 5px; border: 0; float: left; width: 270px; height: 20px; font-size: 1em; }
         #system-component-search input:focus { border: 0; outline: none; }
         #system-component-content { overflow: auto; } 
-
+	
+		#system-planet-component { background-color: rgba(150, 150, 150, 0.8); z-index: 100; position: absolute;}
+		#system-planet-component-container {width: 100%; height: 100%; padding: 0px; margin: 0;}
+		#system-planet-component-content { height: 200px; padding: 0px; margin: 0;}
+		#system-planet-component-content li.universe { background-image: url(/images/universe.png); background-repeat: no-repeat; background-position: 5px 5px; }
+        #system-planet-component-content li.galaxy { background-image: url(/images/galaxy.png); background-repeat: no-repeat; background-position: 5px 5px; }
+        #system-planet-component-content li.starsystem { background-image: url(/images/starsystem.png); background-repeat: no-repeat; background-position: 5px 5px; }
+        #system-planet-component-content li.planet { background-image: url(/images/planet.png); background-repeat: no-repeat; background-position: 5px 5px; }
+        #system-planet-component-content li.fleet { background-image: url(/images/fleet.png); background-repeat: no-repeat; background-position: 5px 5px; }
+		#system-planet-component-content dd {width: 100%;  margin: 0; padding: 0;}
+		#system-planet-component-content ul { list-style-type: none; margin: 0; padding: 0;}
+		#system-planet-component-content li { margin: 0; padding: 0; border-bottom: 1px solid black; width:100%; background-color: #666;}
+        #system-planet-component-content li a { display: block;  font-size: 20px;
+        	color: #000; text-align: left; text-decoration: none; margin-left: 25px; padding-top: 10px; padding-bottom: 10px; margin-right: 10px;}
+        #system-planet-component-content li a:hover { }
+		#system-planet-component-content { clear: both; }
+	
         ul.tree-list { margin: 2px 0 2px 0; list-style-type: none; }
         ul.tree-list ul { margin: 2px 0 2px 0px; list-style-type: none; }
         ul.tree-list li { margin: 0; padding: 0 0 1px 20px; line-height: 16px; }
@@ -99,6 +119,7 @@
         #notify-component div { margin: 5px 0; }
         #notify-component .category { color: orange; font-size: 0.8em; }
         #notify-component .text { padding-left: 2px; color: #fff; }
+	
     </style>
     <script type="text/javascript" src="scripts/jquery-dev.js"></script>
     <script type="text/javascript" src="scripts/jquery-timers.js"></script>
@@ -172,7 +193,13 @@
                         <div id="info-component-content" class="content"></div>
                     </div>
                 </div>
-
+		
+		<div id="system-planet-component" class="component">
+			<div id="system-planet-component-container" class="container">
+				<h3>Objects in System</h3>
+				<div id="system-planet-component-content" class="content"></div>
+			</div>
+		</div>
             </div>
         </div>
         <div id="mapdiv"></div>
