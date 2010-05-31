@@ -14,9 +14,12 @@ except ImportError:
 # Local imports
 import middleman 
 
+currentTurn = 0
+
 def login(environ, start_response):
     """Login handler"""
-
+        
+    print("--Logging In--")
     if environ['REQUEST_METHOD'].lower() == 'post':
         postdata = parse_qs(environ['wsgi.input'].read())
         
@@ -31,7 +34,7 @@ def login(environ, start_response):
         data = {'auth': True, 'error': 'Wrong username or password.'}
 
         try:
-            conn, cache = middleman.connect(host, port, username, password)
+            conn = middleman.connect(host, port, username, password)
         except middleman.ConnectionError, e:
             data['auth'] = False
             data['error'] = str(e)
@@ -44,17 +47,23 @@ def login(environ, start_response):
             session = environ.get('session')
             session['uid'] = (host, port, username, password, datetime.datetime.now())
             session.save()
+            
+            middleman.createCache(host, port, username, password)
+            
     else:
         data = {'auth': False, 'error': 'Just use the form we provid to submit data, OK?'}
 
     output = json.dumps(data, encoding='utf-8', ensure_ascii=False)
 
     start_response('200 OK', [('Content-Type', 'application/json')])
+    
+    print("---Login Complete---")
+    
     return [output]
 
 def logout(environ, start_response):
     """A helper method during development to delete a session"""
-
+    
     environ.get('session').delete()
     output = json.dumps({'auth': False}, encoding='utf-8', ensure_ascii=False)
 
@@ -63,30 +72,57 @@ def logout(environ, start_response):
 
 def cache_update(environ, start_response):
     """Update cache"""
-
+    global currentTurn
+    
+    print("--Updating Cache--")
     session = environ.get('session')
+    
     if 'uid' in session:
+        
         host, port, username, password, now = session['uid']
-        conn, cache = middleman.connect(host, port, username, password)
-        cache.update(conn, middleman.callback)
-        cache.save()
-        turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
+        #conn = middleman.connect(host, port, username, password)
+        conn, cache = middleman.updateCache(host, port, username, password)
+        
+        """       
+        print("begin printing cache")
+        for key in cache.__dict__:
+            print("------------")
+            print(key)
+            print(cache.__getattribute__(key))
+        
+        """
+        #cache.save()
+        
+        
+        """\
+        FIXME: Find out how to actually get the current turn
+        """
+        currentTurn = cache.objects[0].__Informational.Year.value    
+            
+        turn = {'time': int(conn.time()), 'current': int(currentTurn)}
         data = {'auth': True, 'cache': True, 'turn': turn}
+        
     else:
         data = {'auth': False}
-
+    
     output = json.dumps(data, encoding='utf-8', ensure_ascii=False)
-
+    
     start_response('200 OK', [('Content-Type', 'application/json')])
+    print("Cache updated")
     return [output]
 
 def get_orders(environ, start_response):
+    global currentTurn
+    
+    print("--Getting Orders--")
+    
     session = environ.get('session')
     if 'uid' in session:
         host, port, username, password, now = session['uid']
-        conn, cache = middleman.connect(host, port, username, password)
-
-        turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
+        conn = middleman.connect(host, port, username, password)
+        cache = middleman.cache
+        
+        turn = {'time': int(conn.time()), 'current': int(currentTurn)}
         data = {'auth': True, 'orders': middleman.Orders(cache).build(), 'turn': turn}
     else:
         data = {'auth': False}
@@ -97,14 +133,19 @@ def get_orders(environ, start_response):
     return [output]
    
 def send_orders(environ, start_response):
+    global currentTurn
+    
+    print("--Sending Orders--")
+    
     if environ['REQUEST_METHOD'].lower() == 'post':
         postdata = parse_qs(environ['wsgi.input'].read())
 
         session = environ.get('session')
         if 'uid' in session:
             host, port, username, password, now = session['uid']
-            conn, cache = middleman.connect(host, port, username, password)
-
+            conn = middleman.connect(host, port, username, password)
+            cache = middleman.cache
+            
             if 'args' in postdata:
                 args = postdata['args']
             else:
@@ -112,7 +153,7 @@ def send_orders(environ, start_response):
 
             middleman.Orders(cache).sendOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), args) 
 
-            turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
+            turn = {'time': int(conn.time()), 'current': int(currentTurn)}
             data = {'auth': True, 'sent': True, 'turn': turn, 'order_id': int(cache.orders[int(postdata['id'][0])].last.id)}
         else:
             data = {'auth': False}
@@ -123,13 +164,18 @@ def send_orders(environ, start_response):
         return [output]
 
 def update_orders(environ, start_response):
+    global currentTurn
+    
+    print("--Updating Orders--")
+    
     if environ['REQUEST_METHOD'].lower() == 'post':
         postdata = parse_qs(environ['wsgi.input'].read())
 
         session = environ.get('session')
         if 'uid' in session:
             host, port, username, password, now = session['uid']
-            conn, cache = middleman.connect(host, port, username, password)
+            conn = middleman.connect(host, port, username, password)
+            cache = middleman.cache
 
             if 'args' in postdata:
                 args = postdata['args']
@@ -138,7 +184,7 @@ def update_orders(environ, start_response):
 
             middleman.Orders(cache).updateOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), int(postdata['order_id'][0]), args) 
 
-            turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
+            turn = {'time': int(conn.time()), 'current': int(currentTurn)}
             data = {'auth': True, 'sent': True, 'turn': turn}
         else:
             data = {'auth': False}
@@ -150,17 +196,22 @@ def update_orders(environ, start_response):
 
 
 def remove_orders(environ, start_response):
+    global currentTurn
+    
+    print("--Removing Orders")
+    
     if environ['REQUEST_METHOD'].lower() == 'post':
         postdata = parse_qs(environ['wsgi.input'].read())
 
         session = environ.get('session')
         if 'uid' in session:
             host, port, username, password, now = session['uid']
-            conn, cache = middleman.connect(host, port, username, password)
-
+            conn = middleman.connect(host, port, username, password)
+            cache = middleman.cache
+            
             middleman.Orders(cache).removeOrder(conn, int(postdata['id'][0]), int(postdata['order_id'][0])) 
 
-            turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
+            turn = {'time': int(conn.time()), 'current': int(currentTurn)}
             data = {'auth': True, 'removed': True, 'turn': turn}
         else:
             data = {'auth': False}
@@ -172,36 +223,44 @@ def remove_orders(environ, start_response):
 
 def get_objects(environ, start_response):
     """Get all objects from cache"""
-
+    global currentTurn
+    
+    print("--Getting Objects--")
+    
     session = environ.get('session')
     if 'uid' in session:
         host, port, username, password, now = session['uid']
-        conn, cache = middleman.connect(host, port, username, password)
-        #cache = middleman.cache(session['uid'][0], session['uid'][2])
-        
-        turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
+        conn = middleman.connect(host, port, username, password)
+        cache = middleman.cache
+               
+        turn = {'time': int(conn.time()), 'current': int(currentTurn)}
         data = {'auth': True, 'objects': middleman.FriendlyObjects(cache).build(), 'turn': turn}
     else:
         data = {'auth': False}
 
     def test(obj):
         return str(obj).encode('utf-8')
-
+    
     output = json.dumps(data, encoding='utf-8', ensure_ascii=False, default=test)
 
     start_response('200 OK', [('Content-Type', 'application/json')])
+    
+    print("Finished Getting Objects")
     return [output]
 
 def get_messages(environ, start_response):
     """Get all messages from cache"""
-
+    global currentTurn
+    
+    print("--Getting Messages--")
+    
     session = environ.get('session')
     if 'uid' in session:
         host, port, username, password, now = session['uid']
-        #conn, cache = middleman.connect(host, port, username, password)
-        cache = middleman.cache(host, username)
+        conn = middleman.connect(host, port, username, password)
+        cache = middleman.cache
 
-        #turn = {'time': int(conn.time()), 'current': int(cache.objects[0].turn)}
+        turn = {'time': int(conn.time()), 'current': int(currentTurn)}
         data = {'auth': True, 'messages': middleman.Messages(cache).build()}
     else:
         data = {'auth': False}

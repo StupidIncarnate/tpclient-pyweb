@@ -127,9 +127,8 @@ Map = ( function() {
                 
                 for(var j in galaxy.contains) {
                     obj = this.objects[galaxy.contains[j]];
-                    var x = (obj.pos[0] / universe.size) * 120000;
-                    var y = (obj.pos[1] / universe.size) * 120000;
-                    
+                    var x = (obj.Position.vector.x / universe.Size.size) * 120000;
+                    var y = (obj.Position.vector.y / universe.Size.size) * 120000;
                     this.drawobject(x, y, obj.id, obj.name, obj.type.name);
                 }
                 
@@ -146,7 +145,6 @@ Map = ( function() {
     	var objectText = $(document.createElement('div'));
     	objectText.attr('class', 'name');
     	objectText.text(name);
-    	
     	this.canvas.append(object.append(objectText));
     	
     };
@@ -440,7 +438,7 @@ UserInterface = ( function() {
                 }, 
                 success: function(data, textstatus) { 
                     if(data.auth === true) {
-                        UILock.notice('Please wait while loading user interface <img src="/images/loading.gif" />');
+                        UILock.notice('Please wait while loading user interface <img src="/images/loading.gif" /><br>Orclick here to log out.');
 								
                         UserInterface.cache_update(function(data) {
                             UserInterface.drawUI();
@@ -980,7 +978,7 @@ UserInterface = ( function() {
             h4 = $(document.createElement("h4")).text(object.name).addClass(ObjectComponent.classes[object.type.id]);
             dl = $(document.createElement("dl"));
             infoComponent.append(h4).append(dl);
-
+            /*
             if(object.type.name == 'Fleet') {
                 base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size', 'owner': 'Owner', 'damage': 'Damage', 'ships': 'Ships'}
             } else if(object.type.name == 'Planet') {
@@ -991,7 +989,36 @@ UserInterface = ( function() {
                 base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size'}
             } else {
                 base = {'parent': 'Parent', 'size': 'Size'}
+            }*/
+            if(object != undefined) {
+	            for(key in object){
+	            	alert("topfor"+key + " "+object[key])
+	            	dt = $(document.createElement('dt')).text(key);
+	            	alert("aftercreateelement" + key)
+	                if(key == 'parent') {
+	                    o = ObjectComponent.objects[object[key]];
+	                    alert(key + o.id);
+	                    if(o.id > 0) {
+	                        a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).addClass(ObjectComponent.classes[o.type.id]).text(o.name);
+	                        a.one('click', ObjectComponent.onMapClick);
+	                        dd = $(document.createElement('dd')).append(a);
+	                    } else {
+	                        dd = $(document.createElement('dd')).text(o.name);
+	                    }
+	                } else {
+	                	alert(key);
+	                    if(object[key].length == 0) {
+	                        dd = $(document.createElement('dd')).text('-');
+	                    } else {
+	                        dd = $(document.createElement('dd')).text(object[key].toString());
+	                    }
+	                }
+	                alert("ohoh");
+	                dl.append(dt).append(dd);
+	            	
+	            }
             }
+            /*
             for(var attr in base) {
                 dt = $(document.createElement('dt')).text(base[attr]);
                 if(attr == 'parent') {
@@ -1012,8 +1039,9 @@ UserInterface = ( function() {
                 }
                 dl.append(dt).append(dd);
             }
-
+			*/
             // What objects are contained inside this object
+            /*
             if(object.contains.length > 0) {
                 dt = $(document.createElement('dt')).text('Contains');
                 dd = $(document.createElement('dd'));
@@ -1037,7 +1065,7 @@ UserInterface = ( function() {
                     }
                 }
                 dl.append(dt).append(dd.append(ul));
-            }
+            }*/
             return false;
         };
 
@@ -1144,7 +1172,7 @@ UserInterface = ( function() {
      */
     constructor.prototype.drawUI = function() {
         // Create UI Lock
-        UILock.create().notice('Please wait while loading user interface <img src="/images/loading.gif" />');
+        UILock.create().notice('Please wait while loading user interface <img src="/images/loading.gif" /> <br><a href="#logout">Or</a> click here to log out.');
 
         // Hide loginbox and show UI
         $('#loginbox').hide();
@@ -1155,16 +1183,16 @@ UserInterface = ( function() {
         
             // Setup ObjectComponent
             ObjectComponent.setup(data.objects);
-	    
+            
             //Setup SystemObjectComponent
             SystemObjectComponent.setup(data.objects);
 
             // Add objects to map
             Map.addObjects(data.objects);
-
+            
             // Draw Map
             Map.draw();
-
+            
             // Hack to fix height and width
             jQuery('#overlay-content').css('height', (jQuery(window).height() - jQuery('#overlay-content').offset().top));
             jQuery('#overlay-content').css('width', jQuery(window).width());
