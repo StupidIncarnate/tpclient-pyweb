@@ -8,7 +8,7 @@
 function array2json(arr) {
     var parts = [];
     var is_list = (Object.prototype.toString.apply(arr) === '[object Array]');
-
+    
     for(var key in arr) {
         var value = arr[key];
         if(typeof value == "object") { //Custom handling for arrays
@@ -29,7 +29,6 @@ function array2json(arr) {
         }
     }
     var json = parts.join(",");
-    
     if(is_list) return '[' + json + ']';//Return numerical JSON
     return '{' + json + '}';//Return associative JSON
 }
@@ -300,13 +299,16 @@ UserInterface = ( function() {
         var createList = function(object, ul, match) {
             for(var i in object.contains) {
                 var temp = SystemComponent.objects[object.contains[i]];
-
+                var queueid = 0;
+                if(temp["Order Queue"] != undefined && temp["Order Queue"]["queueid"] != undefined) {
+                	queueid = temp["Order Queue"]["queueid"];
+                }
                 if(match) {
                     if(temp.name.toLowerCase().indexOf(match) == 0) {
                     	ul.append(
                             $(document.createElement('li')).addClass(UserInterface.classes[temp.type.id]).append(
                                 $(document.createElement('a'))
-                                    .attr({'href': '#info/'+temp.id, 'id': temp.id})
+                                    .attr({'href': '#info/'+temp.id, 'id': temp.id, 'queueid': queueid})
                                     .addClass(UserInterface.classes[temp.type.id])
                                     .text(temp.name)
                             )
@@ -318,7 +320,7 @@ UserInterface = ( function() {
                 } else {
                     li = $(document.createElement('li')).addClass(UserInterface.classes[temp.type.id]).append(
                         $(document.createElement('a'))
-                            .attr({'href': '#info/'+temp.id, 'id': temp.id})
+                            .attr({'href': '#info/'+temp.id, 'id': temp.id, 'queueid': queueid})
                             .addClass(UserInterface.classes[temp.type.id])
                             .text(temp.name)
                     );
@@ -434,7 +436,6 @@ UserInterface = ( function() {
             $.ajax({type: "POST", dataType: 'json', data: {'host': host, 'user': user, 'pass': pass}, url: "/json/login/", 
                 error: function(req, textstatus) { 
                     UILock.error('Something went wrong, contact administrator or try again later.', true);
-		    alert("req : " + textstatus);
                 }, 
                 success: function(data, textstatus) { 
                     if(data.auth === true) {
@@ -666,12 +667,12 @@ UserInterface = ( function() {
                 for(var i in this.__options) {
                     options.push([i, this.__options[i][0], this.__options[i][1]]);
                 }
-
                 var selections = [];
                 for(var i in this.__selections) {
                     selections.push([i, this.__selections[i]]);
                 }
-
+                alert("options get val " + options)
+                alert("selections get val " + selections )
                 return array2json([options, selections]);
             };
         };
@@ -715,9 +716,9 @@ UserInterface = ( function() {
                 this.order_type = order_type;
                 
                 if(this.order_type.value != null) {
-                    this.pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[0], 'size': 12});
-                    this.pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[1], 'size': 12});
-                    this.pos3 = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[2], 'size': 12});
+                    this.pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[0][0], 'size': 12});
+                    this.pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[0][1], 'size': 12});
+                    this.pos3 = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[0][2], 'size': 12});
                 } else {
                     this.pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
                     this.pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
@@ -776,7 +777,6 @@ UserInterface = ( function() {
             for(var i in this.args) {
                 temp = temp.concat(this.args[i].getValue());
             }
-
             $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponentClass.id, 'type': parseInt(order.type), 'order_id': parseInt(order.order_id), 'args': temp}, url: "/json/order/update/", 
                 error: function(req, textstatus) { 
                     UILock.error('Something went wrong, contact administrator or try again later.', true);
@@ -817,19 +817,26 @@ UserInterface = ( function() {
 
             $('#order-component-create-order').html('').append('Create a new order: ', OrderComponent.buildOrderList());
             if(subid == null && OrderComponentClass.type != null) {
+            	alert("type " + OrderComponentClass.type)
                 var orderType = OrderComponent.orders[OrderComponentClass.id].order_type[OrderComponentClass.type];
             } else if(subid != null) {
+            	alert("sud" + subid)
+            	var values = "";
+            	for(i in OrderComponent.orders[OrderComponentClass.id].orders) {
+            		values += OrderComponent.orders[OrderComponentClass.id].orders[i].order_id + " "
+            		
+            	}
+            	alert(values);
                 var orderType = OrderComponent.orders[OrderComponentClass.id].orders[subid];
             } else {
                 return false;
             }
    
             $('#order-component-create-order').append($(document.createElement('h5')).css({'margin': 0, 'padding': 0}).text(orderType.name));
-
+            
             if(orderType != null) {
                 for(var i in orderType.args) {
                     var argument = null;
-
                     // If argument type is coordinate, build a coordinate panel
                     if(orderType.args[i].type == 'coordinate') {
                         argument = new CoordinateArgumentPanel();
@@ -857,7 +864,7 @@ UserInterface = ( function() {
                     }
 
                     if(argument != null) {
-                        this.args.push(argument);
+                        this.args[orderType.args[i].type] = argument;
                     }
                 }
             }
@@ -876,43 +883,51 @@ UserInterface = ( function() {
         };
 
         OrderComponentClass.prototype.buildOrderList = function() {
+        	var counter = 0;
             select = $(document.createElement('select')).attr('id', 'order_list');
             for(var i in OrderComponent.orders[OrderComponentClass.id].order_type) {
                 order_type = OrderComponent.orders[OrderComponentClass.id].order_type[i];
                 option = $(document.createElement('option')).attr('value', i).text(order_type.name);
                 select.append(option);
+                counter++;
             }
-            return $(document.createElement('div')).append(select,
-                $(document.createElement('input')).attr({'type': 'submit', 'value': 'New order'}).click(function(eventData) {
-                    OrderComponentClass.type = $('#order_list').val();
-
-                    var sendType = OrderComponent.orders[OrderComponentClass.id].order_type[OrderComponentClass.type].type;
-                    $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponentClass.id, 'type': sendType}, url: "/json/order/send/", 
-                        error: function(req, textstatus) { 
-                            UILock.error('Something went wrong, contact administrator or try again later.', true);
-                        }, 
-                        success: function(data, textstatus) {
-                            if(data.auth === true) {
-                                UserInterface.getOrders(function(data_extra) {
-                                    OrderComponent.setup(data_extra.orders);
-                                    OrderComponent.buildOrder(data.order_id);
-                                });
-                            } else {
-                                UILock.error(data.error, true);
-                            }
-                        }
-                    });
-                }));
+            if(counter > 0) {
+	            return $(document.createElement('div')).append(select,
+	                $(document.createElement('input')).attr({'type': 'submit', 'value': 'New order'}).click(function(eventData) {
+	                    OrderComponentClass.type = $('#order_list').val();
+	                    
+	                    var sendType = OrderComponent.orders[OrderComponentClass.id].order_type[OrderComponentClass.type].type;
+	                    $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponentClass.id, 'type': sendType}, url: "/json/order/send/", 
+	                        error: function(req, textstatus) { 
+	                            UILock.error('Something went wrong, contact administrator or try again later.', true);
+	                        }, 
+	                        success: function(data, textstatus) {
+	                            if(data.auth === true) {
+	                                UserInterface.getOrders(function(data_extra) {
+	                                    OrderComponent.setup(data_extra.orders);
+	                                    OrderComponent.buildOrder(data.order_id);
+	                                });
+	                            } else {
+	                                UILock.error(data.error, true);
+	                            }
+	                        }
+	                    });
+	                }));
+            }
+        	return false;
         };
 
         OrderComponentClass.prototype.onMapClick = function(eventData) {
-            OrderComponent.buildOrderPanel(parseInt(eventData.target.id));
+        	var queueid = 0;
+        	if(ObjectComponent.objects[eventData.target.id]["Order Queue"] != undefined && ObjectComponent.objects[eventData.target.id]["Order Queue"]["queueid"] != undefined) 
+        		queueid = ObjectComponent.objects[eventData.target.id]["Order Queue"]["queueid"];
+            OrderComponent.buildOrderPanel(parseInt(queueid));
         };
 
         OrderComponentClass.prototype.buildOrderPanel = function(id) {
             // Store selected object id
             OrderComponentClass.id = id;
-
+            
             // Reset selected order
             OrderComponentClass.type = null;
 
@@ -922,7 +937,7 @@ UserInterface = ( function() {
             orderComponent = $('#order-component-content').html('');
 
             // If this object has orders continue
-            if(OrderComponent.orders[OrderComponentClass.id]) {
+            if(OrderComponentClass.id > 0 && OrderComponent.orders[OrderComponentClass.id]) {
                 dl = $(document.createElement('dl'));
                 for(var i in OrderComponent.orders[OrderComponentClass.id]['orders']) {
                     var order_id = OrderComponent.orders[OrderComponentClass.id]['orders'][i].order_id;
@@ -992,12 +1007,9 @@ UserInterface = ( function() {
             }*/
             if(object != undefined) {
 	            for(key in object){
-	            	alert("topfor"+key + " "+object[key])
 	            	dt = $(document.createElement('dt')).text(key);
-	            	alert("aftercreateelement" + key)
 	                if(key == 'parent') {
 	                    o = ObjectComponent.objects[object[key]];
-	                    alert(key + o.id);
 	                    if(o.id > 0) {
 	                        a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).addClass(ObjectComponent.classes[o.type.id]).text(o.name);
 	                        a.one('click', ObjectComponent.onMapClick);
@@ -1006,14 +1018,12 @@ UserInterface = ( function() {
 	                        dd = $(document.createElement('dd')).text(o.name);
 	                    }
 	                } else {
-	                	alert(key);
 	                    if(object[key].length == 0) {
 	                        dd = $(document.createElement('dd')).text('-');
 	                    } else {
 	                        dd = $(document.createElement('dd')).text(object[key].toString());
 	                    }
 	                }
-	                alert("ohoh");
 	                dl.append(dt).append(dd);
 	            	
 	            }

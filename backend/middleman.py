@@ -13,10 +13,12 @@ from tp.netlib import Connection
 from tp.netlib import failed, constants, objects
 from tp.client.cache import Cache, apply
 from tp.client.objectutils import *
+from tp.client.ChangeList import ChangeList
 
 object_type = ['Universe', 'Galaxy', 'Star System', 'Planet', 'Fleet', 'Wormhole']
 
-"""defaults = {
+"""
+defaults = {
     constants.ARG_ABS_COORD: [0,0,0],
     constants.ARG_TIME: [0, 0],
     constants.ARG_OBJECT: [0],
@@ -24,23 +26,17 @@ object_type = ['Universe', 'Galaxy', 'Star System', 'Planet', 'Fleet', 'Wormhole
     constants.ARG_STRING: [0, ""],
     constants.ARG_LIST: [[], []],
     constants.ARG_RANGE: [-1, -1, -1, -1],
-}"""
-
+}
+"""
 cache = None
 
 def getPropertyList(obj):
     """
-    Get a list of the position references of a DynamicObject as tuples.
-    Each tuple has the form: (x, y, z, coord name)
-    """
+    Examines an objects properties structure and outputs a nested dict of the entire thing for use
+    by the javascript portion of tpweb
     
-    """Loop through the type of paramaters an object might have"""
     """
-    for key in objects.parameters.ObjectParamsMapping:
-        print key, objects.parameters.ObjectParamsMapping[key]
-        print objects.parameters.ObjectParamsMapping[key].kw
-    """
-    #print "==========================="
+    #print "Getting Property List of object", obj.__dict__
     propertieslist = {}
     counter = 0
     variable_list = {}
@@ -61,18 +57,6 @@ def getPropertyList(obj):
                     subproperty_list = getattr(property_list, property.name) #Gets Position list
                     for subproperty in property.structures:
                         subvardict.update(propertyparselist(subproperty, subproperty_list))
-                        
-                    #if type(subproperty_list) == Structures.ListStructure.ListProxy:
-                        """for something in subproperty_list:
-                            print something
-                        print "List Proxy===================="
-                        print subproperty
-                        print type(subproperty)
-                        print subproperty_list
-                        print len(subproperty_list)
-                        print type(subproperty_list)
-                        print "===================="
-                        """
                 
                 if(len(subvardict) > 0):
                      vardict[safestr(property.name)] = subvardict
@@ -95,16 +79,109 @@ def getPropertyList(obj):
                 return vardict
                 
             propertieslist.update(propertyparselist(property, property_list))
-            #print "&&&&&&&&Printing var list&&&&&", variable_list
             counter += 1
-            #if type(variable) == Structures.GroupPoxy:
             
             
     #print "Printing Properties List", propertieslist
     #print "===================="
     
     return propertieslist
+def searchPropertyList(propertylist, attribute, found=False):
+#    print "Find this attribute: ", attribute
+#    print "Propertylist incoming: ", propertylist
+#    print type(propertylist)
+    if type(propertylist) == type(dict()) and len(propertylist) > 0:
+        for keys in propertylist.keys():
+            if keys == attribute:
+                return propertylist[keys], True
+            else:
+                propertyl, found = searchPropertyList(propertylist[keys], attribute)
+                if found:
+                   #print "returning attribute: ", attribute, " ", propertyl
+                   return propertyl, True
+    return None, False 
 
+def insertDummyOrder(args, orderdesc):
+    print "InsertDummyOrder"
+    for property in orderdesc.properties:
+        print "InsertDummy prop ", property 
+        if isinstance(property, parameters.OrderParamAbsSpaceCoords):
+            args += [[[0, 0, 0]]]
+        elif isinstance(property, parameters.OrderParamList):
+            args += [[[], []]]
+        elif isinstance(property, parameters.OrderParamString):
+            args += [[0, ""]]
+        elif isinstance(property, parameters.OrderParamTime):
+            args += [[0, 0]]
+        elif isinstance(property, parameters.OrderParamObject):
+            args += [[0, []]]
+    print args
+    return args
+
+def applyArgNesting(args, moreargs, orderdesc):
+    counter = 0
+    for property, arg in zip(orderdesc.properties, moreargs):
+        print "ApplyArgNesting prop ", property
+        if isinstance(property, parameters.OrderParamAbsSpaceCoords):
+            args += [[moreargs[counter]]]
+        elif isinstance(property, parameters.OrderParamList):
+            shipargslist = []
+            for shipargs in arg:
+                shipslist = []
+                for ships in shipargs: #THrough the ship list
+                    shipproptup = ()
+                    shipproplist = []
+                    for shipprop in ships:
+                        if len(ships) == 3:
+                            shipproptup = shipproptup + (shipprop,)
+                        else:
+                            shipproplist.append(shipprop)
+                    if len(shipproplist) > 0:
+                        shipslist += [shipproplist]
+                    else:    
+                        shipslist += [shipproptup]
+                shipargslist += [shipslist]
+            args += [shipargslist]
+            print "Finalized args", args
+        elif isinstance(property, parameters.OrderParamString):
+            args += [moreargs[counter]]
+        elif isinstance(property, parameters.OrderParamTime):
+            args += [moreargs[counter]]
+        elif isinstance(property, parameters.OrderParamObject):
+            args += [moreargs[counter]]
+        counter = counter + 1
+    
+    print "Returning"    
+    return args
+            
+def checkIfOrdersSame(order1, order2):
+    #check if both are None
+    if order1 is None and order2 is None:
+        return True
+    #check the type
+    if type(order1) != type(order2):
+        return False
+    #check the name
+    if order1._name != order2._name:
+        return False
+    #check the order arguments
+    if order1.properties != order2.properties:
+        return False
+    return True
+
+def findOrderDesc(name):
+    name = name.lower()
+    for d in OrderDescs().values():
+        if d._name.lower() == name:
+            return d
+def findNnodeIdInHead(headnode, nodeId):
+    for id, node in enumerate(headnode):
+        print "FindNodeId ", id, node.__dict__
+        print node.id
+        if node.id == nodeId:
+            return node
+    return None
+    
 class FriendlyObjects(object):
     def __init__(self, cache):
         self.cache = cache
@@ -134,6 +211,8 @@ class FriendlyObjects(object):
             
             if hasattr(obj, 'parent'):
                 ret[obj.id]['parent'] = obj.parent
+            
+            """fix: Convert owner to name"""
             
             #print "====================================================="
             #print ret[obj.id]
@@ -177,13 +256,70 @@ class Orders(object):
         self.cache = cache
 
     def removeOrder(self, conn, id, order_id):
+        queue = self.cache.orders[id]
+        node = queue.first
+        evt = self.cache.apply('orders', 'remove', id, nodes=[node])
+        apply(conn, evt, self.cache)
+        
+        #return self.cache
+        
+        """
         node = self.cache.orders[id][order_id]
         evt = self.cache.apply('orders', 'remove', id, nodes=[node])
         apply(conn, evt, self.cache)
         #self.cache.save()
+        """
 
     def updateOrder(self, conn, id, type, order_id, moreargs):
         """Not sure if this is the correct way, but it works"""
+        args = [0, id, -1, type, 0, []]
+        # Really stupid hack that makes me crazy, http post forms converts
+        # everything into strings and I dont want to process the args seperatly
+        # on the backend side.
+        def recur_map(func, data):
+            print "Entering recur map", data
+            if hasattr(data, '__iter__'):
+                print "hasiter attri"
+                args = []
+                for elem in data:
+                    args.append(recur_map(func, elem))
+                # [recur_map(func, elem) for elem in data]
+                return args
+            else:
+                print "else"
+                try:
+                    return func(data)
+                except ValueError:
+                    print "except"
+                    return data
+        
+        moreargsProcessed = []
+        if moreargs:
+            for arg in moreargs:
+                moreargsProcessed.append(recur_map(int, json.loads(arg)))
+
+        print moreargsProcessed
+        
+        # Create the new order
+        ordertype = objects.OrderDescs()[type]
+        print ordertype
+        
+        args = applyArgNesting(args, moreargsProcessed, ordertype)
+        print "ttttt", args
+        order = ordertype(*args)
+        order._dirty = True
+        queue = self.cache.orders[int(id)]
+        node = queue.first
+        
+        #ordernode = findNnodeIdInHead(queue, order_id)
+        if order != None:
+                print "Printing updateorder args: ", args
+        
+                evt = self.cache.apply("orders", "change", id, node, order)
+                apply(conn, evt, self.cache)
+        
+        #return self.cache
+        """
         args = [0, id, -1, type, 0, []]
         # Really stupid hack that makes me crazy, http post forms converts
         # everything into strings and I dont want to process the args seperatly
@@ -215,43 +351,186 @@ class Orders(object):
         evt = self.cache.apply('orders', 'change', id, node, new)
         apply(conn, evt, self.cache)
         #self.cache.save()
+        """
+
 
     def sendOrder(self, conn, id, type, moreargs):
+        print "Sending Orders ", type
         # sequence, id, slot, type, turns, resources
         args = [0, id, -1, type, 0, []]
-
-        # get orderdesc so we can get default args for order type
-        orderdesc = objects.OrderDescs()[type]
-        """for name, type in orderdesc.names:
-            args += defaults[type]
-        """
         
+        # get orderdesc so we can get default args for order type
+        #orderdesc = objects.OrderDescs()[type]
+        ordertype = objects.OrderDescs()[type]
+        args = insertDummyOrder(args, ordertype);
+        order = ordertype(*args)
+        order._dirty = True
+        queue = self.cache.orders[id]
+        node = queue.first
+        print "Printing sendorder args: ", args
+        
+        if order != None and queue.first.CurrentOrder is None:
+            #make a new order
+            evt = self.cache.apply("orders", "create after", id, node, order)
+            #print evt
+            apply(conn, evt, self.cache)
+        else: 
+            print "What am I supposed to do?"
+        print "order done?"
+        """
+        print "meeeeh"       
+        print orderdesc.__dict__
+        print type
+        print id 
+        
+        orderqueuelist = getOrderQueueList(self.cache, id)
+                
+        # FIXME: Should do something about multiple order queues here.
+        print orderqueuelist[0][1]
+        queue = self.cache.orders[orderqueuelist[0][1]]
+        print "que ", queue
+        """
+        """
+        def findOrderDesc(name):
+            name = name.lower()
+            for d in OrderDescs().values():
+                if d._name.lower() == name:
+                    return d
+        """
+        """
+        order = objects.Order(*args)
+        queueid, found = searchPropertyList(getPropertyList(self.cache.objects[id]), "queueid")
+        queueid = int(queueid)
+        queue = self.cache.orders[queueid]
+        node = queue.first
+        
+        print "---------------"
+        print queueid
+        print queue.__dict__
+        print node.__dict__
+        
+        if order != None and queue.first.CurrentOrder is None:
+            #make a new order
+            evt = cache.apply("orders", "create after", queueid, node, order)
+            print evt
+            apply(conn, evt, cache)
+        print ".............."
+        print order.__dict__
+        """
+        """        
         # Create the new order
         new = objects.Order(*args)
         new._dirty = True
-
+        
+        queueid, found = searchPropertyList(getPropertyList(self.cache.objects[id]), "queueid")
+        queueid = int(queueid)
+        
         # Insert order after
-        node = self.cache.orders[id].last
+        node = self.cache.orders[queueid].last
+        print node
         assert not node is None
-
+        
         # Do some sanity checking
-        d = self.cache.orders[id]
+        d = self.cache.orders[queueid]
+        print d, node
         assert node in d
-
-        evt = self.cache.apply("orders", "create after", id, node, new)
+        print "reading for evt"
+        evt = self.cache.apply("orders", "create after", queueid, node, new)
+        print evt
         apply(conn, evt, self.cache)
+        print "____Sent Orders Sent_____"
+        return self.cache
         #self.cache.save()
-
+        """
+        return self.cache
+    
     def get_args(self, orderdesc, order=None):
         args = []
-
+        
+        for property in orderdesc.properties:
+            name = property.name
+            name_text = name.title().replace('_', '')
+            
+            print name, property
+            type = None
+            if isinstance(property, parameters.OrderParamAbsSpaceCoords):
+                type = 'coordinate'
+            elif isinstance(property, parameters.OrderParamList):
+                type = 'list'
+            elif isinstance(property, parameters.OrderParamString):
+                type = 'string'
+            elif isinstance(property, parameters.OrderParamTime):
+                type = 'time'
+            elif isinstance(property, parameters.OrderParamObject):
+                type = 'object'
+            else:
+                 print "Unknown Type"
+                
+            #name_text = orderdesc._name
+            #description = orderdesc.doc
+            print "value"
+            value = None
+            if order:
+                print "Has order"
+                value = list(getattr(order, name))
+                def recur_map(func, data):
+                    if hasattr(data, '__iter__'):
+                        return [recur_map(func, elem) for elem in data]
+                    else:
+                        return func(data) 
+    
+                value = recur_map(safestr, value)
+            print "Appending to args"
+            #args.append({'name': safestr(name_text), 'type': type, 'description': safestr(getattr(orderdesc, name+'__doc__')), 'value': value})
+            args.append({'name': safestr(name_text), 'type': type, 'description': safestr(property.description), 'value': value})
+        
+        #value = None
+        #args.append({'name': safestr(name_text), 'type': type, 'description': safestr(description), 'value': value})
+        
+        """
+            TODO MAYBE IF NEEDED    
+            elif isinstance(property, parameters.OrderParamPlayer):
+                args += [[0, 0]]
+            elif isinstance(property, parameters.OrderParamRange):
+                args += [[-1, -1, -1, -1]]
+            elif isinstance(property, parameters.OrderParamReference):
+                args += [[0, [0]]]
+            elif isinstance(property, parameters.OrderParamReferenceList):
+                args += [[[0], [0]]] OrderComponent
+            elif isinstance(property, parameters.OrderParamResourceList):
+                args += [[[0,0], 0, 0, [0,0]]]
+            elif isinstance(property, parameters.OrderParamGenericReferenceQuantityList):
+                args += [[[0, []], [0, "", 0, [], []], []]]
+            else:
+                print "Unknown: ", type(property)
+                return
+            """
+        
+        """
+        if "wait" in orderdesc.__dict__:
+            print "momomomom"
+        elif "pos" in orderdesc.__dict__:
+            
+        elif "ships" in orderdesc.__dict__:
+            
+        elif 
+        for name in orderdesc.properties:
+            print name
+            print name.name
+            for thim in name.structures:
+                print thim.__dict__
+            
+        """    
+        
+        """
         # Loop through all arguments for this order description
         for name, subtype in orderdesc.names:
             name_text = name.title().replace('_', '')
-
+             
             # Get type and if order also get current value
             type = None
-            """if subtype == constants.ARG_ABS_COORD:
+           
+            if subtype == constants.ARG_ABS_COORD:
                 type = 'coordinate'
             elif subtype == constants.ARG_LIST:
                 type = 'list'
@@ -261,7 +540,7 @@ class Orders(object):
                 type = 'time'
             elif subtype == constants.ARG_OBJECT:
                 type = 'object'
-            """
+           
             value = None
             if order:
                 value = list(getattr(order, name))
@@ -275,6 +554,7 @@ class Orders(object):
                 value = recur_map(safestr, value)
 
             args.append({'name': safestr(name_text), 'type': type, 'description': safestr(getattr(orderdesc, name+'__doc__')), 'value': value})
+            """
         return args
         
     def build(self):
@@ -287,50 +567,71 @@ class Orders(object):
                 orders = object.Orders
                 orders = orders[0]
                 orderTypes = getOrderTypes(cache, i)
-                print "Orders: ", orders
-                print orderTypes
-                print "-------------------"
-               
-                
+                queueid = orders.queueid
                 """Fix"""    
                     
                 # If we have orders for this object or the object can receive orders
                 
+                #if orders.numorders > 0:
+                print("Processing Orders")
+                print "Order Count ", orders.numorders
+                # Build the initialize structure for this object and its orders
+                return_data[queueid] = {'orders': {}, 'order_type': []}
+                """
+                --------------------
+                ordertype = objects.OrderDescs()[type]
+                order = ordertype(*args)
+                order._dirty = True
+                queue = self.cache.orders[id]
+                node = queue.first
+                
+                if order != None and queue.first.CurrentOrder is None:
+                    #make a new order
+                    evt = self.cache.apply("orders", "create after", id, node, order)
+                    #print evt
+                    apply(conn, evt, self.cache)
+                else: 
+                    print "What am I supposed to do?"
+                print "order done?"
+                ----------------
+                """
+                
                 if orders.numorders > 0:
-                    print("Processing Orders")
-                    # Build the initialize structure for this object and its orders
-                    return_data[i] = {'orders': {}, 'order_type': []}
-    
                     # Go through all orders currently on the object
-                    for listpos, node in enumerate(orders):
+                    orderobj = self.cache.orders[queueid]
+                    for listpos, node in enumerate(orderobj):
                         order = node.CurrentOrder
                         orderdesc = objects.OrderDescs()[order.subtype]
-    
+                        print orderdesc
                         if hasattr(orderdesc, 'doc'):
                             desc = orderdesc.doc
                         else:
                             desc = orderdesc.__doc__
                             desc = desc.strip()
-    
+                        
+                        
                         args = self.get_args(orderdesc, order)
-    
-                        return_data[i]['orders'][int(node.id)] = {
+                        print "order args ", args
+                        #args = None
+                        return_data[queueid]['orders'][int(node.id)] = {
                             'order_id': int(node.id),
                             'name': safestr(order._name),
                             'description': safestr(desc),
                             'type': order.subtype,
                             'turns': order.turns,
                             'args': args}
-    
+                        
+                        
+                if len(orders.ordertypes) > 0:
                     # Go through all possible orders this object can receive
-                    for type in object.order_types:
-    
+                    for type in orders.ordertypes:
                         # If type is not recognized, ignore it
                         if not objects.OrderDescs().has_key(type):
                             continue
     
                         # Retrive order description
                         orderdesc = objects.OrderDescs()[type]
+                        #print orderdesc.__dict__
                         if hasattr(orderdesc, 'doc'):
                             desc = orderdesc.doc
                         else:
@@ -339,13 +640,12 @@ class Orders(object):
     
                         args = self.get_args(orderdesc)
     
-                        return_data[i]['order_type'].append({
+                        return_data[queueid]['order_type'].append({
                             'name': safestr(orderdesc._name),
                             'description': safestr(desc),
                             'type': type,
                             'args': args})
-            
-                
+                   
         print("Done Processing Orders")
         return return_data
 
@@ -439,4 +739,13 @@ def updateCache(host, port, username, password):
     print("Cache Updated")
     
     return conn, cache
+
+def setCache(cacher):
+    global cache
+    cache = cacher
+
+def getCache():
+    global cache
+    return cache
+    
     

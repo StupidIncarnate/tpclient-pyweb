@@ -18,7 +18,7 @@ currentTurn = 0
 
 def login(environ, start_response):
     """Login handler"""
-        
+    print environ
     print("--Logging In--")
     if environ['REQUEST_METHOD'].lower() == 'post':
         postdata = parse_qs(environ['wsgi.input'].read())
@@ -49,7 +49,6 @@ def login(environ, start_response):
             session.save()
             
             middleman.createCache(host, port, username, password)
-            
     else:
         data = {'auth': False, 'error': 'Just use the form we provid to submit data, OK?'}
 
@@ -94,9 +93,6 @@ def cache_update(environ, start_response):
         #cache.save()
         
         
-        """\
-        FIXME: Find out how to actually get the current turn
-        """
         currentTurn = cache.objects[0].__Informational.Year.value    
             
         turn = {'time': int(conn.time()), 'current': int(currentTurn)}
@@ -118,9 +114,12 @@ def get_orders(environ, start_response):
     
     session = environ.get('session')
     if 'uid' in session:
+        print "Printing empty cache", middleman.cache.orders
         host, port, username, password, now = session['uid']
-        conn = middleman.connect(host, port, username, password)
+        """conn = middleman.connect(host, port, username, password)
         cache = middleman.cache
+        """
+        conn, cache = middleman.updateCache(host, port, username, password)
         
         turn = {'time': int(conn.time()), 'current': int(currentTurn)}
         data = {'auth': True, 'orders': middleman.Orders(cache).build(), 'turn': turn}
@@ -143,21 +142,31 @@ def send_orders(environ, start_response):
         session = environ.get('session')
         if 'uid' in session:
             host, port, username, password, now = session['uid']
+            #Fix so it doesn't have to call updateCache each time.
+            """
             conn = middleman.connect(host, port, username, password)
             cache = middleman.cache
+            """
+            conn = middleman.connect(host, port, username, password)
+            cache = middleman.getCache()
             
             if 'args' in postdata:
                 args = postdata['args']
             else:
                 args = None
-
-            middleman.Orders(cache).sendOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), args) 
-
+                
+            middleman.setCache(middleman.Orders(cache).sendOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), args))
+            
+            cache = middleman.getCache() 
+             
+            #print "queueid ", postdata['id'][0], "Printing cache after send orders: ", cache.orders
+            print "cache.orders id ", cache.orders[int(postdata['id'][0])].last.__dict__
             turn = {'time': int(conn.time()), 'current': int(currentTurn)}
             data = {'auth': True, 'sent': True, 'turn': turn, 'order_id': int(cache.orders[int(postdata['id'][0])].last.id)}
         else:
             data = {'auth': False}
 
+        print "Data: ", data
         output = json.dumps(data, encoding='utf-8', ensure_ascii=False)
 
         start_response('200 OK', [('Content-Type', 'application/json')])
@@ -176,14 +185,16 @@ def update_orders(environ, start_response):
             host, port, username, password, now = session['uid']
             conn = middleman.connect(host, port, username, password)
             cache = middleman.cache
+            #conn, cache = middleman.updateCache(host, port, username, password)
 
             if 'args' in postdata:
                 args = postdata['args']
             else:
                 args = None
-
-            middleman.Orders(cache).updateOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), int(postdata['order_id'][0]), args) 
-
+                
+            cache = middleman.Orders(cache).updateOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), int(postdata['order_id'][0]), args) 
+            middleman.cache = cache 
+            
             turn = {'time': int(conn.time()), 'current': int(currentTurn)}
             data = {'auth': True, 'sent': True, 'turn': turn}
         else:
@@ -206,11 +217,14 @@ def remove_orders(environ, start_response):
         session = environ.get('session')
         if 'uid' in session:
             host, port, username, password, now = session['uid']
+            """Fix so it doesn't have to call updateCache each time."""
             conn = middleman.connect(host, port, username, password)
             cache = middleman.cache
+            #conn, cache = middleman.updateCache(host, port, username, password)
             
             middleman.Orders(cache).removeOrder(conn, int(postdata['id'][0]), int(postdata['order_id'][0])) 
-
+            
+            
             turn = {'time': int(conn.time()), 'current': int(currentTurn)}
             data = {'auth': True, 'removed': True, 'turn': turn}
         else:
