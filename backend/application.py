@@ -82,7 +82,6 @@ def cache_update(environ, start_response):
     if 'uid' in session:
         
         host, port, username, password, now = session['uid']
-        #conn = middleman.connect(host, port, username, password)
         conn, cache = middleman.updateCache(host, port, username, password)
         
         currentTurn = cache.objects[0].__Informational.Year.value    
@@ -165,8 +164,6 @@ def update_orders(environ, start_response):
         if 'uid' in session:
             host, port, username, password, now = session['uid']
             conn, cacher = middleman.updateCache(host, port, username, password)
-            #cache = middleman.cache
-            #conn, cache = middleman.updateCache(host, port, username, password)
 
             if 'args' in postdata:
                 args = postdata['args']
@@ -198,8 +195,6 @@ def remove_orders(environ, start_response):
         if 'uid' in session:
             host, port, username, password, now = session['uid']
             """Fix so it doesn't have to call updateCache each time."""
-            #conn = middleman.connect(host, port, username, password)
-            #cache = middleman.getCache()
             conn, cacher = middleman.updateCache(host, port, username, password)
             
             cache = middleman.Orders(cacher).removeOrder(conn, int(postdata['id'][0]), int(postdata['order_position'][0])) 
