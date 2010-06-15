@@ -33,6 +33,50 @@ function array2json(arr) {
     return '{' + json + '}';//Return associative JSON
 }
 
+function OrderPosition2OrderId(ordersArr, position) {
+	var counter = 0;
+	ordersArr = sortArrByKey(ordersArr);
+	for(i in ordersArr) {
+		if(counter == position) {
+			return ordersArr[i].order_id;
+		} else {
+			counter++;
+		}
+	}
+	return undefined
+}
+
+function OrderId2OrderPosition(ordersArr, id) {
+	var counter = 0;
+	ordersArr = sortArrByKey(ordersArr);
+	for(i in ordersArr) {
+		if(id == i) {
+			return counter;
+		} else {
+			counter++;
+		}
+	}
+	return undefined
+}
+function sortArrByKey(array) {
+	var sortedArr = new Array();
+    var keys = new Array();
+    for(k in array)
+    {
+         keys.push(k);
+    }
+
+    keys.sort( function (a, b){
+    	return (a>b)-(a<b);
+    	}
+    );
+
+    for (var i = 0; i < keys.length; i++)
+    {
+    	sortedArr[keys[i]] = array[keys[i]];        
+    }
+    return sortedArr
+}
 /**
  * Z-index table
  * 100 - UI
@@ -671,8 +715,6 @@ UserInterface = ( function() {
                 for(var i in this.__selections) {
                     selections.push([i, this.__selections[i]]);
                 }
-                alert("options get val " + options)
-                alert("selections get val " + selections )
                 return array2json([options, selections]);
             };
         };
@@ -777,7 +819,8 @@ UserInterface = ( function() {
             for(var i in this.args) {
                 temp = temp.concat(this.args[i].getValue());
             }
-            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponentClass.id, 'type': parseInt(order.type), 'order_id': parseInt(order.order_id), 'args': temp}, url: "/json/order/update/", 
+            var order_position = OrderId2OrderPosition(OrderComponent.orders[OrderComponentClass.id].orders, order.order_id);
+            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponentClass.id, 'type': parseInt(order.type), 'order_position': order_position, 'args': temp}, url: "/json/order/update/", 
                 error: function(req, textstatus) { 
                     UILock.error('Something went wrong, contact administrator or try again later.', true);
                 }, 
@@ -795,7 +838,9 @@ UserInterface = ( function() {
         };
 
         OrderComponentClass.prototype.removeOrder = function(order_id) {
-             $.ajax({type: "POST", dataType: 'json', data: {'action': 'remove', 'id': OrderComponentClass.id, 'order_id': parseInt(order_id)}, url: "/json/order/remove/", 
+        	//FIX: Does not remove when send order and then press remove
+        	 var order_position = OrderId2OrderPosition(OrderComponent.orders[OrderComponentClass.id].orders, order_id);
+             $.ajax({type: "POST", dataType: 'json', data: {'action': 'remove', 'id': OrderComponentClass.id, 'order_position': order_position}, url: "/json/order/remove/", 
                 error: function(req, textstatus) { 
                     UILock.error('Something went wrong, contact administrator or try again later.', true);
                 }, 
@@ -817,21 +862,12 @@ UserInterface = ( function() {
 
             $('#order-component-create-order').html('').append('Create a new order: ', OrderComponent.buildOrderList());
             if(subid == null && OrderComponentClass.type != null) {
-            	alert("type " + OrderComponentClass.type)
                 var orderType = OrderComponent.orders[OrderComponentClass.id].order_type[OrderComponentClass.type];
             } else if(subid != null) {
-            	alert("sud" + subid)
-            	var values = "";
-            	for(i in OrderComponent.orders[OrderComponentClass.id].orders) {
-            		values += OrderComponent.orders[OrderComponentClass.id].orders[i].order_id + " "
-            		
-            	}
-            	alert(values);
-                var orderType = OrderComponent.orders[OrderComponentClass.id].orders[subid];
+            	var orderType = OrderComponent.orders[OrderComponentClass.id].orders[subid];
             } else {
                 return false;
             }
-   
             $('#order-component-create-order').append($(document.createElement('h5')).css({'margin': 0, 'padding': 0}).text(orderType.name));
             
             if(orderType != null) {
@@ -895,7 +931,6 @@ UserInterface = ( function() {
 	            return $(document.createElement('div')).append(select,
 	                $(document.createElement('input')).attr({'type': 'submit', 'value': 'New order'}).click(function(eventData) {
 	                    OrderComponentClass.type = $('#order_list').val();
-	                    
 	                    var sendType = OrderComponent.orders[OrderComponentClass.id].order_type[OrderComponentClass.type].type;
 	                    $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponentClass.id, 'type': sendType}, url: "/json/order/send/", 
 	                        error: function(req, textstatus) { 
@@ -905,7 +940,11 @@ UserInterface = ( function() {
 	                            if(data.auth === true) {
 	                                UserInterface.getOrders(function(data_extra) {
 	                                    OrderComponent.setup(data_extra.orders);
-	                                    OrderComponent.buildOrder(data.order_id);
+	                                    subid = OrderPosition2OrderId(OrderComponent.orders[OrderComponentClass.id].orders, data.order_position);
+	                                	if(subid != undefined) { 
+	                                		OrderComponent.buildOrder(subid);
+	                                	}
+	                                    
 	                                });
 	                            } else {
 	                                UILock.error(data.error, true);
@@ -939,13 +978,18 @@ UserInterface = ( function() {
             // If this object has orders continue
             if(OrderComponentClass.id > 0 && OrderComponent.orders[OrderComponentClass.id]) {
                 dl = $(document.createElement('dl'));
+                
+                
+                OrderComponent.orders[OrderComponentClass.id]['orders'] = 
+                	sortArrByKey(OrderComponent.orders[OrderComponentClass.id]['orders']);
+                
                 for(var i in OrderComponent.orders[OrderComponentClass.id]['orders']) {
                     var order_id = OrderComponent.orders[OrderComponentClass.id]['orders'][i].order_id;
                     order = OrderComponent.orders[OrderComponentClass.id]['orders'][i];
                     dt = $(document.createElement('dt')).text(order.turns + ' turns');
                     dd = $(document.createElement('dd')).append(
                         $(document.createElement('a')).attr({'id': order.order_id, 'href': '#'}).text(order.name).click(function(eventData) {
-                            OrderComponent.buildOrder(order_id);
+                        	OrderComponent.buildOrder(eventData.currentTarget.id);
                             //OrderComponent.buildOrder(eventData.currentTarget.id);
                         }),
                         $(document.createElement('br')),
