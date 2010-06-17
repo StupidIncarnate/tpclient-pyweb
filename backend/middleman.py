@@ -15,8 +15,6 @@ from tp.client.cache import Cache, apply
 from tp.client.objectutils import *
 from tp.client.ChangeList import ChangeList
 
-object_type = ['Universe', 'Galaxy', 'Star System', 'Planet', 'Fleet', 'Wormhole']
-
 """
 defaults = {
     constants.ARG_ABS_COORD: [0,0,0],
@@ -209,11 +207,14 @@ class FriendlyObjects(object):
         for i in self.cache.objects:
             obj = self.cache.objects[i]
             
+            #Get Object Type Name
+            objdesc = objects.ObjectDescs()[obj.subtype]
+            
             #The attributes that have no nested elements
             ret[obj.id] = {
                 'name': safestr(obj.name),
                 'id': obj.id,
-                'type': {'id': obj.subtype, 'name': object_type[obj.subtype]},
+                'type': {'id': obj.subtype, 'name': safestr(objdesc._name)},
                 #'size': obj.size,
                 'contains': obj.contains
             }
@@ -269,7 +270,6 @@ class Orders(object):
         if moreargs:
             for arg in moreargs:
                 moreargsProcessed.append(recur_map(int, json.loads(arg)))
-
         
         # Create the new order
         ordertype = objects.OrderDescs()[type]
