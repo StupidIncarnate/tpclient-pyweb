@@ -10,7 +10,9 @@
     <![endif]-->
     <style type="text/css">
         html, body { background: black url('/images/background.jpg') repeat; }
-
+		
+		.icon {background-repeat: no-repeat; background-position: 0 0;}
+		
     	#map-viewport { position: relative; overflow: hidden; width: 100%; }
 		#map-viewport .starsystem {position: absolute; background-color: blue; width: 10px; height: 10px; font-size: 8px; z-index: 100;}
 		#map-viewport .fleet {position: absolute; background-color: green; width: 5px; height: 5px; font-size: 8px; z-index: 100; }
@@ -50,15 +52,9 @@
         #uilock-content.error { color: red; }
         #uilock-content.notice { color: orange; }
 
-        #info-component { background-color: rgba(255, 165, 0, 0.8); z-index: 100; }
+        #info-component { background-color: rgba(255, 165, 0, 0.8); z-index: 100;}
         #info-component-container { width: 100%;  }
         #info-component-content h4 { margin: 0; padding: 0 0 0 20px; }
-        #info-component-content h4.universe { background-image: url(/images/universe.png); background-repeat: no-repeat; background-position: 0 0; }
-        #info-component-content h4.galaxy { background-image: url(/images/galaxy.png); background-repeat: no-repeat; background-position: 0 0; }
-        #info-component-content h4.starsystem { background-image: url(/images/starsystem.png); background-repeat: no-repeat; background-position: 0 0; }
-        #info-component-content h4.planet { background-image: url(/images/planet.png); background-repeat: no-repeat; background-position: 0 0; }
-        #info-component-content h4.fleet { background-image: url(/images/fleet.png); background-repeat: no-repeat; background-position: 0 0; }
-        #info-component-content h4.starsystem { background-image: url(/images/starsystem.png); background-repeat: no-repeat; background-position: 0 0; }
         #info-component-content dl { }
         #info-component-content dt { float: left; clear: left; width: 5em; text-align: left; }
         #info-component-content dt:after { content: ":"; }
@@ -93,14 +89,9 @@
 		#system-planet-component { background-color: rgba(150, 150, 150, 0.8); z-index: 100; position: absolute;}
 		#system-planet-component-container {width: 100%; height: 100%; padding: 0px; margin: 0;}
 		#system-planet-component-content { height: 200px; padding: 0px; margin: 0;}
-		#system-planet-component-content li.universe { background-image: url(/images/universe.png); background-repeat: no-repeat; background-position: 5px 5px; }
-        #system-planet-component-content li.galaxy { background-image: url(/images/galaxy.png); background-repeat: no-repeat; background-position: 5px 5px; }
-        #system-planet-component-content li.starsystem { background-image: url(/images/starsystem.png); background-repeat: no-repeat; background-position: 5px 5px; }
-        #system-planet-component-content li.planet { background-image: url(/images/planet.png); background-repeat: no-repeat; background-position: 5px 5px; }
-        #system-planet-component-content li.fleet { background-image: url(/images/fleet.png); background-repeat: no-repeat; background-position: 5px 5px; }
 		#system-planet-component-content dd {width: 100%;  margin: 0; padding: 0;}
 		#system-planet-component-content ul { list-style-type: none; margin: 0; padding: 0;}
-		#system-planet-component-content li { margin: 0; padding: 0; border-bottom: 1px solid black; width:100%; background-color: #666;}
+		#system-planet-component-content li { margin: 0; padding: 0; border-bottom: 1px solid black; width:100%; background-color: #666; background-repeat: no-repeat; background-position: 5px 5px;}
         #system-planet-component-content li a { display: block;  font-size: 20px;
         	color: #000; text-align: left; text-decoration: none; margin-left: 25px; padding-top: 10px; padding-bottom: 10px; margin-right: 10px;}
         #system-planet-component-content li a:hover { }
@@ -109,12 +100,7 @@
         ul.tree-list { margin: 2px 0 2px 0; list-style-type: none; }
         ul.tree-list ul { margin: 2px 0 2px 0px; list-style-type: none; }
         ul.tree-list li { margin: 0; padding: 0 0 1px 20px; line-height: 16px; }
-        ul.tree-list li.universe { background-image: url(/images/universe.png); background-repeat: no-repeat; background-position: 0 0; }
-        ul.tree-list li.galaxy { background-image: url(/images/galaxy.png); background-repeat: no-repeat; background-position: 0 0; }
-        ul.tree-list li.starsystem { background-image: url(/images/starsystem.png); background-repeat: no-repeat; background-position: 0 0; }
-        ul.tree-list li.planet { background-image: url(/images/planet.png); background-repeat: no-repeat; background-position: 0 0; }
-        ul.tree-list li.fleet { background-image: url(/images/fleet.png); background-repeat: no-repeat; background-position: 0 0; }
-
+        
         #notify-component { position: absolute; top: 5px; right: 10px; width: 60em; height: 72px; z-index: 100; text-align: right; overflow: hidden; }
         #notify-component div { margin: 5px 0; }
         #notify-component .category { color: orange; font-size: 0.8em; }

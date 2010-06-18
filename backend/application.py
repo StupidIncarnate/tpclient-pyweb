@@ -171,7 +171,7 @@ def update_orders(environ, start_response):
                 args = None
                 
             cache = middleman.Orders(cacher).updateOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), int(postdata['order_position'][0]), args) 
-            
+
             turn = {'time': int(conn.time()), 'current': int(currentTurn)}
             data = {'auth': True, 'sent': True, 'turn': turn}
         else:
@@ -198,7 +198,6 @@ def remove_orders(environ, start_response):
             conn, cacher = middleman.updateCache(host, port, username, password)
             
             cache = middleman.Orders(cacher).removeOrder(conn, int(postdata['id'][0]), int(postdata['order_position'][0])) 
-            
             
             turn = {'time': int(conn.time()), 'current': int(currentTurn)}
             data = {'auth': True, 'removed': True, 'turn': turn}

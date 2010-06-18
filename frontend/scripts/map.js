@@ -77,6 +77,7 @@ function sortArrByKey(array) {
     }
     return sortedArr
 }
+
 /**
  * Z-index table
  * 100 - UI
@@ -170,8 +171,8 @@ Map = ( function() {
                 
                 for(var j in galaxy.contains) {
                     obj = this.objects[galaxy.contains[j]];
-                    var x = (obj.Position.vector.x / universe.Size.size) * 120000;
-                    var y = (obj.Position.vector.y / universe.Size.size) * 120000;
+                    var x = (obj.Position.x / universe.Size) * 120000;
+                    var y = (obj.Position.y / universe.Size) * 120000;
                     this.drawobject(x, y, obj.id, obj.name, obj.type.name);
                 }
                 
@@ -350,10 +351,10 @@ UserInterface = ( function() {
                 if(match) {
                     if(temp.name.toLowerCase().indexOf(match) == 0) {
                     	ul.append(
-                            $(document.createElement('li')).addClass(UserInterface.classes[temp.type.id]).append(
+                            $(document.createElement('li')).addClass("icon").css("background-image", "url("+temp.Icon+")").append(
                                 $(document.createElement('a'))
                                     .attr({'href': '#info/'+temp.id, 'id': temp.id, 'queueid': queueid})
-                                    .addClass(UserInterface.classes[temp.type.id])
+                                    .addClass(temp.type.name.toLowerCase().split(' ').join(''))
                                     .text(temp.name)
                             )
                         );
@@ -362,10 +363,10 @@ UserInterface = ( function() {
                         createList(temp, ul, match);
                     }
                 } else {
-                    li = $(document.createElement('li')).addClass(UserInterface.classes[temp.type.id]).append(
+                    li = $(document.createElement('li')).addClass("icon").css("background-image", "url("+temp.Icon+")").append(
                         $(document.createElement('a'))
                             .attr({'href': '#info/'+temp.id, 'id': temp.id, 'queueid': queueid})
-                            .addClass(UserInterface.classes[temp.type.id])
+                            .addClass(temp.type.name.toLowerCase().split(' ').join(''))
                             .text(temp.name)
                     );
                     ul.append(li);
@@ -958,7 +959,9 @@ UserInterface = ( function() {
 
         OrderComponentClass.prototype.onMapClick = function(eventData) {
         	var queueid = 0;
-        	if(ObjectComponent.objects[eventData.target.id]["Order Queue"] != undefined && ObjectComponent.objects[eventData.target.id]["Order Queue"]["queueid"] != undefined) 
+        	if(ObjectComponent.objects[eventData.target.id] != undefined &&
+        			ObjectComponent.objects[eventData.target.id]["Order Queue"] != undefined && 
+        			ObjectComponent.objects[eventData.target.id]["Order Queue"]["queueid"] != undefined) 
         		queueid = ObjectComponent.objects[eventData.target.id]["Order Queue"]["queueid"];
             OrderComponent.buildOrderPanel(parseInt(queueid));
         };
@@ -1014,8 +1017,6 @@ UserInterface = ( function() {
     var ObjectComponent = (function() {
         var ObjectComponentClass = function(){};
 
-        // Types of object classes
-        ObjectComponentClass.prototype.classes = ['universe', 'galaxy', 'starsystem', 'planet', 'fleet', 'wormhole'];
         // List of all objects
         ObjectComponentClass.prototype.objects = null;
 
@@ -1032,94 +1033,69 @@ UserInterface = ( function() {
         ObjectComponentClass.prototype.onMapClick = function(eventData) {
             id = parseInt(eventData.target.id);
             object = ObjectComponent.objects[id];
-
             infoComponent = $("#info-component-content").html("");
-            h4 = $(document.createElement("h4")).text(object.name).addClass(ObjectComponent.classes[object.type.id]);
+            h4 = $(document.createElement("h4")).text(object.name).addClass("icon").css("background-image", "url("+object.Icon+")");
             dl = $(document.createElement("dl"));
             infoComponent.append(h4).append(dl);
-            /*
-            if(object.type.name == 'Fleet') {
-                base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size', 'owner': 'Owner', 'damage': 'Damage', 'ships': 'Ships'}
-            } else if(object.type.name == 'Planet') {
-                base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size', 'owner': 'Owner', 'resources': 'Resources'}
-            } else if(object.type.name == 'Star System' || object.type.name == 'Wormhole') {
-                base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size'}
-            } else if(object.type.name == 'Galaxy') {
-                base = {'parent': 'Parent', 'pos': 'Position', 'vel': 'Velocity', 'size': 'Size'}
-            } else {
-                base = {'parent': 'Parent', 'size': 'Size'}
-            }*/
             if(object != undefined) {
 	            for(key in object){
-	            	dt = $(document.createElement('dt')).text(key);
-	                if(key == 'parent') {
-	                    o = ObjectComponent.objects[object[key]];
-	                    if(o.id > 0) {
-	                        a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).addClass(ObjectComponent.classes[o.type.id]).text(o.name);
-	                        a.one('click', ObjectComponent.onMapClick);
-	                        dd = $(document.createElement('dd')).append(a);
-	                    } else {
-	                        dd = $(document.createElement('dd')).text(o.name);
-	                    }
-	                } else {
-	                    if(object[key].length == 0) {
-	                        dd = $(document.createElement('dd')).text('-');
-	                    } else {
-	                        dd = $(document.createElement('dd')).text(object[key].toString());
-	                    }
-	                }
-	                dl.append(dt).append(dd);
+	            	if (key != "contains" && key != "Order Queue" && key != "name" && key != "Icon") {
+		            	dt = $(document.createElement('dt')).text(key);
+		                if(key == 'parent') {
+		                    o = ObjectComponent.objects[object[key]];
+		                    if(o.id > 0) {
+		                    	h4 = $(document.createElement("h4")).addClass("icon").css("background-image", "url("+o.Icon+")");
+		                        a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).text(o.name);
+		                        a.one('click', ObjectComponent.onMapClick);
+		                        dd = $(document.createElement('dd')).append(h4.append(a));
+		                    } else {
+		                        dd = $(document.createElement('dd')).text(o.name);
+		                    }
+		                } else {
+		                    if(object[key].length == 0) {
+		                        dd = $(document.createElement('dd')).text('-');
+		                    } else {
+		                    	var objText = object[key].toString();
+		                    	//Checks if the thing has an image
+		                    	if(objText.substring(0,4) == "http"){
+		                    		dd = $(document.createElement('dd')).html("<img src=\""+ objText +"\">");
+		                    	} else {
+		                    		dd = $(document.createElement('dd')).text(objText);
+		                    	}
+		                    }
+		                }
+		                dl.append(dt).append(dd);
+	            	}
 	            	
 	            }
+	            
+	            // What objects are contained inside this object
+	            if(object.contains.length > 0) {
+	                dt = $(document.createElement('dt')).text('Contains');
+	                dd = $(document.createElement('dd'));
+	                ul = $(document.createElement('ul')).addClass('tree-list');
+	                for(var i in object.contains) {
+	                    toplevel = ObjectComponent.objects[object.contains[i]];
+	                    li = $(document.createElement('li')).addClass("icon").css("background-image", "url("+toplevel.Icon+")");
+	                    a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id})
+	                        .addClass(toplevel.type.name.toLowerCase().replace(" ", "")).text(toplevel.name).one('click', ObjectComponent.onMapClick);
+	                    ul.append(li.append(a));
+	                    if(toplevel.contains.length > 0) {
+	                        subul = $(document.createElement('ul'));
+	                        li.append(subul);
+	                        for(var j in toplevel.contains) {
+	                            sublevel = ObjectComponent.objects[toplevel.contains[j]];
+	                            subli = $(document.createElement('li')).addClass("icon").css("background-image", "url("+sublevel.Icon+")");
+	                            a = $(document.createElement('a')).attr({'href': '#info/' + sublevel.id, 'id': sublevel.id}).text(sublevel.name)
+	                                .addClass(sublevel.type.name.toLowerCase().replace(" ", "")).one('click', ObjectComponent.onMapClick);
+	                            subul.append(subli.append(a));
+	                        }
+	                    }
+	                }
+	                dl.append(dt).append(dd.append(ul));
+	            }
             }
-            /*
-            for(var attr in base) {
-                dt = $(document.createElement('dt')).text(base[attr]);
-                if(attr == 'parent') {
-                    o = ObjectComponent.objects[object[attr]];
-                    if(o.id > 0) {
-                        a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).addClass(ObjectComponent.classes[o.type.id]).text(o.name);
-                        a.one('click', ObjectComponent.onMapClick);
-                        dd = $(document.createElement('dd')).append(a);
-                    } else {
-                        dd = $(document.createElement('dd')).text(o.name);
-                    }
-                } else {
-                    if(object[attr].length == 0) {
-                        dd = $(document.createElement('dd')).text('-');
-                    } else {
-                        dd = $(document.createElement('dd')).text(object[attr].toString());
-                    }
-                }
-                dl.append(dt).append(dd);
-            }
-			*/
-            // What objects are contained inside this object
-            /*
-            if(object.contains.length > 0) {
-                dt = $(document.createElement('dt')).text('Contains');
-                dd = $(document.createElement('dd'));
-                ul = $(document.createElement('ul')).addClass('tree-list');
-                for(var i in object.contains) {
-                    toplevel = ObjectComponent.objects[object.contains[i]];
-                    li = $(document.createElement('li')).addClass(ObjectComponent.classes[toplevel.type.id]);
-                    a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id})
-                        .addClass(UserInterface.classes[toplevel.type.id]).text(toplevel.name).one('click', ObjectComponent.onMapClick);
-                    ul.append(li.append(a));
-                    if(toplevel.contains.length > 0) {
-                        subul = $(document.createElement('ul'));
-                        li.append(subul);
-                        for(var j in toplevel.contains) {
-                            sublevel = ObjectComponent.objects[toplevel.contains[j]];
-                            subli = $(document.createElement('li')).addClass(ObjectComponent.classes[sublevel.type.id]);
-                            a = $(document.createElement('a')).attr({'href': '#info/' + sublevel.id, 'id': sublevel.id}).text(sublevel.name)
-                                .addClass(ObjectComponent.classes[sublevel.type.id]).one('click', ObjectComponent.onMapClick);
-                            subul.append(subli.append(a));
-                        }
-                    }
-                }
-                dl.append(dt).append(dd.append(ul));
-            }*/
+            
             return false;
         };
 
@@ -1162,23 +1138,23 @@ UserInterface = ( function() {
 				    $("#system-planet-component").css("top", posY).css("left", posX);
 				    
 				    infoComponent = $("#system-planet-component-content").html("");
-				    //h4 = $(document.createElement("h4")).text(object.name).addClass(ObjectComponent.classes[object.type.id]);
 				    dl = $(document.createElement("dl"));
 				    infoComponent.append(dl);				    
 				    
 					ul = $(document.createElement('ul')).addClass('tree-list');
 					for(var i in object.contains) {
 					    toplevel = SystemObjectComponent.objects[object.contains[i]];
-					    li = $(document.createElement('li')).addClass(UserInterface.classes[toplevel.type.id]);
+					    li = $(document.createElement('li')).addClass("icon").css("background-image", "url("+toplevel.Icon+")");
 					    a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id})
-						.addClass(UserInterface.classes[toplevel.type.id]).text(toplevel.name).one('click', SystemObjectComponent.onMapClick).one('click', ObjectComponent.onMapClick);
+					    	.text(toplevel.name).one('click', SystemObjectComponent.onMapClick).one('click', ObjectComponent.onMapClick);
 					    ul.append(li.append(a));
 					    if(toplevel.contains.length > 0) {
 							subul = $(document.createElement('ul'));
 							li.append(subul);
 							for(var j in toplevel.contains) {
 							    sublevel = SystemObjectComponent.objects[toplevel.contains[j]];
-							    subli = $(document.createElement('li')).addClass(UserInterface.classes[sublevel.type.id]);
+							    
+							    subli = $(document.createElement('li')).addClass("icon").css("background-image", "url("+sublevel.Icon+")");
 							    a = $(document.createElement('a')).attr({'href': '#info/' + sublevel.id, 'id': sublevel.id}).text(sublevel.name).one('click', ObjectComponent.onMapClick);
 							    subul.append(subli.append(a));
 							}
@@ -1206,7 +1182,6 @@ UserInterface = ( function() {
     constructor.prototype.MessageComponent = MessageComponent;
     constructor.prototype.objects = null;
     constructor.prototype.orders = null;
-    constructor.prototype.classes = ['universe', 'galaxy', 'starsystem', 'planet', 'fleet'];
 
     /**
      * Logout handler
