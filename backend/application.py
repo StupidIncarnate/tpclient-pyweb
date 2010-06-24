@@ -13,10 +13,14 @@ except ImportError:
     from cgi import parse_qs
 
 # Local imports
-import middleman 
+import middleman
 
 currentTurn = 0
 cache = None
+
+mediaListDir = '/tmp/tpclient-pyweb/media/'
+serverMediaZip = 'http://svn.thousandparsec.net/svn/media/client/media-new.gz'
+mediaListName = mediaListDir + 'media-new.txt'
 
 def login(environ, start_response):
     """Login handler"""
@@ -43,7 +47,7 @@ def login(environ, start_response):
     
         if data['auth']:
             conn.disconnect()
-
+            
             # Set session when login was ok
             import datetime, hashlib
             session = environ.get('session')
@@ -51,6 +55,53 @@ def login(environ, start_response):
             session.save()
             
             cache = middleman.createCache(host, port, username, password)
+            
+            #Get the media list from the server
+            import urllib
+            import gzip
+            import os
+            
+            # Get the media file zip
+            if not os.path.exists(mediaListDir):
+                os.mkdir(mediaListDir)
+            
+            mediaListZip            = mediaListDir+'media-new.gz'
+            mediaListNameServerVer  = mediaListDir + 'media-new-server.txt'
+            
+            urllib.urlretrieve(serverMediaZip, mediaListZip)
+            if os.path.exists(mediaListZip):
+                fileObj = gzip.GzipFile(mediaListZip, 'rb');
+                fileObjOut = file(mediaListNameServerVer, 'wb');
+                while 1:
+                    lines = fileObj.readline()
+                    if lines == '': break
+                    fileObjOut.write(lines)
+                fileObj.close()
+                fileObjOut.close()
+                os.remove(mediaListZip)
+                        
+            # Check if local media file is different from server file
+
+            if os.path.exists(mediaListName) and os.path.exists(mediaListNameServerVer):
+                print "Both txt files are now local"
+                localMediaSize = os.path.getsize(mediaListName)
+                serverMediaSize = os.path.getsize(mediaListNameServerVer)
+                print "Sizes: " + str(localMediaSize) + ", " + str(serverMediaSize)
+                if not localMediaSize is serverMediaSize:
+                    os.remove(mediaListName)
+                    os.rename(mediaListNameServerVer, mediaListName)
+                else:
+                    os.remove(mediaListNameServerVer)
+            elif not os.path.exists(mediaListName):
+                if os.path.exists(mediaListNameServerVer):
+                    os.rename(mediaListNameServerVer, mediaListName)
+                else:
+                    print "There is no local image list file"
+                    fileHolder = open(mediaListName, 'w')
+                    fileHolder.write('')
+                    fileHolder.close()
+                    
+            
     else:
         data = {'auth': False, 'error': 'Just use the form we provid to submit data, OK?'}
 
@@ -221,7 +272,7 @@ def get_objects(environ, start_response):
         conn = middleman.connect(host, port, username, password)
         
         turn = {'time': int(conn.time()), 'current': int(currentTurn)}
-        data = {'auth': True, 'objects': middleman.FriendlyObjects(cache).build(), 'turn': turn}
+        data = {'auth': True, 'objects': middleman.FriendlyObjects(cache, mediaListName).build(), 'turn': turn}
     else:
         data = {'auth': False}
 

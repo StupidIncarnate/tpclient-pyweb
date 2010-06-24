@@ -1059,6 +1059,12 @@ UserInterface = ( function() {
 		                    	//Checks if the thing has an image
 		                    	if(objText.substring(0,4) == "http"){
 		                    		dd = $(document.createElement('dd')).html("<img src=\""+ objText +"\">");
+		                    	} else if(typeof object[key] == "object") {
+		                    		var text = "";
+		                    		for(vars in object[key]){
+		                    			text += vars.toUpperCase() + ": " + object[key][vars] + ", ";
+		                    		}
+		                    		dd = $(document.createElement('dd')).text(text);
 		                    	} else {
 		                    		dd = $(document.createElement('dd')).text(objText);
 		                    	}

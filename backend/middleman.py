@@ -31,12 +31,12 @@ mediaRepoURL = "svn.thousandparsec.net/svn/media/client/"
 knownImageUrls = {}
 
 
-def cacheObjectPrintout():
+def cacheObjectPrintout(cache):
     """Prints out the data held in the cache, except for the orders"""
     print cache.__dict__
         
     for i in cache.objects:
-        print middleman.getPropertyList(cache.objects[i])
+        print getPropertyList(cache.objects[i])
         print "------------"
     print "================="
     
@@ -250,14 +250,28 @@ def getOrderNodeByPosition(queue, position):
     
     print "Found no ordernode"
     return None
-
-def checkIfImageExists(objectData):
-    global knownImageUrls
-    import httplib
+def getImageListFromFile(fileloc):
+    """parses through a media-new file list of images and pulls out the locations if they are indeed images"""
+    import os
     
-    #Get the host
-    host = objectData[0]["Media"].split("/")[0]
-    conn = httplib.HTTPConnection(host)
+    imageArr = {}
+    
+    if os.path.exists(fileloc):
+        filehandle = open(fileloc, 'r')
+        for line in filehandle:
+            line = line.split(" ")[0].lstrip("./")
+            filepathname = line.split(".")[0]
+            ext = line.lstrip(filepathname)
+            if ext.endswith(("png", "gif", "jpg")):
+                imageArr[filepathname] = ext
+    return imageArr
+    
+def checkIfImageExists(objectData, mediaListName):
+    global knownImageUrls
+    
+    #Construct Server Image arr
+    if len(knownImageUrls) == 0:
+        knownImageUrls = getImageListFromFile(mediaListName)
     
     for i in objectData:
         obj = objectData[i]
@@ -266,82 +280,23 @@ def checkIfImageExists(objectData):
             url = obj[k]
             
             if url in knownImageUrls:
-                objectData[i][k] = "http://" + objectData[i][k] + knownImageUrls[url] 
-                continue
-            
-            filename = url.lstrip(host)
-            for extension in [".png", ".gif", ".jpg"]:
-                conn.request( 'HEAD', filename + extension)
-                r1 = conn.getresponse()
-                if r1.status == 200:
-                    knownImageUrls[host + filename] = extension
-                    objectData[i][k] = "http://" + objectData[i][k] + extension  
-                    conn.close()
-                    break
+                objectData[i][k] = safestr("http://" + mediaRepoURL + url + knownImageUrls[url]) 
                 
-                conn.close()
-            
-        """
-            pngFilename = filename + ".png"
-            gifFilename = filename + ".gif"
-            jpgFilename = filename + ".jpg"
-            
-            conn.request( 'HEAD', filename + ".png")
-            r1 = conn.getresponse()
-            if r1.status == 200:
-                str = host + filename
-                knownImageUrls[host + filename] = ".png"
-                if str in knownImageUrls:
-                    print "meeee"
-                if host + filename in knownImageUrls: 
-                    print knownImageUrls[host + filename]
-                if not host + filename + "t" in knownImageUrls: 
-                    print "son uip no"
-                
-                print totototo 
-            conn.close()    
-            --------------
-            #mediaurl = objectData[i]["Media"]["url"]
-            #iconurl = objectData[i]["Icon"]["url"]
-            mediafilename = mediaurl.lstrip(host)
-            iconfilename = iconurl.lstrip(host)
-            
-            pngFilename = filename + ".png"
-            gifFilename = filename + ".gif"
-            jpgFilename = filename + ".jpg"
-            
-            conn.request( 'HEAD', pngFilename)
-            r1 = conn.getresponse()
-            if r1.status == 200:
-                knownImageUrls.append(pngFilename)
-                return host + pngFilename
-            
-            conn.close()
-            conn.request( 'HEAD', gifFilename)
-            r1 = conn.getresponse()
-            if r1.status == 200:
-                conn.close()
-                return host + gifFilename
-            
-            conn.close()
-            conn.request( 'HEAD', jpgFilename)
-            r1 = conn.getresponse()
-            if r1.status == 200:
-                conn.close()
-                return host + jpgFilename
-            """
-    conn.close()
     return objectData
 
 class FriendlyObjects(object):
-    def __init__(self, cache):
+    def __init__(self, cache, mediaListName):
         self.cache = cache
+        self.mediaListName = mediaListName
 
     def build(self):
         global mediaRepoURL
         ret = {}
         noExtensionURLs = {}
         #print("Build Object Data Structure")
+        
+        cacheObjectPrintout(self.cache)
+        
         for i in self.cache.objects:
             obj = self.cache.objects[i]
             
@@ -359,8 +314,6 @@ class FriendlyObjects(object):
             
             ret[obj.id].update(getPropertyList(obj))
             
-            print ret[obj.id]
-            
             if "Media" in ret[obj.id]:
                 ret[obj.id]["Media"] = ret[obj.id]["Media"]["url"] 
             if "Icon" in ret[obj.id]:
@@ -371,6 +324,8 @@ class FriendlyObjects(object):
                 ret[obj.id]["Year"] = ret[obj.id]["Year"]["value"]
             if "Damage" in ret[obj.id]:
                 ret[obj.id]["Damage"] = ret[obj.id]["Damage"]["value"]
+                
+            #ownerid = getOwner(self.cache, obj.id)
             
             """Fix for relative"""
             if "Position" in ret[obj.id]:
@@ -383,8 +338,8 @@ class FriendlyObjects(object):
             """Treat specific data certain ways"""
             
             #print checkIfImageExists(safestr(mediaRepoURL + mediaRelativeURLS["Media"]))
-            ret[obj.id]["Media"] = safestr(mediaRepoURL + mediaRelativeURLS["Media"])
-            ret[obj.id]["Icon"] = safestr(mediaRepoURL + mediaRelativeURLS["Icon"])
+            ret[obj.id]["Media"] = safestr(mediaRelativeURLS["Media"])
+            ret[obj.id]["Icon"] = safestr(mediaRelativeURLS["Icon"])
             
             if hasattr(obj, 'parent'):
                 ret[obj.id]['parent'] = obj.parent
@@ -392,7 +347,7 @@ class FriendlyObjects(object):
             
             """fix: Convert owner to name"""
             
-        ret = checkIfImageExists(ret)
+        ret = checkIfImageExists(ret, self.mediaListName)
         #print "Done With Building Items"
         return ret
 
