@@ -265,7 +265,7 @@ UserInterface = ( function() {
         var timeleft = 0;
         TurnHandler.prototype.setup = function(time, turn) {
             timeleft = parseInt(time);
-            $(".turn-component").html('Turn <span class="turn">'+turn+'</span> will end in <span class="timeleft">'+timeleft+'</span> s');
+            $("#turn-component").html('Turn <span class="turn">'+turn+'</span> will end in <span class="timeleft">'+timeleft+'</span> s');
 
             $(window).stopTime("turntimer");
             $(window).oneTime(timeleft * 1000, "turntimer", function() {
@@ -277,7 +277,7 @@ UserInterface = ( function() {
                 });
             });
             $(window).everyTime("1s", "turntimer", function() {
-                $(".turn-component .timeleft").text(--timeleft);
+                $("#turn-component .timeleft").text(--timeleft);
             }, timeleft);
         };
         return new TurnHandler();
@@ -385,10 +385,11 @@ UserInterface = ( function() {
          *
          * Updates the height of the component on resize events.
          */
+        /*
         var onResize = function(e) {
             $('#system-component').css('height', jQuery(window).height() - jQuery('#overlay-content').offset().top);
             $('#system-component-content').css('height', jQuery(window).height() - jQuery('#overlay-content').offset().top - 30);
-        };
+        };*/
 
 
         /**
@@ -403,15 +404,15 @@ UserInterface = ( function() {
                 searchActive = true;
             }
             if(searchActive) {
-                $('#system-component-content a').unbind('click');
-                $('#system-component-content').html('');
+                $('#system-bar-text a').unbind('click');
+                $('#system-component-text').html('');
                 ul = $(document.createElement('ul')).addClass('tree-list');
                 createList(ObjectComponent.objects[0], ul, searchString.toLowerCase());
                 $('a', ul).bind('click', function(eventData) {
                     ObjectComponent.onMapClick(eventData);
                     OrderComponent.onMapClick(eventData);
                 });
-                $('#system-component-content').append(ul);
+                $('#system-component-text').append(ul);
             }
             if(searchString.length <= 0 && searchActive == true) {
                 searchActive = false;
@@ -425,19 +426,19 @@ UserInterface = ( function() {
                 systemElement.remove();
             }
 
-            $(window).bind('resize', onResize);
+            //$(window).bind('resize', onResize);
 
             SystemComponent.objects = objects;
-            var system = $(document.createElement('div')).attr('id', 'system-component').css({
-                'height': jQuery(window).height() - jQuery('#overlay-content').offset().top});
+            var system = $(document.createElement('div')).attr('id', 'system-bar');
 
             var systemsearch = $(document.createElement('div')).attr('id', 'system-component-search');
             var input = $(document.createElement('input')).attr({'id': 'system-search-input', 'type': 'text'});
             input.bind('keyup', onSearch);
             systemsearch.append(input);
 
-            var systemcontent = $(document.createElement('div')).attr('id', 'system-component-content').css({
-                'height': (jQuery(window).height() - jQuery('#overlay-content').offset().top) - 30});
+            /*var systemcontent = $(document.createElement('div')).attr('id', 'system-bar-text').css({
+                'height': (jQuery(window).height() - jQuery('#overlay-content').offset().top) - 30});*/
+            var systemcontent = $(document.createElement('div')).attr('id', 'system-component-text');
 
             ul = $(document.createElement('ul')).addClass('tree-list');
             createList(objects[0], ul);
@@ -446,8 +447,10 @@ UserInterface = ( function() {
                 OrderComponent.onMapClick(eventData);
             });
             
-            $('#overlay-content').append(system.append(systemsearch, systemcontent.append(ul)));
-
+            //$('#overlay-content').append(system.append(systemsearch, systemcontent.append(ul)));
+            $('#system-bar-text').empty().append(systemsearch, systemcontent.append(ul));
+            
+            /*
             // Make it resizable
             $('#system-component').resizable({
                 handles: 'w,n,e,s',
@@ -456,7 +459,7 @@ UserInterface = ( function() {
                 minWidth: 200,
                 minHeight: jQuery(window).height() - jQuery('#overlay-content').offset().top
             });
-
+			*/
             // Store this system component
             systemElement = system;
         };
@@ -506,7 +509,8 @@ UserInterface = ( function() {
         var messages = null;
         var messageNumber = 0;
         var messageBodyElement = null;
-	
+        
+        /*
         var onNext = function() {
             messageNumber++;
             if(messageNumber > (messages[0].number - 1)) {
@@ -527,24 +531,26 @@ UserInterface = ( function() {
             $('#message-component-container li.center span').text(messages[0].messages[messageNumber].subject + ' (' + (messageNumber+1) + '/' + messages[0].number + ')');
             messageBodyElement.empty().append("<br /><br />"+messages[0].messages[messageNumber].body);
         };
-
+		*/
         var MessageComponentClass = function(){};
 
         MessageComponentClass.prototype.setup = function(data) {
             messages = data;
-            messageNav = $(document.createElement('ul'))
-                .append($(document.createElement('li')).addClass('left').append(
-                    $(document.createElement('a')).text('Previous').bind('click', onPrev)
-                ))
-                .append($(document.createElement('li')).addClass('center').append(
-                    $(document.createElement('span')).text(messages[0].messages[messageNumber].subject + ' (' + (messageNumber+1) + '/' + messages[0].number + ')')
-                ))
-                .append($(document.createElement('li')).addClass('right').append(
-                    $(document.createElement('a')).text('Next').bind('click', onNext)
-                ));
-            messageBodyElement = $(document.createElement('p')).append("<br /><br/>"+messages[0].messages[messageNumber].body);
-            $('#message-component-content').empty().append(messageNav, messageBodyElement);
+            var panelText = "";
+            var turn = null;
+            for(i in messages[0].messages) {
+            	message = messages[0].messages[i]
+            	if(message.turn != turn) {
+            		turn = message.turn;
+            		panelText += "<br><br>Turn " + turn;
+            	}
+            	panelText += "<br>" + message.body;
+            }
+            messageBodyElement = $(document.createElement('p')).append(panelText);
+            $('#message-bar-text').empty().append(messageBodyElement);
+            
         };
+        
 
         return new MessageComponentClass();
 
@@ -1254,6 +1260,11 @@ UserInterface = ( function() {
                 });
             });
         });
+        var menuWidth = $('#menu-bar').width() - $('#menu-bar-title').width();
+        $('#menu-bar').css('left', -menuWidth);
+        
+        var messageWidth = $('#message-bar').width() - $('#message-bar-title').width();
+        $('#message-bar').css('left', -messageWidth);
     };
 
     /**
@@ -1410,7 +1421,30 @@ UserInterface = ( function() {
             ObjectComponent.onMapClick(eventData);
             SystemObjectComponent.onMapClick(eventData);
         });
-
+        
+        $('#menu-bar-title').bind('click', function() {
+        	var width = $('#menu-bar').width() - $('#menu-bar-title').width();
+        	if($('#menu-bar').position().left < 0) {
+        		width = "+=" + width + "px";            		
+        	} else {
+        		width = "-=" + width + "px";
+        	}
+        	$('#menu-bar').animate({"left": width}, "fast");
+        	
+        });
+        
+        
+        $('#message-bar-title').bind('click', function() {
+        	var width = $('#message-bar').width() - $('#message-bar-title').width();
+        	if($('#message-bar').position().left < 0) {
+        		width = "+=" + width + "px";            		
+        	} else {
+        		width = "-=" + width + "px";
+        	}
+        	$('#message-bar').animate({"left": width}, "fast");
+        	
+        });
+        
         // Menu - download universe
         $('#menu-bar li.download-universe').bind('click', function() {
             NotifyComponent.notify('Started downloading the Universe', 'Universe');
