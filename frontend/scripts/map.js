@@ -409,7 +409,11 @@ UserInterface = ( function() {
                 ul = $(document.createElement('ul')).addClass('tree-list');
                 createList(ObjectComponent.objects[0], ul, searchString.toLowerCase());
                 $('a', ul).bind('click', function(eventData) {
-                    ObjectComponent.onMapClick(eventData);
+                	//Tells the info panel not to load panel above system panel
+                	eventData.clickThrough = "sysPanel";
+                	
+                	InfoComponent.onMapClick(eventData);
+                	//ObjectComponent.onMapClick(eventData);
                     OrderComponent.onMapClick(eventData);
                 });
                 $('#system-component-text').append(ul);
@@ -443,7 +447,11 @@ UserInterface = ( function() {
             ul = $(document.createElement('ul')).addClass('tree-list');
             createList(objects[0], ul);
             $('a', ul).bind('click', function(eventData) {
-                ObjectComponent.onMapClick(eventData);
+            	//Tells the info panel not to load panel above system panel
+            	eventData.clickThrough = "sysPanel";
+            	
+            	InfoComponent.onMapClick(eventData);
+                //ObjectComponent.onMapClick(eventData);
                 OrderComponent.onMapClick(eventData);
             });
             
@@ -546,8 +554,12 @@ UserInterface = ( function() {
             	}
             	panelText += "<br>" + message.body;
             }
-            messageBodyElement = $(document.createElement('p')).append(panelText);
+            messageBodyElement = $(document.createElement('p')).append(panelText); 
+            	
             $('#message-bar-text').empty().append(messageBodyElement);
+            
+            //Apply a custom scroll to the component
+            $('#message-bar-text').jScrollPane({scrollbarWidth:28, dragMinHeight:25, dragMaxHeight:25});
             
         };
         
@@ -1114,6 +1126,131 @@ UserInterface = ( function() {
         return new ObjectComponentClass();
     } )();
     
+ 
+    var InfoComponent = ( function() {
+    	var InfoComponentClass = function(){};
+    	
+    	InfoComponentClass.prototype.objects = null;
+    	
+    	/*
+    	 * Setup the information panel
+    	 */
+    	InfoComponentClass.prototype.setup = function(data) {
+    		InfoComponentClass.prototype.objects = data;	
+    		
+    	};
+    	/*
+    	 * Event: onMapClick
+    	 */
+    	InfoComponentClass.prototype.onMapClick = function(eventData) {
+    		id = parseInt(eventData.target.id);
+    		if(InfoComponent.objects[id] == undefined) {
+    			$('#info-panel').css("display", "none");
+    		}
+    		else if(InfoComponent.objects[id] != undefined) {
+    			//sysPanel "mapobj";
+    			
+    			if(eventData.clickThrough == "sysPanel") {
+    				infoposTop = 5;
+    				infoposLeft = (screen.width / 2) - ($('#info-panel').width() / 2);
+    				if(infoposTop < 0)
+	    				infoposTop = 0;
+	    			if(infoposLeft < 0)
+	    				infoposLeft = 0;
+	    			$('#info-panel').css("display", "inline").css("top", infoposTop+"px").css("left", infoposLeft+"px");
+	    			
+    			} else if(eventData.clickThrough == "mapobj") {
+    				infoposTop = eventData.pageY - ($('#info-panel').height() / 2);
+	    			infoposLeft = eventData.pageX - ($('#info-panel').width() / 2);
+	    			if(infoposTop < 0)
+	    				infoposTop = 0;
+	    			if(infoposLeft < 0)
+	    				infoposLeft = 0;
+	    			
+	    			$('#info-panel').css("display", "inline").css("top", infoposTop+"px").css("left", infoposLeft+"px");
+    				
+    			}
+    			 
+                object = InfoComponent.objects[id];
+                infoComponent = $("#info-panel-text").html("");
+                h4 = $(document.createElement("h4")).attr("id", "planet-title").text(object.name);
+                div = $(document.createElement("div")).attr("id", "planet-media").html("<img src=\""+ object.Media.toString() +"\">");
+                dl = $(document.createElement("dl")).attr("id", "info-tree");
+                infoComponent.append(h4).append(div).append(dl);
+                if(object != undefined) {
+    	            for(key in object){
+    	            	if (key != "contains" && key != "Order Queue" && key != "name" && key != "Icon" && key != "Media") {
+    		            	dt = $(document.createElement('dt')).text(key);
+    		                if(key == 'parent') {
+    		                    o = InfoComponent.objects[object[key]];
+    		                    if(o.id > 0) {
+    		                    	h4 = $(document.createElement("h4")).html("<img src=\""+ o.Icon +"\">");
+    		                        a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).text(o.name);
+    		                        a.one('click', InfoComponent.onMapClick);
+    		                        dd = $(document.createElement('dd')).append(h4.append(a));
+    		                    } else {
+    		                        dd = $(document.createElement('dd')).text(o.name);
+    		                    }
+    		                } else {
+    		                    if(object[key].length == 0) {
+    		                        dd = $(document.createElement('dd')).text('-');
+    		                    } else {
+    		                    	var objText = object[key].toString();
+    		                    	//Checks if the thing has an image
+    		                    	if(objText.substring(0,4) == "http"){
+    		                    		dd = $(document.createElement('dd')).html("<img src=\""+ objText +"\">");
+    		                    	} else if(typeof object[key] == "object") {
+    		                    		var text = "";
+    		                    		for(vars in object[key]){
+    		                    			text += vars.toUpperCase() + ": " + object[key][vars] + ", <br />";
+    		                    		}
+    		                    		dd = $(document.createElement('dd')).html(text);
+    		                    	} else {
+    		                    		dd = $(document.createElement('dd')).text(objText);
+    		                    	}
+    		                    }
+    		                }
+    		                dl.append(dt).append(dd);
+    	            	}
+    	            	
+    	            }
+    	            
+    	            // What objects are contained inside this object
+    	            if(object.contains.length > 0) {
+    	                dt = $(document.createElement('dt')).text('Contains');
+    	                dd = $(document.createElement('dd'));
+    	                ul = $(document.createElement('ul')).addClass('tree-list');
+    	                for(var i in object.contains) {
+    	                    toplevel = InfoComponent.objects[object.contains[i]];
+    	                    li = $(document.createElement('li')).addClass("icon").css("background-image", "url("+toplevel.Icon+")");
+    	                    a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id})
+    	                        .addClass(toplevel.type.name.toLowerCase().replace(" ", "")).text(toplevel.name).one('click', InfoComponent.onMapClick);
+    	                    ul.append(li.append(a));
+    	                    if(toplevel.contains.length > 0) {
+    	                        subul = $(document.createElement('ul'));
+    	                        li.append(subul);
+    	                        for(var j in toplevel.contains) {
+    	                            sublevel = InfoComponent.objects[toplevel.contains[j]];
+    	                            subli = $(document.createElement('li')).addClass("icon").css("background-image", "url("+sublevel.Icon+")");
+    	                            a = $(document.createElement('a')).attr({'href': '#info/' + sublevel.id, 'id': sublevel.id}).text(sublevel.name)
+    	                                .addClass(sublevel.type.name.toLowerCase().replace(" ", "")).one('click', InfoComponent.onMapClick);
+    	                            subul.append(subli.append(a));
+    	                        }
+    	                    }
+    	                }
+    	                dl.append(dt).append(dd.append(ul));
+    	            }
+                }
+                //Apply a custom scroll to the component
+                infoComponent.jScrollPane({scrollbarWidth:28, dragMinHeight:25, dragMaxHeight:25});
+    		}
+    		
+    	};
+    	
+    	
+    	return new InfoComponentClass();
+    } )();
+    
     /**
      * System object component
      * Handles all the panel for system objects in a galaxy
@@ -1207,7 +1344,7 @@ UserInterface = ( function() {
         });
         return false;
     };
-
+    
     /**
      * Draw UI
      */
@@ -1227,6 +1364,9 @@ UserInterface = ( function() {
             
             //Setup SystemObjectComponent
             SystemObjectComponent.setup(data.objects);
+            
+            //Setup InfoComponent
+            InfoComponent.setup(data.objects);
 
             // Add objects to map
             Map.addObjects(data.objects);
@@ -1240,7 +1380,7 @@ UserInterface = ( function() {
 
             // Setup SystemComponent
             SystemComponent.setup(data.objects);
-
+            
             // Get orders with ajax call
             UserInterface.getOrders(function(data) {
 
@@ -1414,12 +1554,16 @@ UserInterface = ( function() {
         $('#logout').bind('click', UserInterface.logout);
         $('#loginform').bind("submit", this, login);
         $('#mapdiv').live('click', function(eventData) {
-        	SystemObjectComponent.onMapClick(eventData);
+        	eventData.clickThrough = "mapobj";
+        	InfoComponent.onMapClick(eventData);
+        	//SystemObjectComponent.onMapClick(eventData);
         });
         $('#mapdiv .starsystem, #mapdiv .fleet').live('click', function(eventData) {
             OrderComponent.onMapClick(eventData);
-            ObjectComponent.onMapClick(eventData);
-            SystemObjectComponent.onMapClick(eventData);
+            //ObjectComponent.onMapClick(eventData);
+            eventData.clickThrough = "mapobj";
+            InfoComponent.onMapClick(eventData);
+            //SystemObjectComponent.onMapClick(eventData);
         });
         
         $('#menu-bar-title').bind('click', function() {
@@ -1444,7 +1588,7 @@ UserInterface = ( function() {
         	$('#message-bar').animate({"left": width}, "fast");
         	
         });
-        
+
         // Menu - download universe
         $('#menu-bar li.download-universe').bind('click', function() {
             NotifyComponent.notify('Started downloading the Universe', 'Universe');

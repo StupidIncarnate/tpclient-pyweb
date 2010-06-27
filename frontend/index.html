@@ -32,6 +32,27 @@
         .titlestrip span {display: none;}
         .textstrip {margin: 0; background-repeat: repeat-x;}
         
+        .jScrollPaneContainer {
+			position: relative;
+			overflow: hidden;
+			z-index: 1;
+		}
+		.jScrollPaneTrack {
+			position: absolute;
+			cursor: pointer;
+			right: 0;
+			top: 0;
+			height: 100%;
+			display: block;
+		}
+		.jScrollPaneDrag {
+			position: absolute;
+			background: url('images/scrollicon.png') no-repeat 50% 50%;
+			cursor: pointer;
+			overflow: hidden;
+			
+		}
+
         #menu-bar {position: relative; width: 270px; height: 186px; z-index: 100; left: 0px;}
         #menu-bar-title {background-image: url('images/menu-panel-title.png'); width:59px;}
 		#menu-bar ul {padding-top: 28px; font-size: 17px; background-image: url('images/menu-panel-text.png'); width: 211px; height:186px; }
@@ -42,8 +63,20 @@
         
         #message-bar { position: relative; width: 550px; height: 400px; z-index: 100; }
         #message-bar-title { background-image: url('images/message-panel-title.png'); width: 58px; }
-        #message-bar-text {background-image: url('images/message-panel-text.png'); width: 492px; height: 400px; }
+        #message-bar-container {background-image: url('images/message-panel-text.png'); width: 478px; height: 400px; padding: 7px;}
+        #message-bar-text { width: 482px; height: 376px;}
         #message-bar-text p {padding: 10px; font-size: 17px;}
+        
+        #info-panel { width: 430px; height: 430px; z-index: 100; background-image: url('images/info-panel.png'); background-repeat: no-repeat; display: none;
+        		position: absolute; top: 0px; left: 0px; margin: 0; padding: 12px;}
+        #info-panel #planet-title {font-size: 18px; width: 100%; text-align: center;}
+        #info-panel #planet-media {float: left; display: block; margin: 0 20px 0 20px;}
+        #info-panel #info-panel-text {overflow: auto; height: 420px; width: 425px;}
+        #info-panel dl {float: left; padding-left: 10px;}
+        #info-panel dt { float: left; clear: left; width: 45px; text-align: right; margin-right: 10px; display: block;}
+        #info-panel dd { float: left; dispaly: block; width: 130px;}
+        #info-panel img {margin-right: 2px;}
+        
         
         #system-bar { position: absolute; top: 2px; right: 2px; width: 303px; height: 698px; z-index: 100; }
         #system-bar-title { position: absolute; bottom: 0px; background-image: url('images/system-panel-title.png'); background-repeat: no-repeat; width: 303px; height: 59px; }
@@ -89,6 +122,11 @@
     <script type="text/javascript" src="scripts/jquery.cookies.2.1.0.min.js"></script>
     <script type="text/javascript" src="scripts/jquery-ui.js"></script>
     <script type="text/javascript" src="scripts/map.js"></script>
+    <script type="text/javascript" src="scripts/jquery.mousewheel.min.js"></script>
+	<script type="text/javascript" src="scripts/jquery.em.js"></script>
+	<script type="text/javascript" src="scripts/jScrollPane.js"></script>
+	<!--<link rel="stylesheet" type="text/css" media="all" href="css/jScrollPane.css" />-->
+	    
     <script type="text/javascript">
         $(document).ready(function () {
             UserInterface.setup();
@@ -137,13 +175,18 @@
 	            </div>
 	            <div id="message-bar">
 	            	<div id="message-bar-title" class="titlestrip"><span>Messages</span></div>
-	            	<div id="message-bar-text" class="textstrip"></div>
+	            	<div id="message-bar-container" class="textstrip">
+	            		<div id="message-bar-text"></div>
+	            	</div>
 	            </div>
 				<div id="system-bar">
 	            	<div id="system-bar-title"><span>Systems</span></div>
 	            	<div id="system-bar-text"></div>
 	            </div>
-				            
+				<div id="info-panel">
+					<div id="info-panel-text" class="scroll-pane"></div>	
+				</div>   
+				<!--         
                 <div id="order-component" class="component">
                     <div id="order-component-container" class="container">
                         <h3>Orders</h3>
@@ -163,6 +206,7 @@
 						<div id="system-planet-component-content" class="content"></div>
 					</div>
 				</div>
+				 -->
             </div>
         </div>
         <div id="mapdiv"></div>

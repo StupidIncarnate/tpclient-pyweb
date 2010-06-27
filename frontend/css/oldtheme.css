@@ -1,0 +1,96 @@
+html, body { background: black url('/images/background.jpg') repeat; }
+
+.icon {background-repeat: no-repeat; background-position: 0 0;}
+
+#map-viewport { position: relative; overflow: hidden; width: 100%; }
+#map-viewport .starsystem {position: absolute; background-color: blue; width: 10px; height: 10px; font-size: 8px; z-index: 100;}
+#map-viewport .fleet {position: absolute; background-color: green; width: 5px; height: 5px; font-size: 8px; z-index: 100; }
+#map-viewport .wormhole {position: absolute; background-color: red; width: 5px; height: 5px; font-size: 8px; z-index: 100; }
+#map-viewport .name {position: relative; top: -6px; left: 15px; font-size: 15px; color: gray; width: 500px; margin: 0; padding: 0;}
+#mapdiv { position: absolute; top: 0; left: 0; margin: 0; padding: 0; width: 100%; height: 100%; }
+
+#overlay { top: 0; left: 0; width: 100%; height: 100%; }
+#overlay-content { top: 113px; width: 100%; height: 100%; }
+
+#header { position: relative; padding: 10px; margin: 0; z-index: 100; background-color: rgba(0,0,0,0.8); }
+#header h1 { width: 381px; height: 63px; margin: 0; background: url('/images/logo.png') no-repeat scroll 0 0; z-index: 100; } 
+#header h1 span { display: none; }
+
+#menu-bar { position: relative; background-color: rgba(238, 238, 238, 0.95); width: 100%; height: 30px; z-index: 100; }
+#menu-bar ul { margin: 0; padding: 0; }
+#menu-bar ul li { margin: 0; padding: 0 1em; display: inline; list-style-type: none; line-height: 30px; }
+#menu-bar .windows, #menu-bar .download-universe, #menu-bar .request-eot, #menu-bar .settings, #menu-bar .logout { float: left; }
+#menu-bar .turn-component { float: right; }
+#menu-bar .turn-component .timeleft, #menu-bar .turn-component .turn { font-size: 1.2em; font-weight: bold; }
+
+#loginbox { position: absolute; top: 40px; left: 50%; width: 440px; margin-left: -220px; z-index: 1001; color: orange; background-color: #222; }
+#loginbox h1 { color: orange; text-align: center; margin: 0.4em 0; padding: 0; width: 440px; height: 63px; background: transparent url('/images/logo.png') no-repeat scroll center; }
+#loginbox h1 span { display: none; }
+#loginbox .content { background-color: #222; margin: 2em; text-align: left; }
+#loginbox .content p.info { margin: 0 0 1em 0; padding: 0; } 
+#loginbox fieldset { margin: 0em 0em; border: 0; padding: 0em 0em; }
+#loginbox fieldset input { float: right; }
+#loginbox fieldset label { float: left; margin-top: 10px; }
+#loginbox fieldset p { clear: both; }
+
+.transparent { filter:alpha(opacity=80); -moz-opacity: 0.8; -khtml-opacity: 0.8; opacity: 0.8; -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=80)"; }
+
+#uilock { position: absolute; top: 0; left: 0; background-color: black; width: 100%; height: 100%; z-index: 10000 }
+#uilock-content { position: absolute; top: 0; left: 50%;
+    width: 440px; margin: 0 0 0 -220px; padding: 1em 0; z-index: 10001; text-align: center; background: 0; border: 0; }
+#uilock-content.error { color: red; }
+#uilock-content.notice { color: orange; }
+
+#info-component { background-color: rgba(255, 165, 0, 0.8); z-index: 100;}
+#info-component-container { width: 100%;  }
+#info-component-content h4 { margin: 0; padding: 0 0 0 20px; }
+#info-component-content dl { }
+#info-component-content dt { float: left; clear: left; width: 5em; text-align: left; }
+#info-component-content dt:after { content: ":"; }
+#info-component-content dd { margin: 0 0 0 5.5em; padding: 0; }
+
+.component { width: 360px; height: 100%; margin: 0; padding: 0; height: 160px; }
+.component .container { width: 100%; height: 150px; margin: 0; padding: 0; }
+.component .container h3 { font-size: 12px; margin: 0; padding: 5px; background-color: red; cursor: move; }
+.component .content { margin: 0; padding: 5px; height: 128px; overflow: auto; }
+
+#message-component { background-color: rgba(150, 150, 150, 0.8); z-index: 100;}
+#message-component-container { width: 100%; }
+#message-component-container ul { list-style-type: none; margin: 0; padding: 0; }
+#message-component-container li a { display: block; width: 50px; color: #000; background-color: #666; text-align: center; text-decoration: none; }
+#message-component-container li a:hover { }
+#message-component-container .left { float: left;}
+#message-component-container .center { float: left; text-align: center; width: 230px; clear: right;}
+#message-component-container .right { float: right; clear: right;}
+#message-component-content { clear: both; }
+
+#order-component { background-color: rgba(255, 165, 0, 0.8); z-index: 100; }
+#order-component-container { width: 100%; }
+#order-component-content dt { float: left; clear: left; width: 5em; text-align: left; }
+#order-component-content dd { margin: 0 0 0 5.5em; padding: 0; }
+
+#system-component { position: absolute; top: 113px; right: 0; width: 280px; z-index: 100; background-color: rgba(187, 187, 187, 0.8); }
+#system-component-search { height: 30px; }
+#system-component-search input { margin: 0; padding: 5px; border: 0; float: left; width: 270px; height: 20px; font-size: 1em; }
+#system-component-search input:focus { border: 0; outline: none; }
+#system-component-content { overflow: auto; } 
+
+#system-planet-component { background-color: rgba(150, 150, 150, 0.8); z-index: 100; position: absolute;}
+#system-planet-component-container {width: 100%; height: 100%; padding: 0px; margin: 0;}
+#system-planet-component-content { height: 200px; padding: 0px; margin: 0;}
+#system-planet-component-content dd {width: 100%;  margin: 0; padding: 0;}
+#system-planet-component-content ul { list-style-type: none; margin: 0; padding: 0;}
+#system-planet-component-content li { margin: 0; padding: 0; border-bottom: 1px solid black; width:100%; background-color: #666; background-repeat: no-repeat; background-position: 5px 5px;}
+#system-planet-component-content li a { display: block;  font-size: 20px;
+   	color: #000; text-align: left; text-decoration: none; margin-left: 25px; padding-top: 10px; padding-bottom: 10px; margin-right: 10px;}
+#system-planet-component-content li a:hover { }
+#system-planet-component-content { clear: both; }
+
+ul.tree-list { margin: 2px 0 2px 0; list-style-type: none; }
+ul.tree-list ul { margin: 2px 0 2px 0px; list-style-type: none; }
+ul.tree-list li { margin: 0; padding: 0 0 1px 20px; line-height: 16px; }
+
+#notify-component { position: absolute; top: 5px; right: 10px; width: 60em; height: 72px; z-index: 100; text-align: right; overflow: hidden; }
+#notify-component div { margin: 5px 0; }
+#notify-component .category { color: orange; font-size: 0.8em; }
+#notify-component .text { padding-left: 2px; color: #fff; }
