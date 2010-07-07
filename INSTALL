@@ -93,6 +93,7 @@ This will allow you to browse to the client from your web browser by calling "ww
 8. One last thing to check. If you downloaded the tpclient-pyweb source from git, it will be missing the source files for the two libs it needs to run. Cd to the tpclient-pyweb folder and run the following to download the necessary libraries.
 
 git submodule init
+git submodule update
 
 
 9. After all that change, restart apache.

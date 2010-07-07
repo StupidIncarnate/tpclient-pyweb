@@ -81,12 +81,13 @@
         #system-bar { position: absolute; top: 2px; right: 2px; width: 303px; height: 698px; z-index: 100; }
         #system-bar-title { position: absolute; bottom: 0px; background-image: url('images/system-panel-title.png'); background-repeat: no-repeat; width: 303px; height: 59px; }
         #system-bar-title span {display: none; }
-        #system-bar-text {background-image: url('images/system-panel-text.png'); background-repeat: repeat-y; width: 303px; height: 639px; padding-left: 15px;}
+        #system-bar-container {background-image: url('images/system-panel-text.png'); background-repeat: repeat-y; width: 303px; height: 639px; padding-left: 15px;}
         #system-component-search { height: 30px; }
 		#system-component-search input { padding: 5px; border: 0; float: left; width: 260px; height: 20px; font-size: 1em; }
 		#system-component-search input:focus { border: 0; outline: none; }
-		#system-component-text {padding: 5px; clear: both;}
-		#system-bar-text { overflow: auto; } 
+		#system-component-text {padding: 10px;}
+		#system-bar-text {clear: both; overflow: auto; width: 285px; height: 640px;}
+		
         
 		
 		#loginbox { position: absolute; top: 40px; left: 50%; width: 440px; margin-left: -220px; z-index: 1001; color: orange; background-color: #222; }
@@ -181,19 +182,21 @@
 	            </div>
 				<div id="system-bar">
 	            	<div id="system-bar-title"><span>Systems</span></div>
-	            	<div id="system-bar-text"></div>
+	            	<div id="system-bar-container">
+	            		<div id="system-bar-text"></div>
+	            	</div>
 	            </div>
 				<div id="info-panel">
-					<div id="info-panel-text" class="scroll-pane"></div>	
+					<div id="info-panel-text"></div>	
 				</div>   
-				<!--         
+				         
                 <div id="order-component" class="component">
                     <div id="order-component-container" class="container">
                         <h3>Orders</h3>
                         <div id="order-component-content" class="content"></div>
                     </div>
                 </div>
-
+				<!--
                 <div id="info-component" class="component">
                     <div id="info-component-container" class="container">
                         <h3>Information</h3>

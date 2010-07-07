@@ -166,14 +166,46 @@ Map = ( function() {
     MapCreator.prototype.draw = function() {
         if(this.objects) {
             universe = this.objects[0];
+            
+            var viewH = $(window).height();
+            viewH = (viewH / 2) - (viewH / 16);
+            
+            //Universe Radiuses
+            var URH = 0;
+            var URW = 0;
+            var UniverseRadius = 0
+            
+            
+            minX = universe.Size.minX;
+            maxX = universe.Size.maxX;
+            minY = universe.Size.minY;
+            maxY = universe.Size.maxY;
+            
+            if(-minX > maxX)
+            	URW = -minX;
+            else 
+            	URW = maxX;
+            if(-minY > maxY)
+            	URH = -minY;
+            else
+            	URH = maxY;
+            
+            //Determine the biggest dimension
+            if(URW > URH)
+            	UniverseRadius = URW;
+            else
+            	UniverseRadius = URH;
+            		
+            
+            	
             for(var i in universe.contains) {
                 galaxy = this.objects[universe.contains[i]];
-                
-                for(var j in galaxy.contains) {
+                for(var j in galaxy.contains) { 
                     obj = this.objects[galaxy.contains[j]];
-                    var x = (obj.Position.x / universe.Size) * 120000;
-                    var y = (obj.Position.y / universe.Size) * 120000;
+                    var x = (obj.Position.x / UniverseRadius) * viewH;
+                    var y = (obj.Position.y / UniverseRadius) * viewH;
                     this.drawobject(x, y, obj.id, obj.name, obj.type.name);
+                    
                 }
                 
             }
@@ -433,7 +465,7 @@ UserInterface = ( function() {
             //$(window).bind('resize', onResize);
 
             SystemComponent.objects = objects;
-            var system = $(document.createElement('div')).attr('id', 'system-bar');
+            var system = $('system-bar');
 
             var systemsearch = $(document.createElement('div')).attr('id', 'system-component-search');
             var input = $(document.createElement('input')).attr({'id': 'system-search-input', 'type': 'text'});
@@ -456,7 +488,13 @@ UserInterface = ( function() {
             });
             
             //$('#overlay-content').append(system.append(systemsearch, systemcontent.append(ul)));
-            $('#system-bar-text').empty().append(systemsearch, systemcontent.append(ul));
+            
+            systemcontent.append(ul);
+            systemtext = $('#system-bar-text');
+            systemtext.empty().append(systemsearch, systemcontent.append(ul));
+            
+            //Apply a custom scroll to the component
+            systemtext.jScrollPane({scrollbarWidth:28, dragMinHeight:25, dragMaxHeight:25});
             
             /*
             // Make it resizable
@@ -471,7 +509,7 @@ UserInterface = ( function() {
             // Store this system component
             systemElement = system;
         };
-
+        
         return new SystemComponent();
     } )();
 

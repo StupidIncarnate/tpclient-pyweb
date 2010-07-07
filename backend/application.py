@@ -18,7 +18,7 @@ import middleman
 currentTurn = 0
 cache = None
 
-mediaListDir = '/tmp/tpclient-pyweb/media/'
+mediaListDir = '/tmp/tpclient-pyweb/media/' 
 serverMediaZip = 'http://svn.thousandparsec.net/svn/media/client/media-new.gz'
 mediaListName = mediaListDir + 'media-new.txt'
 
@@ -101,7 +101,7 @@ def login(environ, start_response):
                     fileHolder.write('')
                     fileHolder.close()
                     
-            
+            middleman.cacheObjectPrintout(cache)
     else:
         data = {'auth': False, 'error': 'Just use the form we provid to submit data, OK?'}
 

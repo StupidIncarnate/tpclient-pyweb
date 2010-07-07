@@ -276,12 +276,13 @@ def checkIfImageExists(objectData, mediaListName):
     for i in objectData:
         obj = objectData[i]
         for k in ["Media", "Icon"]:
-            
-            url = obj[k]
-            
-            if url in knownImageUrls:
-                objectData[i][k] = safestr("http://" + mediaRepoURL + url + knownImageUrls[url]) 
+            if k in obj: 
+                url = obj[k]
                 
+                if url in knownImageUrls:
+                    objectData[i][k] = safestr("http://" + mediaRepoURL + url + knownImageUrls[url]) 
+            else:
+                obj[k] = ""
     return objectData
 
 class FriendlyObjects(object):
@@ -296,6 +297,10 @@ class FriendlyObjects(object):
         #print("Build Object Data Structure")
         
         cacheObjectPrintout(self.cache)
+        minX = 0
+        maxX = 0
+        minY = 0
+        maxY = 0
         
         for i in self.cache.objects:
             obj = self.cache.objects[i]
@@ -313,11 +318,14 @@ class FriendlyObjects(object):
             }
             
             ret[obj.id].update(getPropertyList(obj))
+            mediaRelativeURLS = getMediaURLs(self.cache, obj.id)            
             
             if "Media" in ret[obj.id]:
                 ret[obj.id]["Media"] = ret[obj.id]["Media"]["url"] 
+                ret[obj.id]["Media"] = safestr(mediaRelativeURLS["Media"])
             if "Icon" in ret[obj.id]:
                 ret[obj.id]["Icon"] = ret[obj.id]["Icon"]["url"]
+                ret[obj.id]["Icon"] = safestr(mediaRelativeURLS["Icon"])
             if "Size" in ret[obj.id]:
                 ret[obj.id]["Size"] = ret[obj.id]["Size"]["size"]
             if "Year" in ret[obj.id]:
@@ -333,13 +341,26 @@ class FriendlyObjects(object):
             if "Velocity" in ret[obj.id]:
                 ret[obj.id]["Velocity"] = ret[obj.id]["Velocity"]["vector"]
             
-            mediaRelativeURLS = getMediaURLs(self.cache, obj.id)
+            print type(ret[obj.id]["Position"]["x"]) 
+            print type(minX)
+            print str(ret[obj.id]["Position"]["x"]) + " " + str(minX)
             
-            """Treat specific data certain ways"""
+            
+            """Find the Boundries of the Universe"""
+            objX = int(ret[obj.id]["Position"]["x"])
+            objY = int(ret[obj.id]["Position"]["y"])
+            
+            if objX < minX:
+                minX = objX
+            elif objX > maxX:
+                maxX = objX
+            if objY < minY:
+                minY = objY
+            elif objY > maxY:
+                maxY = objY
             
             #print checkIfImageExists(safestr(mediaRepoURL + mediaRelativeURLS["Media"]))
-            ret[obj.id]["Media"] = safestr(mediaRelativeURLS["Media"])
-            ret[obj.id]["Icon"] = safestr(mediaRelativeURLS["Icon"])
+            
             
             if hasattr(obj, 'parent'):
                 ret[obj.id]['parent'] = obj.parent
@@ -348,6 +369,9 @@ class FriendlyObjects(object):
             """fix: Convert owner to name"""
             
         ret = checkIfImageExists(ret, self.mediaListName)
+        
+        """Add the universe dimensions to the universe object array"""
+        ret[0]["Size"] = {'minX': minX, 'maxX': maxX, 'minY': minY, 'maxY': maxY}
         #print "Done With Building Items"
         return ret
 
