@@ -613,6 +613,7 @@ UserInterface = ( function() {
 
         /**
          * Inline class: object argument panel
+         * Old
          */
         function ObjectArgumentPanel() {
             this.object = null;
@@ -644,6 +645,7 @@ UserInterface = ( function() {
 
         /**
          * Inline class: list argument panel
+         * Old
          */
         function ListArgumentPanel() {
             this.order_type = null;
@@ -778,6 +780,7 @@ UserInterface = ( function() {
 
         /**
          * Inline class: string argument panel
+         * Old
          */
         function StringArgumentPanel() {
             this.string = null;
@@ -804,6 +807,7 @@ UserInterface = ( function() {
 
         /**
          * Inline class: coordinate argument panel
+         * Old
          */
         function CoordinateArgumentPanel() {
             this.pos1 = null;
@@ -833,6 +837,7 @@ UserInterface = ( function() {
 
         /**
          * Inline class: time argument panel
+         * Old
          */
         function TimeArgumentPanel() {
             this.time = null;
@@ -870,7 +875,7 @@ UserInterface = ( function() {
         OrderComponentClass.prototype.setup = function(data) {
             OrderComponent.orders = data;
         };
-
+        //old
         OrderComponentClass.prototype.updateOrder = function(order) {
             var temp = new Array();
             for(var i in this.args) {
@@ -893,7 +898,7 @@ UserInterface = ( function() {
                 }
             });
         };
-
+        //Old
         OrderComponentClass.prototype.removeOrder = function(order_id) {
         	//FIX: Does not remove when send order and then press remove
         	 var order_position = OrderId2OrderPosition(OrderComponent.orders[OrderComponentClass.id].orders, order_id);
@@ -913,7 +918,7 @@ UserInterface = ( function() {
                 }
             });          
         };
-
+        //Old
         OrderComponentClass.prototype.buildOrder = function(subid) {
             this.args = new Array();
 
@@ -974,7 +979,10 @@ UserInterface = ( function() {
                 $('#order-component-create-order').append(update, remove);
             }
         };
-
+        /*
+         * TODO: Convert this to rightlicck menu
+         * Old
+         */
         OrderComponentClass.prototype.buildOrderList = function() {
         	var counter = 0;
             select = $(document.createElement('select')).attr('id', 'order_list');
@@ -1012,7 +1020,7 @@ UserInterface = ( function() {
             }
         	return false;
         };
-
+        //Old
         OrderComponentClass.prototype.onMapClick = function(eventData) {
         	var queueid = 0;
         	if(ObjectComponent.objects[eventData.target.id] != undefined &&
@@ -1021,7 +1029,7 @@ UserInterface = ( function() {
         		queueid = ObjectComponent.objects[eventData.target.id]["Order Queue"]["queueid"];
             OrderComponent.buildOrderPanel(parseInt(queueid));
         };
-
+        //Old
         OrderComponentClass.prototype.buildOrderPanel = function(id) {
             // Store selected object id
             OrderComponentClass.id = id;
@@ -1037,7 +1045,6 @@ UserInterface = ( function() {
             // If this object has orders continue
             if(OrderComponentClass.id > 0 && OrderComponent.orders[OrderComponentClass.id]) {
                 dl = $(document.createElement('dl'));
-                
                 
                 OrderComponent.orders[OrderComponentClass.id]['orders'] = 
                 	sortArrByKey(OrderComponent.orders[OrderComponentClass.id]['orders']);
@@ -1062,7 +1069,45 @@ UserInterface = ( function() {
             }
 
         };
+        OrderComponentClass.prototype.currentOrderList = function(id) {
+            // Store selected object id
+            OrderComponentClass.id = id;
+            
+            // Reset selected order
+            OrderComponentClass.type = null;
 
+            OrderComponentClass.args = new Array();
+
+            div = $(document.createElement('div'));
+            div.attr('id','order-list');
+            div.append($(document.createElement('h4')).text("Orders"));
+            
+            // If this object has orders continue
+            if(OrderComponentClass.id > 0 && OrderComponent.orders[OrderComponentClass.id]) {
+                
+                OrderComponent.orders[OrderComponentClass.id]['orders'] = 
+                	sortArrByKey(OrderComponent.orders[OrderComponentClass.id]['orders']);
+                
+                for(var i in OrderComponent.orders[OrderComponentClass.id]['orders']) {
+                    var order_id = OrderComponent.orders[OrderComponentClass.id]['orders'][i].order_id;
+                    order = OrderComponent.orders[OrderComponentClass.id]['orders'][i];
+                    dt = $(document.createElement('dt')).text(order.turns + ' turns');
+                    dd = $(document.createElement('dd')).append(
+                        $(document.createElement('a')).attr({'id': order.order_id, 'href': '#'}).text(order.name).click(function(eventData) {
+                            //OrderComponent.buildOrder(eventData.currentTarget.id);
+                        }),
+                        $(document.createElement('br')),
+                        order.description);
+                    div.append(dt).append(dd);
+                }
+                
+                //OrderComponent.buildOrder();
+            } else {
+                div.append('No orders for this object');
+            }
+            return div;
+        };
+        
         return new OrderComponentClass();
     } )();
 
@@ -1212,9 +1257,14 @@ UserInterface = ( function() {
                 object = InfoComponent.objects[id];
                 infoComponent = $("#info-panel-text").html("");
                 h4 = $(document.createElement("h4")).attr("id", "planet-title").text(object.name);
-                div = $(document.createElement("div")).attr("id", "planet-media").html("<img src=\""+ object.Media.toString() +"\">");
+                mediadiv = $(document.createElement("div")).attr("id", "planet-media").html("<img src=\""+ object.Media.toString() +"\">");
+                ordersdiv = OrderComponent.currentOrderList(id);
+                leftdiv = $(document.createElement("div")).attr("id", "leftcolumn").append(mediadiv).append(ordersdiv);
+                
                 dl = $(document.createElement("dl")).attr("id", "info-tree");
-                infoComponent.append(h4).append(div).append(dl);
+                
+                infoComponent.append(h4).append(leftdiv).append(dl);
+                
                 if(object != undefined) {
     	            for(key in object){
     	            	if (key != "contains" && key != "Order Queue" && key != "name" && key != "Icon" && key != "Media") {
