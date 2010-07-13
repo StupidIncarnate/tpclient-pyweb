@@ -261,9 +261,10 @@ def getImageListFromFile(fileloc):
         for line in filehandle:
             line = line.split(" ")[0].lstrip("./")
             filepathname = line.split(".")[0]
-            ext = line.lstrip(filepathname)
-            if ext.endswith(("png", "gif", "jpg")):
-                imageArr[filepathname] = ext
+            if len(line.split(".")) > 1:
+                ext = line.split(".")[1]
+                if ext.endswith(("png", "gif", "jpg")):
+                    imageArr[filepathname] = ext
     return imageArr
     
 def checkIfImageExists(objectData, mediaListName):
@@ -278,9 +279,9 @@ def checkIfImageExists(objectData, mediaListName):
         for k in ["Media", "Icon"]:
             if k in obj: 
                 url = obj[k]
-                
+                print "CheckingifImage " + "http://" + mediaRepoURL + url
                 if url in knownImageUrls:
-                    objectData[i][k] = safestr("http://" + mediaRepoURL + url + knownImageUrls[url]) 
+                    objectData[i][k] = safestr("http://" + mediaRepoURL + url + "." + knownImageUrls[url]) 
             else:
                 obj[k] = ""
     return objectData

@@ -204,7 +204,7 @@ Map = ( function() {
                     obj = this.objects[galaxy.contains[j]];
                     var x = (obj.Position.x / UniverseRadius) * viewH;
                     var y = (obj.Position.y / UniverseRadius) * viewH;
-                    this.drawobject(x, y, obj.id, obj.name, obj.type.name);
+                    this.drawobject(x, y, obj.id, obj.name, obj.type.name, obj.Media);
                     
                 }
                 
@@ -212,16 +212,18 @@ Map = ( function() {
         }
     };
     
-    MapCreator.prototype.drawobject = function(x, y, id, name, type) {
+    MapCreator.prototype.drawobject = function(x, y, id, name, type, image) {
     	type = type.toLowerCase().replace(" ", "");
-    	var object = $(document.createElement('div'));
-    	object.attr('id', id).attr('class', type);
-    	object.css({'top': -y+'px', 'left': x+'px'});
+    	var objectdiv = $(document.createElement('div'));
+    	objectdiv.attr('id', id).attr('class', type + " mapsystem");
+    	objectdiv.css({'top': -y+'px', 'left': x+'px'});
+    	
+    	var objectIcon = $(document.createElement('img')).attr('src', image);
     	
     	var objectText = $(document.createElement('div'));
     	objectText.attr('class', 'name');
     	objectText.text(name);
-    	this.canvas.append(object.append(objectText));
+    	this.canvas.append(objectdiv.append(objectIcon).append(objectText));
     	
     };
     
@@ -1069,6 +1071,20 @@ UserInterface = ( function() {
             }
 
         };
+        OrderComponentClass.prototype.constructOrdersMenu = function(queueid, id, x, y) {
+        	if(queueid != undefined && queueid != null) {
+        		div = $(document.createElement('div')).attr('id', 'order-menu').css({'top': y+'px', 'left': x+'px'});
+        		ul = $(document.createElement('ul'));
+        		div.append(ul);
+	        	for(var i in OrderComponent.orders[queueid].order_type) {
+	                order_type = OrderComponent.orders[queueid].order_type[i];
+	                li = $(document.createElement('li')).attr('value', i).text(order_type.name);
+	                ul.append(li);
+	            }
+	        	$('#system-planet-panel').append(div);
+        	}
+        	
+        };
         OrderComponentClass.prototype.currentOrderList = function(id) {
             // Store selected object id
             OrderComponentClass.id = id;
@@ -1274,7 +1290,7 @@ UserInterface = ( function() {
     		                    if(o.id > 0) {
     		                    	h4 = $(document.createElement("h4")).html("<img src=\""+ o.Icon +"\">");
     		                        a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).text(o.name);
-    		                        a.one('click', InfoComponent.onMapClick);
+    		                        a.one('click', InfoComponent.onMapClick); 
     		                        dd = $(document.createElement('dd')).append(h4.append(a));
     		                    } else {
     		                        dd = $(document.createElement('dd')).text(o.name);
@@ -1341,22 +1357,124 @@ UserInterface = ( function() {
     
     /**
      * System object component
-     * Handles all the panel for system objects in a galaxy
+     * Handles all the panel for system objects in a system when the system is rolled over on the map
      */
     var SystemObjectComponent = (function() {
         var SystemObjectComponentClass = function(){};
 
         // List of all objects
         SystemObjectComponentClass.prototype.objects = null;
-
+        SystemObjectComponentClass.prototype.displayPanel = false;
+        SystemObjectComponentClass.prototype.currentId = -1;
+        SystemObjectComponentClass.prototype.overSubPanel = false;
         /**
          * Setup object component
          */
         SystemObjectComponentClass.prototype.setup = function(data) {
             SystemObjectComponent.objects = data;
-            $("#system-planet-component").hide();
         };
-           
+                
+        SystemObjectComponentClass.prototype.hideSystemTitles = function(id) {
+        	$('.name').css({'color': 'black'});
+        	$('#map-canvas #'+id+' .name').css({'color':'white'});
+        };
+        SystemObjectComponentClass.prototype.showSystemTitles = function(id) {
+        	$('.name').css('color', 'white');
+        };
+        SystemObjectComponentClass.prototype.hideObjects = function(id) {
+        	if(SystemObjectComponent.overSubPanel == false) {
+	        	SystemObjectComponent.displayPanel = false;
+		    	SystemObjectComponent.currentId = -1;
+		    	$('#system-planet-panel').remove();
+		    	SystemObjectComponent.showSystemTitles(id);
+        	}
+        };
+        /**
+         * Event: MouseOver
+         */
+        SystemObjectComponentClass.prototype.showObjects = function(systemobject) {
+        	if(SystemObjectComponent.displayPanel == true && SystemObjectComponent.currentId != -1) {
+        		id = SystemObjectComponent.currentId;
+        	}
+        	else {
+        		id = parseInt(systemobject.attr('id'));
+        	}
+		    object = SystemObjectComponent.objects[id];
+		    if((object != undefined && !isNaN(id) && parseInt(object.contains.length) > 0)) {
+		    	$('#system-planet-panel').remove(); 
+		    	SystemObjectComponent.displayPanel = true;
+		    	SystemObjectComponent.currentId = id;
+		    	
+		    	/*posX = systemobject.position().left;
+		    	posY = systemobject.position().top;
+			    */
+			    var infoComp = $(document.createElement("div")).attr('id', 'system-planet-panel');
+			    
+			    var dl = $(document.createElement("dl"));
+			    infoComp.append(dl);			
+			    
+				ul = $(document.createElement('ul')).addClass('tree-list');
+				for(var i in object.contains) {
+				    toplevel = SystemObjectComponent.objects[object.contains[i]];
+				    li = $(document.createElement('li')).addClass(toplevel.type.name.toLowerCase().replace(" ", "")).attr("id", toplevel.id).attr("parent",object.id);
+				    li.bind("contextmenu",function(eventData){
+				    	$("#order-menu").remove();
+				    	
+				    	obj = SystemObjectComponent.objects[parseInt(this.id)];
+				    	parentobj = "#map-canvas #" + SystemObjectComponent.objects[parseInt(this.parentNode.id)];
+				    	
+				    	if(obj["Order Queue"] != undefined && obj["Order Queue"]["queueid"] != undefined && obj["Order Queue"]["queueid"] != 0) {
+				    		queueid = obj["Order Queue"]["queueid"];
+				    		
+				    		var x = eventData.pageX;
+				    		var y = eventData.pageY;
+				    		
+				    		OrderComponent.constructOrdersMenu(queueid, obj.id, x, y);					    		
+				    	}
+				    	//cancel the default context menu
+				        return false;
+				    }).bind("click",function() {
+				    	$("#order-menu").remove();
+				    });
+
+				    
+				    img = $(document.createElement('img'));
+				    img.attr('src', toplevel.Media);
+				    
+				    text = $(document.createElement('p')).text(toplevel.name);
+				    /*a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id})
+				    	.text(toplevel.name).one('click', SystemObjectComponent.onMapClick).one('click', ObjectComponent.onMapClick);*/
+				    ul.append(li.append(img).append(text));
+				    if(toplevel.contains.length > 0) {
+						subul = $(document.createElement('ul')).addClass(toplevel.type.name.toLowerCase().replace(" ", ""));
+						li.append(subul);
+						for(var j in toplevel.contains) {
+						    sublevel = SystemObjectComponent.objects[toplevel.contains[j]];
+						    
+						    subli = $(document.createElement('li'));
+						    img = $(document.createElement('img')).attr('src', sublevel.Media);
+						    text = $(document.createElement('p')).text(sublevel.name).attr('class', 'name');
+						    subul.append(subli.append(img).append(text));
+						}
+				    }
+				}
+				dl.append(ul);
+				
+				$('#map-canvas').children('#'+id).append(infoComp);
+				SystemObjectComponent.hideSystemTitles(id);
+				
+				$('#system-planet-panel').mouseenter(function() {  
+					SystemObjectComponent.overSubPanel = true;
+		          }).mouseleave(function() {
+		        	  SystemObjectComponent.overSubPanel = false;
+		        	  SystemObjectComponent.hideObjects(id);
+		          });
+				
+		    }		    
+        	
+        };
+        
+        
         /**
          * Event: onMapClick
          */
@@ -1461,6 +1579,13 @@ UserInterface = ( function() {
             
             // Draw Map
             Map.draw();
+            
+            //Bind rollover sytem object menu to mapobjects
+            $('.mapsystem').mouseenter(function() {  
+            	SystemObjectComponent.showObjects($(this));
+	          }).mouseleave(function() {
+	        	  SystemObjectComponent.hideObjects();
+	          });
             
             // Hack to fix height and width
             jQuery('#overlay-content').css('height', (jQuery(window).height() - jQuery('#overlay-content').offset().top));
@@ -1641,18 +1766,58 @@ UserInterface = ( function() {
 	
         $('#logout').bind('click', UserInterface.logout);
         $('#loginform').bind("submit", this, login);
-        $('#mapdiv').live('click', function(eventData) {
+        /*$('#mapdiv').live('click', function(eventData) {
         	eventData.clickThrough = "mapobj";
         	InfoComponent.onMapClick(eventData);
         	//SystemObjectComponent.onMapClick(eventData);
+        });*/
+
+
+        /*$('#name').hover(function(eventData) {
+        	alert("ey");
+        	// do something on mouseover
+        	SystemObjectComponent.showObjects(eventData);
+      	}, 
+      	function(eventData){
+      		// do something on mouseout
+      		SystemObjectComponent.hideObjects(eventData);
+      	});
+        /*$('.name').live('mouseover', function(eventData) {
+        	if(eventData.type == 'mouseover') {
+	        	// do something on mouseover
+	        	SystemObjectComponent.showObjects(eventData);
+        	}
+        	else{
+        		alert("abnormal in mouseover");
+        	}
+      	}).live('mouseout', function(eventData){
+      		if(eventData.type == 'mouseout') {
+	  		  	// do something on mouseout
+      			SystemObjectComponent.hideObjects(eventData);
+      		}
+      		else {
+      			alert("abnormal in mouseout");
+      		}
+      	});
+        /*
+        $('#mapcanvas div').live('mouseover mouseout', function(event) {
+        	  if (event.type == 'mouseover') {
+        		    // do something on mouseover
+        		  SystemObjectComponent.showObjects(eventData);
+    		  } else {
+    		    // do something on mouseout
+    			  $('#system-planet-panel').hide(); 
+    		  }
         });
-        $('#mapdiv .starsystem, #mapdiv .fleet').live('click', function(eventData) {
+        
+         * .bind('click', function(eventData) {
             OrderComponent.onMapClick(eventData);
             //ObjectComponent.onMapClick(eventData);
             eventData.clickThrough = "mapobj";
             InfoComponent.onMapClick(eventData);
             //SystemObjectComponent.onMapClick(eventData);
-        });
+        })
+         */
         
         $('#menu-bar-title').bind('click', function() {
         	var width = $('#menu-bar').width() - $('#menu-bar-title').width();
