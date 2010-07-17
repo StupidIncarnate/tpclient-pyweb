@@ -214,16 +214,17 @@ Map = ( function() {
     
     MapCreator.prototype.drawobject = function(x, y, id, name, type, image) {
     	type = type.toLowerCase().replace(" ", "");
+    	var container = $(document.createElement('div')).attr('id', id).attr('class', type + " container").css({'top': -y+'px', 'left': x+'px'});
+    	this.canvas.append(container);
     	var objectdiv = $(document.createElement('div'));
-    	objectdiv.attr('id', id).attr('class', type + " mapsystem");
-    	objectdiv.css({'top': -y+'px', 'left': x+'px'});
+    	objectdiv.attr('class', 'mapsystem').attr('id', id);
     	
     	var objectIcon = $(document.createElement('img')).attr('src', image);
     	
     	var objectText = $(document.createElement('div'));
-    	objectText.attr('class', 'name');
+    	objectText.attr('class', 'name').attr('id', id);
     	objectText.text(name);
-    	this.canvas.append(objectdiv.append(objectIcon).append(objectText));
+    	container.append(objectdiv.append(objectIcon).append(objectText));
     	
     };
     
@@ -361,7 +362,32 @@ UserInterface = ( function() {
 
         return new NotifyComponentClass();
     } )();
-
+    
+    /*
+     * Window Manager
+     * 
+     * Manages what dialog is currently displayed. THe mediator when anywhere on the mapdiv is clicked
+     * 
+     */
+    var WindowManagerComponent = ( function() {
+    	
+    	var WindowManagerClass = function(){};
+    	
+    	var displayedObjectName = ""; //Must be #idname
+    	
+    	WindowManagerClass.prototype.removeObject = function() {
+    		if(displayedObjectName != "") {
+    			$(displayedObjectName).remove();
+    		}
+    	};
+    	WindowManagerClass.prototype.registerObject = function(objectName) {
+    		WindowManagerComponent.removeObject();
+    		displayedObjectName = objectName;
+    	};
+    	
+    	return new WindowManagerClass();
+    })();
+    
     /**
      * System component
      *
@@ -446,7 +472,7 @@ UserInterface = ( function() {
                 	//Tells the info panel not to load panel above system panel
                 	eventData.clickThrough = "sysPanel";
                 	
-                	InfoComponent.onMapClick(eventData);
+                	InfoComponent.onItemClick($(this).attr('id'));
                 	//ObjectComponent.onMapClick(eventData);
                     OrderComponent.onMapClick(eventData);
                 });
@@ -484,7 +510,7 @@ UserInterface = ( function() {
             	//Tells the info panel not to load panel above system panel
             	eventData.clickThrough = "sysPanel";
             	
-            	InfoComponent.onMapClick(eventData);
+            	InfoComponent.onItemClick($(this).attr('id'));
                 //ObjectComponent.onMapClick(eventData);
                 OrderComponent.onMapClick(eventData);
             });
@@ -558,28 +584,6 @@ UserInterface = ( function() {
         var messageNumber = 0;
         var messageBodyElement = null;
         
-        /*
-        var onNext = function() {
-            messageNumber++;
-            if(messageNumber > (messages[0].number - 1)) {
-                messageNumber = 0;
-            }
-            redraw();
-        };
-
-        var onPrev = function() {
-            messageNumber--;
-            if(messageNumber < 0) {
-                messageNumber = messages[0].number-1;
-            }
-            redraw();
-        };
-
-        var redraw = function() {
-            $('#message-component-container li.center span').text(messages[0].messages[messageNumber].subject + ' (' + (messageNumber+1) + '/' + messages[0].number + ')');
-            messageBodyElement.empty().append("<br /><br />"+messages[0].messages[messageNumber].body);
-        };
-		*/
         var MessageComponentClass = function(){};
 
         MessageComponentClass.prototype.setup = function(data) {
@@ -1071,18 +1075,29 @@ UserInterface = ( function() {
             }
 
         };
-        OrderComponentClass.prototype.constructOrdersMenu = function(queueid, id, x, y) {
-        	if(queueid != undefined && queueid != null) {
-        		div = $(document.createElement('div')).attr('id', 'order-menu').css({'top': y+'px', 'left': x+'px'});
-        		ul = $(document.createElement('ul'));
-        		div.append(ul);
-	        	for(var i in OrderComponent.orders[queueid].order_type) {
-	                order_type = OrderComponent.orders[queueid].order_type[i];
-	                li = $(document.createElement('li')).attr('value', i).text(order_type.name);
-	                ul.append(li);
-	            }
-	        	$('#system-planet-panel').append(div);
-        	}
+        OrderComponentClass.prototype.constructOrdersMenu = function(eventData, id) {
+        	id = parseInt(id)
+        	obj = SystemObjectComponent.objects[id];
+        	if(obj["Order Queue"] != undefined && obj["Order Queue"]["queueid"] != undefined && obj["Order Queue"]["queueid"] != 0) {		    		
+	    		queueid = obj["Order Queue"]["queueid"];
+	    		
+	    		var x = eventData.pageX;
+	    		var y = eventData.pageY;
+	    		
+	    		WindowManagerComponent.registerObject("#order-menu");
+	    		
+	    		if(queueid != undefined && queueid != null) {
+	        		div = $(document.createElement('div')).attr('id', 'order-menu').css({'top': y+'px', 'left': x+'px'});
+	        		ul = $(document.createElement('ul'));
+	        		div.append(ul);
+		        	for(var i in OrderComponent.orders[queueid].order_type) {
+		                order_type = OrderComponent.orders[queueid].order_type[i];
+		                li = $(document.createElement('li')).attr('value', i).text(order_type.name);
+		                ul.append(li);
+		            }
+		        	$('#system-planet-panel').append(div);
+	        	}
+	    	}
         	
         };
         OrderComponentClass.prototype.currentOrderList = function(id) {
@@ -1241,109 +1256,69 @@ UserInterface = ( function() {
     	/*
     	 * Event: onMapClick
     	 */
-    	InfoComponentClass.prototype.onMapClick = function(eventData) {
-    		id = parseInt(eventData.target.id);
+    	InfoComponentClass.prototype.onItemClick = function(id) {
+    		id = parseInt(id);
     		if(InfoComponent.objects[id] == undefined) {
-    			$('#info-panel').css("display", "none");
+    			WindowManagerComponent.removeObject();
     		}
     		else if(InfoComponent.objects[id] != undefined) {
-    			//sysPanel "mapobj";
+                WindowManagerComponent.registerObject("#info-panel");
+                
+    			infopanel = $(document.createElement("div")).attr('id', 'info-panel');
+    			$('#overlay').append(infopanel);
     			
-    			if(eventData.clickThrough == "sysPanel") {
-    				infoposTop = 5;
-    				infoposLeft = (screen.width / 2) - ($('#info-panel').width() / 2);
-    				if(infoposTop < 0)
-	    				infoposTop = 0;
-	    			if(infoposLeft < 0)
-	    				infoposLeft = 0;
-	    			$('#info-panel').css("display", "inline").css("top", infoposTop+"px").css("left", infoposLeft+"px");
+    			infoposTop = 5;
+				infoposLeft = (screen.width / 2) - (infopanel.width() / 2);
+				
+				if(infoposTop < 0)
+    				infoposTop = 0;
+    			if(infoposLeft < 0)
+    				infoposLeft = 0;
+    			
+    			infopanel.css("display", "inline").css("top", infoposTop+"px").css("left", infoposLeft+"px");
 	    			
-    			} else if(eventData.clickThrough == "mapobj") {
-    				infoposTop = eventData.pageY - ($('#info-panel').height() / 2);
-	    			infoposLeft = eventData.pageX - ($('#info-panel').width() / 2);
-	    			if(infoposTop < 0)
-	    				infoposTop = 0;
-	    			if(infoposLeft < 0)
-	    				infoposLeft = 0;
-	    			
-	    			$('#info-panel').css("display", "inline").css("top", infoposTop+"px").css("left", infoposLeft+"px");
-    				
-    			}
-    			 
-                object = InfoComponent.objects[id];
-                infoComponent = $("#info-panel-text").html("");
+    			object = InfoComponent.objects[id];
+    			
+                infoComponent = $(document.createElement("div")).attr('id', 'info-panel-text');
+                
                 h4 = $(document.createElement("h4")).attr("id", "planet-title").text(object.name);
+                
                 mediadiv = $(document.createElement("div")).attr("id", "planet-media").html("<img src=\""+ object.Media.toString() +"\">");
                 ordersdiv = OrderComponent.currentOrderList(id);
                 leftdiv = $(document.createElement("div")).attr("id", "leftcolumn").append(mediadiv).append(ordersdiv);
                 
                 dl = $(document.createElement("dl")).attr("id", "info-tree");
                 
-                infoComponent.append(h4).append(leftdiv).append(dl);
+                infopanel.append(infoComponent.append(h4).append(leftdiv).append(dl));
                 
                 if(object != undefined) {
     	            for(key in object){
-    	            	if (key != "contains" && key != "Order Queue" && key != "name" && key != "Icon" && key != "Media") {
+    	            	if (key != "contains" && key != "Order Queue" && key != "name" && key != "Icon" && key != "Media" && key != "parent") {
     		            	dt = $(document.createElement('dt')).text(key);
-    		                if(key == 'parent') {
-    		                    o = InfoComponent.objects[object[key]];
-    		                    if(o.id > 0) {
-    		                    	h4 = $(document.createElement("h4")).html("<img src=\""+ o.Icon +"\">");
-    		                        a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).text(o.name);
-    		                        a.one('click', InfoComponent.onMapClick); 
-    		                        dd = $(document.createElement('dd')).append(h4.append(a));
-    		                    } else {
-    		                        dd = $(document.createElement('dd')).text(o.name);
-    		                    }
-    		                } else {
-    		                    if(object[key].length == 0) {
-    		                        dd = $(document.createElement('dd')).text('-');
-    		                    } else {
-    		                    	var objText = object[key].toString();
-    		                    	//Checks if the thing has an image
-    		                    	if(objText.substring(0,4) == "http"){
-    		                    		dd = $(document.createElement('dd')).html("<img src=\""+ objText +"\">");
-    		                    	} else if(typeof object[key] == "object") {
-    		                    		var text = "";
-    		                    		for(vars in object[key]){
-    		                    			text += vars.toUpperCase() + ": " + object[key][vars] + ", <br />";
-    		                    		}
-    		                    		dd = $(document.createElement('dd')).html(text);
-    		                    	} else {
-    		                    		dd = $(document.createElement('dd')).text(objText);
-    		                    	}
-    		                    }
-    		                }
+    		                
+		                    if(object[key].length == 0) {
+		                        dd = $(document.createElement('dd')).text('-');
+		                    } else {
+		                    	var objText = object[key].toString();
+		                    	//Checks if the thing has an image
+		                    	if(objText.substring(0,4) == "http"){
+		                    		dd = $(document.createElement('dd')).html("<img src=\""+ objText +"\">");
+		                    	} else if(typeof object[key] == "object") {
+		                    		var text = "";
+		                    		for(vars in object[key]){
+		                    			text += vars.toUpperCase() + ": " + object[key][vars] + ", <br />";
+		                    		}
+		                    		dd = $(document.createElement('dd')).html(text);
+		                    	} else {
+		                    		dd = $(document.createElement('dd')).text(objText);
+		                    	}
+		                    }
+    		                
     		                dl.append(dt).append(dd);
     	            	}
     	            	
     	            }
     	            
-    	            // What objects are contained inside this object
-    	            if(object.contains.length > 0) {
-    	                dt = $(document.createElement('dt')).text('Contains');
-    	                dd = $(document.createElement('dd'));
-    	                ul = $(document.createElement('ul')).addClass('tree-list');
-    	                for(var i in object.contains) {
-    	                    toplevel = InfoComponent.objects[object.contains[i]];
-    	                    li = $(document.createElement('li')).addClass("icon").css("background-image", "url("+toplevel.Icon+")");
-    	                    a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id})
-    	                        .addClass(toplevel.type.name.toLowerCase().replace(" ", "")).text(toplevel.name).one('click', InfoComponent.onMapClick);
-    	                    ul.append(li.append(a));
-    	                    if(toplevel.contains.length > 0) {
-    	                        subul = $(document.createElement('ul'));
-    	                        li.append(subul);
-    	                        for(var j in toplevel.contains) {
-    	                            sublevel = InfoComponent.objects[toplevel.contains[j]];
-    	                            subli = $(document.createElement('li')).addClass("icon").css("background-image", "url("+sublevel.Icon+")");
-    	                            a = $(document.createElement('a')).attr({'href': '#info/' + sublevel.id, 'id': sublevel.id}).text(sublevel.name)
-    	                                .addClass(sublevel.type.name.toLowerCase().replace(" ", "")).one('click', InfoComponent.onMapClick);
-    	                            subul.append(subli.append(a));
-    	                        }
-    	                    }
-    	                }
-    	                dl.append(dt).append(dd.append(ul));
-    	            }
                 }
                 //Apply a custom scroll to the component
                 infoComponent.jScrollPane({scrollbarWidth:28, dragMinHeight:25, dragMaxHeight:25});
@@ -1364,7 +1339,7 @@ UserInterface = ( function() {
 
         // List of all objects
         SystemObjectComponentClass.prototype.objects = null;
-        SystemObjectComponentClass.prototype.displayPanel = false;
+        SystemObjectComponentClass.prototype.displaySubPanel = false;
         SystemObjectComponentClass.prototype.currentId = -1;
         SystemObjectComponentClass.prototype.overSubPanel = false;
         /**
@@ -1375,7 +1350,7 @@ UserInterface = ( function() {
         };
                 
         SystemObjectComponentClass.prototype.hideSystemTitles = function(id) {
-        	$('.name').css({'color': 'black'});
+        	$('.name').css({'color': 'black', 'zindex': '99'});
         	$('#map-canvas #'+id+' .name').css({'color':'white'});
         };
         SystemObjectComponentClass.prototype.showSystemTitles = function(id) {
@@ -1384,7 +1359,7 @@ UserInterface = ( function() {
         SystemObjectComponentClass.prototype.hideObjects = function(id) {
         	if(SystemObjectComponent.overSubPanel == false) {
 	        	SystemObjectComponent.displayPanel = false;
-		    	SystemObjectComponent.currentId = -1;
+		    	SystemObjectComponent.currentId = 0;
 		    	$('#system-planet-panel').remove();
 		    	SystemObjectComponent.showSystemTitles(id);
         	}
@@ -1408,7 +1383,7 @@ UserInterface = ( function() {
 		    	/*posX = systemobject.position().left;
 		    	posY = systemobject.position().top;
 			    */
-			    var infoComp = $(document.createElement("div")).attr('id', 'system-planet-panel');
+			    var infoComp = $(document.createElement("div")).attr('id', 'system-planet-panel').css('z-index', '300');
 			    
 			    var dl = $(document.createElement("dl"));
 			    infoComp.append(dl);			
@@ -1417,36 +1392,14 @@ UserInterface = ( function() {
 				for(var i in object.contains) {
 				    toplevel = SystemObjectComponent.objects[object.contains[i]];
 				    li = $(document.createElement('li')).addClass(toplevel.type.name.toLowerCase().replace(" ", "")).attr("id", toplevel.id).attr("parent",object.id);
-				    li.bind("contextmenu",function(eventData){
-				    	$("#order-menu").remove();
-				    	
-				    	obj = SystemObjectComponent.objects[parseInt(this.id)];
-				    	parentobj = "#map-canvas #" + SystemObjectComponent.objects[parseInt(this.parentNode.id)];
-				    	
-				    	if(obj["Order Queue"] != undefined && obj["Order Queue"]["queueid"] != undefined && obj["Order Queue"]["queueid"] != 0) {
-				    		queueid = obj["Order Queue"]["queueid"];
-				    		
-				    		var x = eventData.pageX;
-				    		var y = eventData.pageY;
-				    		
-				    		OrderComponent.constructOrdersMenu(queueid, obj.id, x, y);					    		
-				    	}
-				    	//cancel the default context menu
-				        return false;
-				    }).bind("click",function() {
-				    	$("#order-menu").remove();
-				    });
-
 				    
 				    img = $(document.createElement('img'));
 				    img.attr('src', toplevel.Media);
 				    
 				    text = $(document.createElement('p')).text(toplevel.name);
-				    /*a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id})
-				    	.text(toplevel.name).one('click', SystemObjectComponent.onMapClick).one('click', ObjectComponent.onMapClick);*/
 				    ul.append(li.append(img).append(text));
 				    if(toplevel.contains.length > 0) {
-						subul = $(document.createElement('ul')).addClass(toplevel.type.name.toLowerCase().replace(" ", ""));
+						subul = $(document.createElement('ul')).addClass(toplevel.type.name.toLowerCase().replace(" ", "")).attr("id", sublevel.id).attr("parent",toplevel.id);
 						li.append(subul);
 						for(var j in toplevel.contains) {
 						    sublevel = SystemObjectComponent.objects[toplevel.contains[j]];
@@ -1460,7 +1413,7 @@ UserInterface = ( function() {
 				}
 				dl.append(ul);
 				
-				$('#map-canvas').children('#'+id).append(infoComp);
+				$('#map-canvas').children('#'+id).append(infoComp).css('z-index', '200');
 				SystemObjectComponent.hideSystemTitles(id);
 				
 				$('#system-planet-panel').mouseenter(function() {  
@@ -1474,57 +1427,6 @@ UserInterface = ( function() {
         	
         };
         
-        
-        /**
-         * Event: onMapClick
-         */
-        SystemObjectComponentClass.prototype.onMapClick = function(eventData) {
-		    if(eventData.target.id == 'map-viewport') {
-		    	$("#system-planet-component").hide();
-		    }
-		    else {
-		    	id = parseInt(eventData.target.id);
-			    object = SystemObjectComponent.objects[id];
-		    	
-		    	if(object.contains.length > 0) {
-		    		$("#system-planet-component").show();
-				    posX = parseInt(eventData.clientX);
-				    posY = parseInt(eventData.clientY);
-				    $("#system-planet-component").css("top", posY).css("left", posX);
-				    
-				    infoComponent = $("#system-planet-component-content").html("");
-				    dl = $(document.createElement("dl"));
-				    infoComponent.append(dl);				    
-				    
-					ul = $(document.createElement('ul')).addClass('tree-list');
-					for(var i in object.contains) {
-					    toplevel = SystemObjectComponent.objects[object.contains[i]];
-					    li = $(document.createElement('li')).addClass("icon").css("background-image", "url("+toplevel.Icon+")");
-					    a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id})
-					    	.text(toplevel.name).one('click', SystemObjectComponent.onMapClick).one('click', ObjectComponent.onMapClick);
-					    ul.append(li.append(a));
-					    if(toplevel.contains.length > 0) {
-							subul = $(document.createElement('ul'));
-							li.append(subul);
-							for(var j in toplevel.contains) {
-							    sublevel = SystemObjectComponent.objects[toplevel.contains[j]];
-							    
-							    subli = $(document.createElement('li')).addClass("icon").css("background-image", "url("+sublevel.Icon+")");
-							    a = $(document.createElement('a')).attr({'href': '#info/' + sublevel.id, 'id': sublevel.id}).text(sublevel.name).one('click', ObjectComponent.onMapClick);
-							    subul.append(subli.append(a));
-							}
-					    }
-					}
-					dl.append(ul);
-		    		
-		    	
-			    }
-		    	else {
-		    		$("#system-planet-component").hide();
-		    	}
-		    }
-        	return false;
-        };
 
         return new SystemObjectComponentClass();
     } )();
@@ -1581,11 +1483,36 @@ UserInterface = ( function() {
             Map.draw();
             
             //Bind rollover sytem object menu to mapobjects
-            $('.mapsystem').mouseenter(function() {  
-            	SystemObjectComponent.showObjects($(this));
+            $('#map-canvas .container').mouseenter(function() {  
+            	if(SystemObjectComponent.displaySubPanel != true && SystemObjectComponent.overSubPanel != true) {
+	            	SystemObjectComponent.displaySubPanel = true;
+	            	SystemObjectComponent.showObjects($(this));
+            	}
 	          }).mouseleave(function() {
+	        	  $('#map-canvas').children('#'+SystemObjectComponent.currentId).css('z-index', '100');
+	        	  SystemObjectComponent.displaySubPanel = false;
 	        	  SystemObjectComponent.hideObjects();
 	          });
+            $('.mapsystem').bind("click",function(eventData) {
+	        	InfoComponent.onItemClick($(this).attr('id'));
+			  }).bind("contextmenu",function(eventData){
+			    	//cancel the default context menu
+			        return false;
+			   });
+            
+            //Apply orders menu to rightclick and info panel to leftclick
+		    $('#system-planet-panel li').live("contextmenu",function(eventData){
+	    		OrderComponent.constructOrdersMenu(eventData, $(this).attr('id'));
+		    	//cancel the default context menu
+		        return false;
+		    }).live("click",function(eventData) {
+		    	InfoComponent.onItemClick($(this).attr('id'));
+			  });
+		    $('#map-viewport').bind('click', function(eventData) {
+		    	if(eventData.target.id == "map-viewport") {
+		    		WindowManagerComponent.removeObject();
+		    	}
+            });
             
             // Hack to fix height and width
             jQuery('#overlay-content').css('height', (jQuery(window).height() - jQuery('#overlay-content').offset().top));
@@ -1818,6 +1745,7 @@ UserInterface = ( function() {
             //SystemObjectComponent.onMapClick(eventData);
         })
          */
+        
         
         $('#menu-bar-title').bind('click', function() {
         	var width = $('#menu-bar').width() - $('#menu-bar-title').width();
