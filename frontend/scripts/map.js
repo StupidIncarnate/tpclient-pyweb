@@ -77,6 +77,15 @@ function sortArrByKey(array) {
     }
     return sortedArr
 }
+function objKeyCount(array) {
+	var count = 0;
+	for (var k in array) {
+	    if (array.hasOwnProperty(k)) {
+	       ++count;
+	    }
+	}
+	return count;
+}
 
 /**
  * Z-index table
@@ -511,8 +520,6 @@ UserInterface = ( function() {
             	eventData.clickThrough = "sysPanel";
             	
             	InfoComponent.onItemClick($(this).attr('id'));
-                //ObjectComponent.onMapClick(eventData);
-                OrderComponent.onMapClick(eventData);
             });
             
             //$('#overlay-content').append(system.append(systemsearch, systemcontent.append(ul)));
@@ -641,7 +648,7 @@ UserInterface = ( function() {
                         this.object.append($(document.createElement('option')).attr({'value': ObjectComponent.objects[i].id}));
                     }
                 }
-                $('#order-component-create-order').append(this.order_type.name, this.order_type.description, this.object);
+                $('#order-panel').append(this.order_type.name, this.order_type.description, this.object);
             };
 
             this.getValue = function() {
@@ -766,7 +773,7 @@ UserInterface = ( function() {
                     }
                 }
 
-                $('#order-component-create-order').append(
+                $('#order-panel').append(
                     $(document.createElement('div')).append(this.order_type.name, this.selectionsElement, this.optionsElement)
                 );
             };
@@ -801,8 +808,7 @@ UserInterface = ( function() {
                     var value = '';
                 }
                 this.string = $(document.createElement('input')).attr({'type': 'text', 'value': value});
-                $('#order-component-create-order').append(
-                    $(document.createElement('div')).append(this.order_type.name, this.string)
+                $('#order-panel').append($(document.createElement('div')).append(this.order_type.name, this.string)
                 );
             };
 
@@ -833,7 +839,7 @@ UserInterface = ( function() {
                     this.pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
                     this.pos3 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
                 }
-                $('#order-component-create-order').append(this.order_type.name, this.order_type.description, ("<br />"), this.pos1, ("<br />"), this.pos2, ("<br />"), this.pos3, ("<br />"));
+                $('#order-panel').append(this.order_type.name, this.order_type.description, ("<br />"), this.pos1, ("<br />"), this.pos2, ("<br />"), this.pos3, ("<br />"));
             };
 
             this.getValue = function() {
@@ -857,7 +863,7 @@ UserInterface = ( function() {
                 } else {
                     this.time = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
                 }
-                $('#order-component-create-order').append(this.order_type.name, this.order_type.description, this.time);
+                $('#order-panel').append(this.order_type.name, this.order_type.description, this.time);
             };
 
             this.getValue = function() {
@@ -896,7 +902,8 @@ UserInterface = ( function() {
                     if(data.auth === true) {
                         UserInterface.getOrders(function(data) {
                             OrderComponent.setup(data.orders);
-                            OrderComponent.buildOrderPanel(OrderComponentClass.id);
+                            InfoComponent.onItemClick(InfoComponent.id);
+                            //InfoComponent.onItemClick($(this).attr('id'));OrderComponentClass.id);
                         });
                     } else {
                         UILock.error(data.error, true);
@@ -916,7 +923,8 @@ UserInterface = ( function() {
                     if(data.auth === true) {
                         UserInterface.getOrders(function(data) {
                             OrderComponent.setup(data.orders);
-                            OrderComponent.buildOrderPanel(OrderComponentClass.id);
+                            InfoComponent.onItemClick(InfoComponent.id);
+                            //OrderComponent.buildOrderPanel(OrderComponentClass.id);
                         });
                     } else {
                         UILock.error(data.error, true);
@@ -924,6 +932,15 @@ UserInterface = ( function() {
                 }
             });          
         };
+        OrderComponentClass.prototype.ascendOrder = function(order_id) {
+        	var order_position = OrderId2OrderPosition(OrderComponent.orders[order_id].orders, order_id);
+        	
+        };
+        OrderComponentClass.prototype.descendOrder = function(order_id) {
+        	var order_position = OrderId2OrderPosition(OrderComponent.orders[order_id].orders, order_id);
+        	
+        };
+        /*
         //Old
         OrderComponentClass.prototype.buildOrder = function(subid) {
             this.args = new Array();
@@ -984,12 +1001,12 @@ UserInterface = ( function() {
                 });
                 $('#order-component-create-order').append(update, remove);
             }
-        };
+        };*/
         /*
          * TODO: Convert this to rightlicck menu
          * Old
          */
-        OrderComponentClass.prototype.buildOrderList = function() {
+        /*OrderComponentClass.prototype.buildOrderList = function() {
         	var counter = 0;
             select = $(document.createElement('select')).attr('id', 'order_list');
             for(var i in OrderComponent.orders[OrderComponentClass.id].order_type) {
@@ -1025,7 +1042,8 @@ UserInterface = ( function() {
 	                }));
             }
         	return false;
-        };
+        };*/
+        /*
         //Old
         OrderComponentClass.prototype.onMapClick = function(eventData) {
         	var queueid = 0;
@@ -1034,7 +1052,8 @@ UserInterface = ( function() {
         			ObjectComponent.objects[eventData.target.id]["Order Queue"]["queueid"] != undefined) 
         		queueid = ObjectComponent.objects[eventData.target.id]["Order Queue"]["queueid"];
             OrderComponent.buildOrderPanel(parseInt(queueid));
-        };
+        };*/
+        /*
         //Old
         OrderComponentClass.prototype.buildOrderPanel = function(id) {
             // Store selected object id
@@ -1074,6 +1093,77 @@ UserInterface = ( function() {
                 orderComponent.text('No orders for this object');
             }
 
+        };*/
+        OrderComponentClass.prototype.buildOrderPanel = function(subid) {
+            WindowManagerComponent.registerObject("#order-panel");
+        	this.args = new Array();
+            
+            orderpanel = $(document.createElement('div')).attr('id', 'order-panel');
+            $('#overlay').append(orderpanel);
+            
+            orderposTop = 5;
+			orderposLeft = (screen.width / 2) - (orderpanel.width() / 2);
+			
+			if(orderposLeft < 0)
+				orderposLeft = 0;
+			
+			orderpanel.css("top", orderposTop+"px").css("left", orderposLeft+"px");
+            
+            if(subid == null && OrderComponentClass.type != null) {
+                var orderType = OrderComponent.orders[OrderComponentClass.id].order_type[OrderComponentClass.type];
+            } else if(subid != null) {
+            	var orderType = OrderComponent.orders[OrderComponentClass.id].orders[subid];
+            } else {
+                return false;
+            }
+            orderpanel.append($(document.createElement('h5')).css({'margin': 0, 'padding': 0}).text(orderType.name));
+            
+            if(orderType != null) {
+                for(var i in orderType.args) {
+                    var argument = null;
+                    // If argument type is coordinate, build a coordinate panel
+                    if(orderType.args[i].type == 'coordinate') {
+                        argument = new CoordinateArgumentPanel();
+                        argument.build(orderType.args[i]);
+
+                    // Else if argument type is time, build a time panel
+                    } else if(orderType.args[i].type == 'time') {
+                        argument = new TimeArgumentPanel();
+                        argument.build(orderType.args[i]);
+
+                    // Else if argument type is string, build a string panel
+                    } else if(orderType.args[i].type == 'string') {
+                        argument = new StringArgumentPanel();
+                        argument.build(orderType.args[i]);
+
+                    // Else if argument type is object, build a object panel
+                    } else if(orderType.args[i].type == 'object') {
+                        argument = new ObjectArgumentPanel();
+                        argument.build(orderType.args[i]);
+
+                    // Else if argument type is list, build a list panel
+                    } else if(orderType.args[i].type == 'list') {
+                        argument = new ListArgumentPanel();
+                        argument.build(orderType.args[i]);
+                    }
+
+                    if(argument != null) {
+                        this.args[orderType.args[i].type] = argument;
+                    }
+                }
+            }
+            
+            if(subid != null) {
+                update = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Update Order'}).click(function(eventData) {
+                    OrderComponent.updateOrder(orderType);
+                    return false;
+                });/*
+                remove = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Remove Order'}).click(function(eventData) {
+                    OrderComponent.removeOrder(orderType.order_id);
+                    return false;
+                });*/
+                orderpanel.append(update);
+            }
         };
         OrderComponentClass.prototype.constructOrdersMenu = function(eventData, id) {
         	id = parseInt(id)
@@ -1087,12 +1177,41 @@ UserInterface = ( function() {
 	    		WindowManagerComponent.registerObject("#order-menu");
 	    		
 	    		if(queueid != undefined && queueid != null) {
+	    			
+	    			OrderComponentClass.id = queueid;
+	    			
 	        		div = $(document.createElement('div')).attr('id', 'order-menu').css({'top': y+'px', 'left': x+'px'});
 	        		ul = $(document.createElement('ul'));
 	        		div.append(ul);
 		        	for(var i in OrderComponent.orders[queueid].order_type) {
 		                order_type = OrderComponent.orders[queueid].order_type[i];
-		                li = $(document.createElement('li')).attr('value', i).text(order_type.name);
+		                li = $(document.createElement('li')).attr('value', i).attr('queueid', queueid).text(order_type.name).click(function(eventData){
+		                	menuId = $(this).attr('value');
+		                	queueId = parseInt($(this).attr('queueid'));
+		                	$.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': queueId, 'type': menuId}, url: "/json/order/send/", 
+		                        error: function(req, textstatus) { 
+		                            UILock.error('Something went wrong, contact administrator or try again later.', true);
+		                        }, 
+		                        success: function(data, textstatus) {
+		                            if(data.auth === true) {
+		                                UserInterface.getOrders(function(data_extra) {
+		                                	OrderComponent.setup(data_extra.orders);
+		                                    subid = OrderPosition2OrderId(OrderComponent.orders[OrderComponentClass.id].orders, data.order_position);
+		                                	if(subid != undefined) { 
+		                                		OrderComponent.buildOrderPanel(subid);
+		                                	}
+		                                    
+		                                });
+		                            } else {
+		                                UILock.error(data.error, true);
+		                            }
+		                        }
+		                    });
+		                }).mouseenter(function() {  
+		                	  $(this).addClass("order-menu-roll")
+		    	          }).mouseleave(function() {
+		    	        	  $(this).removeClass("order-menu-roll");
+		    	          });
 		                ul.append(li);
 		            }
 		        	$('#system-planet-panel').append(div);
@@ -1101,41 +1220,73 @@ UserInterface = ( function() {
         	
         };
         OrderComponentClass.prototype.currentOrderList = function(id) {
-            // Store selected object id
-            OrderComponentClass.id = id;
-            
-            // Reset selected order
-            OrderComponentClass.type = null;
-
-            OrderComponentClass.args = new Array();
-
-            div = $(document.createElement('div'));
+        	div = $(document.createElement('div'));
             div.attr('id','order-list');
             div.append($(document.createElement('h4')).text("Orders"));
             
-            // If this object has orders continue
-            if(OrderComponentClass.id > 0 && OrderComponent.orders[OrderComponentClass.id]) {
-                
-                OrderComponent.orders[OrderComponentClass.id]['orders'] = 
-                	sortArrByKey(OrderComponent.orders[OrderComponentClass.id]['orders']);
-                
-                for(var i in OrderComponent.orders[OrderComponentClass.id]['orders']) {
-                    var order_id = OrderComponent.orders[OrderComponentClass.id]['orders'][i].order_id;
-                    order = OrderComponent.orders[OrderComponentClass.id]['orders'][i];
-                    dt = $(document.createElement('dt')).text(order.turns + ' turns');
-                    dd = $(document.createElement('dd')).append(
-                        $(document.createElement('a')).attr({'id': order.order_id, 'href': '#'}).text(order.name).click(function(eventData) {
-                            //OrderComponent.buildOrder(eventData.currentTarget.id);
-                        }),
-                        $(document.createElement('br')),
-                        order.description);
-                    div.append(dt).append(dd);
-                }
-                
-                //OrderComponent.buildOrder();
+        	obj = SystemObjectComponent.objects[id];
+            if(obj["Order Queue"] != undefined && obj["Order Queue"]["queueid"] != undefined && obj["Order Queue"]["queueid"] != 0) {		    		
+	    		queueid = obj["Order Queue"]["queueid"];
+	    		// Store selected object id
+	            OrderComponentClass.id = queueid;
+	    		
+	            OrderComponentClass.args = new Array();
+	
+	            // If this object has orders continue
+	            if(OrderComponentClass.id > 0 && OrderComponent.orders[OrderComponentClass.id] != undefined) {	                
+	                OrderComponent.orders[OrderComponentClass.id]['orders'] = 
+	                	sortArrByKey(OrderComponent.orders[OrderComponentClass.id]['orders']);
+	                
+	                counter = 0;
+	                numorders = objKeyCount(OrderComponent.orders[OrderComponentClass.id]['orders']);
+	                for(var i in OrderComponent.orders[OrderComponentClass.id]['orders']) {
+	                    var order_id = OrderComponent.orders[OrderComponentClass.id]['orders'][i].order_id;
+	                    order = OrderComponent.orders[OrderComponentClass.id]['orders'][i];
+	                    dt = $(document.createElement('dt')).text(order.turns + ' turns');
+	                    dd = $(document.createElement('dd')).append(
+	                        $(document.createElement('a')).attr({'id': order.order_id, 'href': '#', 'title': order.description}).text(order.name).click(function(eventData) {
+	                            //OrderComponent.buildOrder(eventData.currentTarget.id);
+	                        }));
+	                    
+	                    orderControl = $(document.createElement('div')).attr('id', 'ordercontrols');
+	                    dd.append(orderControl);
+	                    
+	                    asc = $(document.createElement('img')).attr({'src': '/images/asc.png'});
+    	                desc = $(document.createElement('img')).attr({'src': '/images/desc.png'});
+    	            	remove = $(document.createElement('img')).attr({'src': '/images/delete.png'});
+	                    
+    	            	//Determine which buttons to disable
+	                    if(counter == 0) { 
+	                    	asc.attr('class', 'disabled');
+	                    }else {
+	                    	asc.one('click', OrderComponent.ascendOrder);
+	                    }
+	                    	
+	                    if(counter + 1 == numorders) 
+	                    	desc.attr('class', 'disabled');
+	                    else 
+	                    	desc.one('click', OrderComponent.descendOrder);
+                    	
+	                    
+	                    orderControl.append(asc).append(desc).append(
+	                    		$(document.createElement('a')).attr({'id': order.order_id, 'href': '#'}).append(remove).click(function(eventData) {
+			                    	//alert(eventData.currentTarget.id);
+			                    	OrderComponent.removeOrder(eventData.currentTarget.id);
+			                    })
+			            );
+	                    //orderControl.append(asc).append(desc).append(remove);
+	                    
+	                    div.append(dt).append(dd);
+	                    counter++;
+	                }
+	                
+	                //OrderComponent.buildOrder();
+	            } else {
+	                div.append('No orders for this object');
+	            }
             } else {
-                div.append('No orders for this object');
-            }
+	            div.append('No orders for this object');
+	        }
             return div;
         };
         
@@ -1245,6 +1396,7 @@ UserInterface = ( function() {
     	var InfoComponentClass = function(){};
     	
     	InfoComponentClass.prototype.objects = null;
+    	InfoComponentClass.prototype.id = null;
     	
     	/*
     	 * Setup the information panel
@@ -1262,6 +1414,7 @@ UserInterface = ( function() {
     			WindowManagerComponent.removeObject();
     		}
     		else if(InfoComponent.objects[id] != undefined) {
+    			InfoComponent.id = id;
                 WindowManagerComponent.registerObject("#info-panel");
                 
     			infopanel = $(document.createElement("div")).attr('id', 'info-panel');
