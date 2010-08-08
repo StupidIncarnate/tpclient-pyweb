@@ -86,6 +86,69 @@ function objKeyCount(array) {
 	}
 	return count;
 }
+function convertSpacePosToPixel(pos, universeMin, universeMax) {
+	/*
+	 * Takes the pos of an object and translates that position based on the viewport
+	 * 
+	 * pos - The xy of an object in space
+	 * universeMin - An obj array of the minimum pos of the universe
+	 * universeMax - An obj array of the maximum pos of the universe 
+	 */
+	
+	/*
+	var universeMin = {'x': universe.Size.minX, 'y': universe.Size.minY};
+    var universeMax = {'x': universe.Size.maxX, 'y': universe.Size.maxY};
+    
+    var universeW = universe.Size.maxX - universe.Size.minX;
+	var universeH = universe.Size.maxY - universe.Size.minY;
+	
+	pixalPos = convertSpacePosToPixel(obj.Position, universeMin, universeMax);
+	*/
+	
+	universeW = universeMax.x - universeMin.x;
+	universeH = universeMax.y - universeMin.y;
+	
+	percentX = (pos.x - universeMin.x) / universeW;
+    percentY = (pos.y - universeMin.y) / universeH;
+    
+    //alert($("#map-scroll").position().left);
+    //alert(percentX + " " + percentY);
+    
+    //Switch around the height value because css goes negative then positive instead of the other way around.
+    return {'x': percentX * $(window).width(), 'y': $(window).height() - (percentY * $(window).height())};
+    
+}
+
+function countNumberDigits(num, sizeNum) {
+	/*
+	 * counts how many digits a number has so that the size of the universe can be determined. 
+	 * 
+	 * num - Needs to be positive
+	 * sizeNum - the number that acts as a boundary to stop the digit counter. 
+	 */
+	
+	var digitNum = 1;
+	
+	while(num > sizeNum) {
+		num = num * 0.1;
+		digitNum = digitNum * 10;
+	}
+	
+	return digitNum;
+	
+}
+function determineLesserNumber(num1, num2) {
+	if(num1 < num2) 
+		return num1;
+	else
+		return num2;
+}
+function SpacePostoPixel(x, y) {
+	pixX = x / Map.UniverseSize;
+	pixY = y / Map.UniverseSize;
+	return {'x': pixX, 'y': pixY};
+
+}
 
 /**
  * Z-index table
@@ -98,6 +161,8 @@ Map = ( function() {
 
     var MapCreator = function() {};
 
+    MapCreator.prototype.UniverseSize = 0; 
+    
     MapCreator.prototype.init = function(target, x, y) {
         this.map = $(target);
 
@@ -123,10 +188,10 @@ Map = ( function() {
         }
 
         // Setup event handlers
-        $(this.viewport).bind("mousedown", this, this.down);
+        /*$(this.viewport).bind("mousedown", this, this.down);
         $(document).bind("mousemove", this, this.move);
         $(document).bind("mouseup", this, this.up);
-        $(window).bind("resize", this, this.resize);
+        $(window).bind("resize", this, this.resize);*/
     };
 
     MapCreator.prototype.down = function(e) {
@@ -171,13 +236,19 @@ Map = ( function() {
     MapCreator.prototype.addObjects = function(objects) {
         this.objects = objects;
     };
+    MapCreator.prototype.addOrders = function(orders) {
+    	this.orders = orders;
+    };
 
     MapCreator.prototype.draw = function() {
+    	var boundaryOffset = 50; //pixels
+    	
         if(this.objects) {
             universe = this.objects[0];
             
             var viewH = $(window).height();
             viewH = (viewH / 2) - (viewH / 16);
+            //viewH = (viewH / 2);
             
             //Universe Radiuses
             var URH = 0;
@@ -204,26 +275,89 @@ Map = ( function() {
             	UniverseRadius = URW;
             else
             	UniverseRadius = URH;
-            		
             
-            	
+            var digitNum = countNumberDigits(UniverseRadius, viewH);
+            
+            Map.UniverseSize = digitNum;
+            
             for(var i in universe.contains) {
                 galaxy = this.objects[universe.contains[i]];
                 for(var j in galaxy.contains) { 
                     obj = this.objects[galaxy.contains[j]];
-                    var x = (obj.Position.x / UniverseRadius) * viewH;
+                    
+                    /*
+                    var percentX = (obj.Position.x - universe.Size.minX) / universeW;
+                    var percentY = (obj.Position.y - universe.Size.minY) / universeH;
+                    
+                    var x = percentX * $(window).width();
+                    var y = percentY * $(window).height();
+                    */
+                    
+                    /*var x = (obj.Position.x / UniverseRadius) * viewH;
                     var y = (obj.Position.y / UniverseRadius) * viewH;
-                    this.drawobject(x, y, obj.id, obj.name, obj.type.name, obj.Media);
+                    
+                    if(x < 0)
+                    	x += boundaryOffset;
+                    else
+                    	x -= boundaryOffset;
+                    
+                    if(y < 0) 
+                    	y += boundaryOffset;
+                    else 
+                    	y -= boundaryOffset
+                    */
+                    var pixelPos = SpacePostoPixel(obj.Position.x, obj.Position.y)
+                    
+                    var destPos = null;
+                    
+                    if(obj["Order Queue"] != undefined && obj["Order Queue"]["numorders"] != undefined && parseInt(obj["Order Queue"]["numorders"]) > 0) {
+	                    
+                    	queueid = parseInt(obj["Order Queue"]["queueid"]);
+                    	
+                    	var counter = 0;
+                    	
+                    	for(var iter in this.orders[queueid].orders) {
+                    		if(counter == 0) {
+                    			var order = this.orders[queueid].orders[iter]
+                    			if(order.args[0].name == "Pos") {
+                    				destPos = SpacePostoPixel(order.args[0].value[0][0], order.args[0].value[0][1])
+                    				this.drawpath(obj.id, pixelPos, destPos)
+                    			}
+                    		}
+                    		break;
+                    	}
+                    }
+                    
+                    this.drawobject(pixelPos, obj.id, obj.name, obj.type.name, obj.Media);
                     
                 }
                 
-            }
+            }            
+            /*
+            // Creates canvas 320 × 200 at 10, 50
+            var paper = Raphael(document.getElementById('shipline'), 640, 480);
+
+            paper.clear();
+            //paper.rect(0, 0, 640, 480, 10).attr({fill: "#fff", stroke: "none"});
+            
+            paper.path("M 250 250 l 0 -50").attr({fill: "#fff", stroke: "none"});
+            */
+         // draw a diagonal line:
+         // move to 10,10, line to 90,90
+
+
         }
     };
     
-    MapCreator.prototype.drawobject = function(x, y, id, name, type, image) {
+    MapCreator.prototype.drawobject = function(pos, id, name, type, image, destPos) {
+    	//alert(pos.x + " " + pos.y);
     	type = type.toLowerCase().replace(" ", "");
-    	var container = $(document.createElement('div')).attr('id', id).attr('class', type + " container").css({'top': -y+'px', 'left': x+'px'});
+    	
+    	//Shift the icons so they're directly over they're coodinate point 
+    	var shiftedX = pos.x - 50;
+    	var shiftedY = pos.y - 25;
+    	
+    	var container = $(document.createElement('div')).attr('id', id).attr('class', type + " container").css({'top': shiftedY+'px', 'left': shiftedX+'px', 'width': '100px'});
     	this.canvas.append(container);
     	var objectdiv = $(document.createElement('div'));
     	objectdiv.attr('class', 'mapsystem').attr('id', id);
@@ -233,8 +367,28 @@ Map = ( function() {
     	var objectText = $(document.createElement('div'));
     	objectText.attr('class', 'name').attr('id', id);
     	objectText.text(name);
-    	container.append(objectdiv.append(objectIcon).append(objectText));
+    	container.append(objectdiv.append(objectIcon).append(objectText));    	
     	
+    };
+    MapCreator.prototype.drawpath = function(id, objpos, destpos) {
+    	var width = Math.abs(objpos.x - destpos.x); 
+        var height = Math.abs(objpos.y - destpos.y);
+        
+    	var shapli = $(document.createElement('div')).attr({'id': 'shipline'+id});
+        this.canvas.append(shapli);
+        
+        var r = Raphael('shipline'+id, width, height);
+        
+        //Determine the placement of the line shape
+        shapli.css({'top': determineLesserNumber(objpos.y, destpos.y),'left': determineLesserNumber(objpos.x, destpos.x), 'position': 'absolute'});
+        
+        if((objpos.x < destpos.x && objpos.y < destpos.y) || (objpos.x > destpos.x && objpos.y > destpos.y))
+        	r.path("M 0 0 L " + width + " " + height).attr("stroke", "#f00");
+        else 
+        	r.path("M 0 "+height+ " L " + width *2+ " " + -height).attr("stroke", "#f00");
+        
+        
+       
     };
     
     
@@ -371,6 +525,117 @@ UserInterface = ( function() {
 
         return new NotifyComponentClass();
     } )();
+    
+    /*
+     * Click Manager
+     * 
+     * Manages the click focus
+     * 
+     */
+    var ClickManagerComponent = ( function() {
+    	
+    	var ClickManagerClass = function(){};
+    	ClickManagerClass.prototype.coordinateOrder = false; //The move order
+    	ClickManagerClass.prototype.orderType = null;
+    	ClickManagerClass.prototype.objid = 0; //Object id that is being issued an order
+    	
+    	ClickManagerClass.prototype.launchInfoComponent = function(id){
+    		if(ClickManagerComponent.coordinateOrder == true)
+    			ClickManagerComponent.objectClicked(id);
+    		else
+    			InfoComponent.onItemClick(id);
+    	};
+    	ClickManagerClass.prototype.launchOrderMenu = function(eventData, id, parentContainer) {
+    		OrderComponent.constructOrdersMenu(eventData, id, parentContainer);
+    	};
+    	ClickManagerClass.prototype.closeWindow = function(eventData, id) {
+    		if(id == "map-viewport") {
+    			if(ClickManagerComponent.coordinateOrder == true)
+        			ClickManagerComponent.mapClicked(eventData);
+        		else {
+        			//alert($("#map-scroll").position().left + " " + eventData.pageX);
+        			WindowManagerComponent.removeObject();
+        		}
+	    	}
+    	};
+    	ClickManagerClass.prototype.closeMenu = function(eventData, id) {
+    		if(id == "system-bar") 
+    			WindowManagerComponent.removeObject();
+    	};
+    	//These two functions are for when a coordinate order is issued, such as move. 
+    	ClickManagerClass.prototype.mapClicked = function(eventData) {
+    		if(ClickManagerComponent.coordinateOrder == true) {
+	    		var destX = (eventData.clientX - $("#map-scroll").position().left) * Map.UniverseSize;
+	    		var destY = (eventData.clientY - $("#map-scroll").position().top) * Map.UniverseSize;
+	    		
+	    		/*
+	    		var percentX = eventData.clientX / $(window).width();
+	    		var percentY = eventData.clientY / $(window).height();
+	    		
+	    		var universe = SystemObjectComponent.objects[0];
+	            
+	    		var universeW = universe.Size.maxX - universe.Size.minX;
+	    		var universeH = universe.Size.maxY - universe.Size.minY;
+	    		
+	    		destX = universe.Size.minX + (percentX * universeW);
+	    		destY = universe.Size.minY + (percentY * universeH);
+	    		*/
+	    		ClickManagerComponent.coordinateOrder = false;
+	    		
+	    		OrderComponent.coordinates = [destX, destY, 0];
+	    		OrderComponent.updateOrder(ClickManagerComponent.orderType);
+	    		
+	    		ClickManagerComponent.orderType = null;
+	    		
+	    		alert(OrderComponent.objid)
+	    		
+	    		shippos = SystemObjectComponent.objects[OrderComponent.objid].Position;
+	    		var originPos = SpacePostoPixel(shippos.x, shippos.y);
+	    		var destpos = {'x': destX, 'y': destY};
+	    		Map.drawpath(OrderComponent.objid, originPos, destpos);
+	    		
+	    		/*
+	    		var uniSize = SystemObjectComponent.objects[0].Size
+	    		var objPos = SystemObjectComponent.objects[4].Position
+	    		alert("Dest:" + ($("#map-scroll").position().left - eventData.clientX) + " " + (eventData.clientY - $("#map-scroll").position().top)
+	    				+ "\n4" + $("#map-canvas").children('#4').position().left + " " + $("#map-canvas").children('#4').position().top 
+	    				+ "\nMapCanvas:" + $("#map-scroll").position().left + " " + $("#map-scroll").position().top
+	    				+ "\nEventData:" + eventData.clientX + " " + eventData.clientY
+	    				+ "\nDestSpac:" + destX + " " + destY
+	    				+ "\nObjSpace:" + objPos.x + " " + objPos.y);
+	    		*/
+	    		/*alert("Reg:" + destX + " " + destY 
+	    				+ "\nUnS:" + universeW + " " + universeH
+	    				+ "\nTim:" + percentX * universeW + " " + percentY * universeH 
+	    				+ "\nPer:" + percentX + " " + percentY 
+	    				+ "\nObj:" + objPos.x + " " + objPos.y
+	    				+ "\nuni:" + uniSize.minX +","+uniSize.maxX + " " +uniSize.minY + ","+uniSize.maxY);
+	    		*/
+    		}
+    	};
+    	ClickManagerClass.prototype.objectClicked = function(id) {
+    		ClickManagerComponent.coordinateOrder = false;
+    		var objPos = SystemObjectComponent.objects[id].Position
+    		OrderComponent.coordinates = [objPos.x, objPos.y, 0];
+    		
+    		OrderComponent.updateOrder(ClickManagerComponent.orderType);
+    		
+    		ClickManagerComponent.orderType = null;
+    		
+    		shippos = SystemObjectComponent.objects[OrderComponent.objid].Position;
+    		objdest = SystemObjectComponent.objects[id].Position;
+    		var originPos = SpacePostoPixel(shippos.x, shippos.y);
+    		var destpos = SpacePostoPixel(objdest.x, objdest.y);
+    		
+    		Map.drawpath(OrderComponent.objid, originPos, destpos);
+    		
+    		
+    		//alert(SystemObjectComponent.objects[id].Position.x);
+    		
+    	};
+    	
+    	return new ClickManagerClass();
+    })();
     
     /*
      * Window Manager
@@ -515,7 +780,13 @@ UserInterface = ( function() {
 
             ul = $(document.createElement('ul')).addClass('tree-list');
             createList(objects[0], ul);
-            $('a', ul).bind('click', function(eventData) {
+            $('a', ul).bind("contextmenu",function(eventData){
+            	
+				  ClickManagerComponent.launchOrderMenu(eventData, $(this).attr('id'), '#system-component-text');
+  				  
+				  	//cancel the default context menu
+			        return false;
+			   }).bind('click', function(eventData) {
             	//Tells the info panel not to load panel above system panel
             	eventData.clickThrough = "sysPanel";
             	
@@ -822,6 +1093,16 @@ UserInterface = ( function() {
          * Old
          */
         function CoordinateArgumentPanel() {
+        	this.order_type = null;
+        	
+        	this.getValue = function() {
+        		return array2json(OrderComponent.coordinates);
+        	}
+        	this.initiateOrder = function(orderType, id) {
+        		ClickManagerComponent.orderType = orderType;
+            	ClickManagerComponent.coordinateOrder = true; 
+        	}
+        	/*
             this.pos1 = null;
             this.pos2 = null;
             this.pos3 = null;
@@ -844,7 +1125,7 @@ UserInterface = ( function() {
 
             this.getValue = function() {
                 return array2json([this.pos1.val(), this.pos2.val(), this.pos3.val()]);
-            };
+            };*/
         };
 
         /**
@@ -879,11 +1160,15 @@ UserInterface = ( function() {
          * Main order component
          */
         var OrderComponentClass = function(){};
-        OrderComponentClass.prototype.id = null;
+        OrderComponentClass.prototype.objid = null;
+        OrderComponentClass.prototype.queueid = null;
         OrderComponentClass.prototype.type = null;
         OrderComponentClass.prototype.args = null;
         OrderComponentClass.prototype.orders = null;
-
+        
+        OrderComponentClass.prototype.coordinateOrder = false;
+        OrderComponentClass.prototype.coordinates = [];
+        
         OrderComponentClass.prototype.setup = function(data) {
             OrderComponent.orders = data;
         };
@@ -893,8 +1178,8 @@ UserInterface = ( function() {
             for(var i in this.args) {
                 temp = temp.concat(this.args[i].getValue());
             }
-            var order_position = OrderId2OrderPosition(OrderComponent.orders[OrderComponentClass.id].orders, order.order_id);
-            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponentClass.id, 'type': parseInt(order.type), 'order_position': order_position, 'args': temp}, url: "/json/order/update/", 
+            var order_position = OrderId2OrderPosition(OrderComponent.orders[OrderComponent.queueid].orders, order.order_id);
+            $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponent.queueid, 'type': parseInt(order.type), 'order_position': order_position, 'args': temp}, url: "/json/order/update/", 
                 error: function(req, textstatus) { 
                     UILock.error('Something went wrong, contact administrator or try again later.', true);
                 }, 
@@ -903,7 +1188,7 @@ UserInterface = ( function() {
                         UserInterface.getOrders(function(data) {
                             OrderComponent.setup(data.orders);
                             InfoComponent.onItemClick(InfoComponent.id);
-                            //InfoComponent.onItemClick($(this).attr('id'));OrderComponentClass.id);
+                            //InfoComponent.onItemClick($(this).attr('id'));OrderComponent.queueid);
                         });
                     } else {
                         UILock.error(data.error, true);
@@ -914,8 +1199,8 @@ UserInterface = ( function() {
         //Old
         OrderComponentClass.prototype.removeOrder = function(order_id) {
         	//FIX: Does not remove when send order and then press remove
-        	 var order_position = OrderId2OrderPosition(OrderComponent.orders[OrderComponentClass.id].orders, order_id);
-             $.ajax({type: "POST", dataType: 'json', data: {'action': 'remove', 'id': OrderComponentClass.id, 'order_position': order_position}, url: "/json/order/remove/", 
+        	 var order_position = OrderId2OrderPosition(OrderComponent.orders[OrderComponent.queueid].orders, order_id);
+             $.ajax({type: "POST", dataType: 'json', data: {'action': 'remove', 'id': OrderComponent.queueid, 'order_position': order_position}, url: "/json/order/remove/", 
                 error: function(req, textstatus) { 
                     UILock.error('Something went wrong, contact administrator or try again later.', true);
                 }, 
@@ -924,7 +1209,7 @@ UserInterface = ( function() {
                         UserInterface.getOrders(function(data) {
                             OrderComponent.setup(data.orders);
                             InfoComponent.onItemClick(InfoComponent.id);
-                            //OrderComponent.buildOrderPanel(OrderComponentClass.id);
+                            //OrderComponent.buildOrderPanel(OrderComponent.queueid);
                         });
                     } else {
                         UILock.error(data.error, true);
@@ -947,9 +1232,9 @@ UserInterface = ( function() {
 
             $('#order-component-create-order').html('').append('Create a new order: ', OrderComponent.buildOrderList());
             if(subid == null && OrderComponentClass.type != null) {
-                var orderType = OrderComponent.orders[OrderComponentClass.id].order_type[OrderComponentClass.type];
+                var orderType = OrderComponent.orders[OrderComponent.queueid].order_type[OrderComponentClass.type];
             } else if(subid != null) {
-            	var orderType = OrderComponent.orders[OrderComponentClass.id].orders[subid];
+            	var orderType = OrderComponent.orders[OrderComponent.queueid].orders[subid];
             } else {
                 return false;
             }
@@ -1009,8 +1294,8 @@ UserInterface = ( function() {
         /*OrderComponentClass.prototype.buildOrderList = function() {
         	var counter = 0;
             select = $(document.createElement('select')).attr('id', 'order_list');
-            for(var i in OrderComponent.orders[OrderComponentClass.id].order_type) {
-                order_type = OrderComponent.orders[OrderComponentClass.id].order_type[i];
+            for(var i in OrderComponent.orders[OrderComponent.queueid].order_type) {
+                order_type = OrderComponent.orders[OrderComponent.queueid].order_type[i];
                 option = $(document.createElement('option')).attr('value', i).text(order_type.name);
                 select.append(option);
                 counter++;
@@ -1019,8 +1304,8 @@ UserInterface = ( function() {
 	            return $(document.createElement('div')).append(select,
 	                $(document.createElement('input')).attr({'type': 'submit', 'value': 'New order'}).click(function(eventData) {
 	                    OrderComponentClass.type = $('#order_list').val();
-	                    var sendType = OrderComponent.orders[OrderComponentClass.id].order_type[OrderComponentClass.type].type;
-	                    $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponentClass.id, 'type': sendType}, url: "/json/order/send/", 
+	                    var sendType = OrderComponent.orders[OrderComponent.queueid].order_type[OrderComponentClass.type].type;
+	                    $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponent.queueid, 'type': sendType}, url: "/json/order/send/", 
 	                        error: function(req, textstatus) { 
 	                            UILock.error('Something went wrong, contact administrator or try again later.', true);
 	                        }, 
@@ -1028,7 +1313,7 @@ UserInterface = ( function() {
 	                            if(data.auth === true) {
 	                                UserInterface.getOrders(function(data_extra) {
 	                                    OrderComponent.setup(data_extra.orders);
-	                                    subid = OrderPosition2OrderId(OrderComponent.orders[OrderComponentClass.id].orders, data.order_position);
+	                                    subid = OrderPosition2OrderId(OrderComponent.orders[OrderComponent.queueid].orders, data.order_position);
 	                                	if(subid != undefined) { 
 	                                		OrderComponent.buildOrder(subid);
 	                                	}
@@ -1057,7 +1342,7 @@ UserInterface = ( function() {
         //Old
         OrderComponentClass.prototype.buildOrderPanel = function(id) {
             // Store selected object id
-            OrderComponentClass.id = id;
+            OrderComponent.queueid = id;
             
             // Reset selected order
             OrderComponentClass.type = null;
@@ -1068,15 +1353,15 @@ UserInterface = ( function() {
             orderComponent = $('#order-component-content').html('');
 
             // If this object has orders continue
-            if(OrderComponentClass.id > 0 && OrderComponent.orders[OrderComponentClass.id]) {
+            if(OrderComponent.queueid > 0 && OrderComponent.orders[OrderComponent.queueid]) {
                 dl = $(document.createElement('dl'));
                 
-                OrderComponent.orders[OrderComponentClass.id]['orders'] = 
-                	sortArrByKey(OrderComponent.orders[OrderComponentClass.id]['orders']);
+                OrderComponent.orders[OrderComponent.queueid]['orders'] = 
+                	sortArrByKey(OrderComponent.orders[OrderComponent.queueid]['orders']);
                 
-                for(var i in OrderComponent.orders[OrderComponentClass.id]['orders']) {
-                    var order_id = OrderComponent.orders[OrderComponentClass.id]['orders'][i].order_id;
-                    order = OrderComponent.orders[OrderComponentClass.id]['orders'][i];
+                for(var i in OrderComponent.orders[OrderComponent.queueid]['orders']) {
+                    var order_id = OrderComponent.orders[OrderComponent.queueid]['orders'][i].order_id;
+                    order = OrderComponent.orders[OrderComponent.queueid]['orders'][i];
                     dt = $(document.createElement('dt')).text(order.turns + ' turns');
                     dd = $(document.createElement('dd')).append(
                         $(document.createElement('a')).attr({'id': order.order_id, 'href': '#'}).text(order.name).click(function(eventData) {
@@ -1099,7 +1384,6 @@ UserInterface = ( function() {
         	this.args = new Array();
             
             orderpanel = $(document.createElement('div')).attr('id', 'order-panel');
-            $('#overlay').append(orderpanel);
             
             orderposTop = 5;
 			orderposLeft = (screen.width / 2) - (orderpanel.width() / 2);
@@ -1110,9 +1394,9 @@ UserInterface = ( function() {
 			orderpanel.css("top", orderposTop+"px").css("left", orderposLeft+"px");
             
             if(subid == null && OrderComponentClass.type != null) {
-                var orderType = OrderComponent.orders[OrderComponentClass.id].order_type[OrderComponentClass.type];
+                var orderType = OrderComponent.orders[OrderComponent.queueid].order_type[OrderComponentClass.type];
             } else if(subid != null) {
-            	var orderType = OrderComponent.orders[OrderComponentClass.id].orders[subid];
+            	var orderType = OrderComponent.orders[OrderComponent.queueid].orders[subid];
             } else {
                 return false;
             }
@@ -1124,7 +1408,7 @@ UserInterface = ( function() {
                     // If argument type is coordinate, build a coordinate panel
                     if(orderType.args[i].type == 'coordinate') {
                         argument = new CoordinateArgumentPanel();
-                        argument.build(orderType.args[i]);
+                        argument.initiateOrder(orderType);
 
                     // Else if argument type is time, build a time panel
                     } else if(orderType.args[i].type == 'time') {
@@ -1153,7 +1437,7 @@ UserInterface = ( function() {
                 }
             }
             
-            if(subid != null) {
+            if(subid != null && ClickManagerComponent.coodinateOrder == false) {
                 update = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Update Order'}).click(function(eventData) {
                     OrderComponent.updateOrder(orderType);
                     return false;
@@ -1163,22 +1447,25 @@ UserInterface = ( function() {
                     return false;
                 });*/
                 orderpanel.append(update);
+                $('#overlay').append(orderpanel);
             }
         };
-        OrderComponentClass.prototype.constructOrdersMenu = function(eventData, id) {
+        OrderComponentClass.prototype.constructOrdersMenu = function(eventData, id, parentContainer) {
+        	/*
+        	 * parentContainer - Must be something like #id
+        	 */
         	id = parseInt(id)
         	obj = SystemObjectComponent.objects[id];
+        	
         	if(obj["Order Queue"] != undefined && obj["Order Queue"]["queueid"] != undefined && obj["Order Queue"]["queueid"] != 0) {		    		
 	    		queueid = obj["Order Queue"]["queueid"];
-	    		
 	    		var x = eventData.pageX;
 	    		var y = eventData.pageY;
-	    		
-	    		WindowManagerComponent.registerObject("#order-menu");
-	    		
 	    		if(queueid != undefined && queueid != null) {
+	    			OrderComponent.objid = id;
+	    			OrderComponent.queueid = queueid;
 	    			
-	    			OrderComponentClass.id = queueid;
+	    			WindowManagerComponent.registerObject("#order-menu");
 	    			
 	        		div = $(document.createElement('div')).attr('id', 'order-menu').css({'top': y+'px', 'left': x+'px'});
 	        		ul = $(document.createElement('ul'));
@@ -1196,7 +1483,7 @@ UserInterface = ( function() {
 		                            if(data.auth === true) {
 		                                UserInterface.getOrders(function(data_extra) {
 		                                	OrderComponent.setup(data_extra.orders);
-		                                    subid = OrderPosition2OrderId(OrderComponent.orders[OrderComponentClass.id].orders, data.order_position);
+		                                    subid = OrderPosition2OrderId(OrderComponent.orders[OrderComponent.queueid].orders, data.order_position);
 		                                	if(subid != undefined) { 
 		                                		OrderComponent.buildOrderPanel(subid);
 		                                	}
@@ -1214,7 +1501,7 @@ UserInterface = ( function() {
 		    	          });
 		                ul.append(li);
 		            }
-		        	$('#system-planet-panel').append(div);
+		        	$(parentContainer).append(div);
 	        	}
 	    	}
         	
@@ -1228,20 +1515,20 @@ UserInterface = ( function() {
             if(obj["Order Queue"] != undefined && obj["Order Queue"]["queueid"] != undefined && obj["Order Queue"]["queueid"] != 0) {		    		
 	    		queueid = obj["Order Queue"]["queueid"];
 	    		// Store selected object id
-	            OrderComponentClass.id = queueid;
+	            OrderComponent.queueid = queueid;
 	    		
 	            OrderComponentClass.args = new Array();
 	
 	            // If this object has orders continue
-	            if(OrderComponentClass.id > 0 && OrderComponent.orders[OrderComponentClass.id] != undefined) {	                
-	                OrderComponent.orders[OrderComponentClass.id]['orders'] = 
-	                	sortArrByKey(OrderComponent.orders[OrderComponentClass.id]['orders']);
+	            if(OrderComponent.queueid > 0 && OrderComponent.orders[OrderComponent.queueid] != undefined) {	                
+	                OrderComponent.orders[OrderComponent.queueid]['orders'] = 
+	                	sortArrByKey(OrderComponent.orders[OrderComponent.queueid]['orders']);
 	                
 	                counter = 0;
-	                numorders = objKeyCount(OrderComponent.orders[OrderComponentClass.id]['orders']);
-	                for(var i in OrderComponent.orders[OrderComponentClass.id]['orders']) {
-	                    var order_id = OrderComponent.orders[OrderComponentClass.id]['orders'][i].order_id;
-	                    order = OrderComponent.orders[OrderComponentClass.id]['orders'][i];
+	                numorders = objKeyCount(OrderComponent.orders[OrderComponent.queueid]['orders']);
+	                for(var i in OrderComponent.orders[OrderComponent.queueid]['orders']) {
+	                    var order_id = OrderComponent.orders[OrderComponent.queueid]['orders'][i].order_id;
+	                    order = OrderComponent.orders[OrderComponent.queueid]['orders'][i];
 	                    dt = $(document.createElement('dt')).text(order.turns + ' turns');
 	                    dd = $(document.createElement('dd')).append(
 	                        $(document.createElement('a')).attr({'id': order.order_id, 'href': '#', 'title': order.description}).text(order.name).click(function(eventData) {
@@ -1309,10 +1596,13 @@ UserInterface = ( function() {
         ObjectComponentClass.prototype.setup = function(data) {
             ObjectComponent.objects = data
         };
+        
            
         /**
          * Event: onMapClick
          */
+        
+        /*
         ObjectComponentClass.prototype.onMapClick = function(eventData) {
             id = parseInt(eventData.target.id);
             object = ObjectComponent.objects[id];
@@ -1386,7 +1676,7 @@ UserInterface = ( function() {
             }
             
             return false;
-        };
+        };*/
 
         return new ObjectComponentClass();
     } )();
@@ -1418,7 +1708,12 @@ UserInterface = ( function() {
                 WindowManagerComponent.registerObject("#info-panel");
                 
     			infopanel = $(document.createElement("div")).attr('id', 'info-panel');
-    			$('#overlay').append(infopanel);
+    			closebutton = $(document.createElement("div")).attr('id', 'closebutton').bind("click",function(eventData){
+    				WindowManagerComponent.removeObject();
+			   });
+    			closebutton.append($(document.createElement("img")).attr('src', 'images/close.png'));
+    			
+    			$('#overlay').append(infopanel.append(closebutton));
     			
     			infoposTop = 5;
 				infoposLeft = (screen.width / 2) - (infopanel.width() / 2);
@@ -1619,66 +1914,84 @@ UserInterface = ( function() {
 
         // Get objects with ajax call
         UserInterface.getObjects(function(data) {
-        
-            // Setup ObjectComponent
-            ObjectComponent.setup(data.objects);
-            
-            //Setup SystemObjectComponent
-            SystemObjectComponent.setup(data.objects);
-            
-            //Setup InfoComponent
-            InfoComponent.setup(data.objects);
-
-            // Add objects to map
-            Map.addObjects(data.objects);
-            
-            // Draw Map
-            Map.draw();
-            
-            //Bind rollover sytem object menu to mapobjects
-            $('#map-canvas .container').mouseenter(function() {  
-            	if(SystemObjectComponent.displaySubPanel != true && SystemObjectComponent.overSubPanel != true) {
-	            	SystemObjectComponent.displaySubPanel = true;
-	            	SystemObjectComponent.showObjects($(this));
-            	}
-	          }).mouseleave(function() {
-	        	  $('#map-canvas').children('#'+SystemObjectComponent.currentId).css('z-index', '100');
-	        	  SystemObjectComponent.displaySubPanel = false;
-	        	  SystemObjectComponent.hideObjects();
-	          });
-            $('.mapsystem').bind("click",function(eventData) {
-	        	InfoComponent.onItemClick($(this).attr('id'));
-			  }).bind("contextmenu",function(eventData){
-			    	//cancel the default context menu
-			        return false;
-			   });
-            
-            //Apply orders menu to rightclick and info panel to leftclick
-		    $('#system-planet-panel li').live("contextmenu",function(eventData){
-	    		OrderComponent.constructOrdersMenu(eventData, $(this).attr('id'));
-		    	//cancel the default context menu
-		        return false;
-		    }).live("click",function(eventData) {
-		    	InfoComponent.onItemClick($(this).attr('id'));
-			  });
-		    $('#map-viewport').bind('click', function(eventData) {
-		    	if(eventData.target.id == "map-viewport") {
-		    		WindowManagerComponent.removeObject();
-		    	}
-            });
-            
-            // Hack to fix height and width
-            jQuery('#overlay-content').css('height', (jQuery(window).height() - jQuery('#overlay-content').offset().top));
-            jQuery('#overlay-content').css('width', jQuery(window).width());
-
-            // Setup SystemComponent
-            SystemComponent.setup(data.objects);
             
             // Get orders with ajax call
-            UserInterface.getOrders(function(data) {
+            UserInterface.getOrders(function(orderdata) {
+            	
+            	// Setup ObjectComponent
+                ObjectComponent.setup(data.objects);
+                
+            	// Setup OrderComponent
+                OrderComponent.setup(orderdata.orders);
+                
+                //Setup SystemObjectComponent
+                SystemObjectComponent.setup(data.objects);
+                
+                //Setup InfoComponent
+                InfoComponent.setup(data.objects);
 
-                OrderComponent.setup(data.orders);
+                // Add objects to map
+                Map.addObjects(data.objects);
+                
+                // Add orders to map for coordinate drawing
+                Map.addOrders(orderdata.orders);
+                
+                // Draw Map
+                Map.draw();
+                
+                $('#system-bar').live("click", function(eventData) {
+                	ClickManagerComponent.closeMenu(eventData, $(this).attr('id'));
+                });
+                
+                //Bind rollover sytem object menu to mapobjects
+                $('#map-canvas .container').mouseenter(function() {  
+                	if(SystemObjectComponent.displaySubPanel != true && SystemObjectComponent.overSubPanel != true) {
+    	            	SystemObjectComponent.displaySubPanel = true;
+    	            	SystemObjectComponent.showObjects($(this));
+    	            	if($(this).hasClass('starsystem')) 
+    	            		$(this).css({'width': '200px'});
+                	}
+    	          }).mouseleave(function() {
+    	        	  $('#map-canvas').children('#'+SystemObjectComponent.currentId).css('z-index', '100');
+    	        	  SystemObjectComponent.displaySubPanel = false;
+    	        	  SystemObjectComponent.hideObjects();
+    	        	  $(this).css({'width': '100px'});
+    	          });
+                $('.mapsystem').live("contextmenu",function(eventData){
+  				  ClickManagerComponent.launchOrderMenu(eventData, $(this).attr('id'));
+				  
+				  	//cancel the default context menu
+			        return false;
+			   }).live("click",function(eventData) {
+                	ClickManagerComponent.launchInfoComponent($(this).attr('id'));
+    	        	//InfoComponent.onItemClick($(this).attr('id'));
+    			  });
+                                
+                //Apply orders menu to rightclick and info panel to leftclick
+    		    $('#system-planet-panel li').live("contextmenu",function(eventData){
+    		    	ClickManagerComponent.launchOrderMenu(eventData, $(this).attr('id'), "#system-planet-panel");
+    	    		//OrderComponent.constructOrdersMenu(eventData, $(this).attr('id'));
+    		    	
+    		    	//cancel the default context menu
+    		        return false;
+    		    }).live("click",function(eventData) {
+    		    	ClickManagerComponent.launchInfoComponent($(this).attr('id'));
+    			  });
+    		    
+    		    
+    		    $('#map-viewport').bind('click', function(eventData) {
+    		    	ClickManagerComponent.mapClicked(eventData);
+    		    	
+                });
+                
+                // Hack to fix height and width
+                jQuery('#overlay-content').css('height', (jQuery(window).height() - jQuery('#overlay-content').offset().top));
+                jQuery('#overlay-content').css('width', jQuery(window).width());
 
+                // Setup SystemComponent
+                SystemComponent.setup(data.objects);
+                
+                
                 // Get messages with ajax call
                 UserInterface.getMessages(function(data) {
 
@@ -1690,6 +2003,7 @@ UserInterface = ( function() {
 
                     // Notify user that we are done
                     NotifyComponent.notify('Finished drawing user interface', 'User Interface');
+                    
                 });
             });
         });
