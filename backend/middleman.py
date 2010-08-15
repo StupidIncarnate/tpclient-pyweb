@@ -656,20 +656,27 @@ def connect(host, port, username, password):
 
     if failed(connection.login(username, password)):
         raise ConnectionError('Wrong user name or password.')
-    
+  
     print("--Connection Made--")
     return connection
 
-def createCache(host, port, username, password):
+def createCache(host, port, username, password, games):
     """Create the initial cache"""
-    cache = Cache(Cache.key(host, username)+":"+str(port), configdir='/tmp/tpclient-pyweb/cache/')
+    #print "Cache Key" + Cache.key(host, games, username)+":"+str(port)+"/"
+    cache = Cache(Cache.key(host, games[0], username)+":"+str(port)+"/", configdir='/tmp/tpclient-pyweb/cache/')
     
     return cache
 
 def updateCache(host, port, username, password):
     """Updates the current cache"""
     conn = connect(host, port, username, password)
-    cache = createCache(host, port, username, password)
+    
+    games = conn.games()
+    if failed(games):
+        print "Getting the game object failed!"
+        return
+  
+    cache = createCache(host, port, username, password, games)
     cache.update(conn, callback)
     
     print("Cache Updated")

@@ -12,6 +12,8 @@ try:
 except ImportError:
     from cgi import parse_qs
 
+from tp.netlib import failed
+
 # Local imports
 import middleman
 
@@ -46,7 +48,6 @@ def login(environ, start_response):
             data['error'] = str(e)
     
         if data['auth']:
-            conn.disconnect()
             
             # Set session when login was ok
             import datetime, hashlib
@@ -54,7 +55,15 @@ def login(environ, start_response):
             session['uid'] = (host, port, username, password, datetime.datetime.now())
             session.save()
             
-            cache = middleman.createCache(host, port, username, password)
+            games = conn.games()
+            if failed(games):
+                print "Getting the game object failed!"
+                return
+            
+            print datetime.datetime.now()
+            cache = middleman.createCache(host, port, username, password, games)
+            
+            conn.disconnect()
             
             #Get the media list from the server
             import urllib
@@ -136,8 +145,8 @@ def cache_update(environ, start_response):
         conn, cache = middleman.updateCache(host, port, username, password)
         
         currentTurn = cache.objects[0].__Informational.Year.value    
-            
-        turn = {'time': int(conn.time()), 'current': int(currentTurn)}
+        
+        turn = {'time': int(conn.time().time), 'current': int(conn.time().turn_num)}
         data = {'auth': True, 'cache': True, 'turn': turn}
         
     else:
@@ -161,7 +170,7 @@ def get_orders(environ, start_response):
         
         conn, cache = middleman.updateCache(host, port, username, password)
         
-        turn = {'time': int(conn.time()), 'current': int(currentTurn)}
+        turn = {'time': int(conn.time().time), 'current': int(conn.time().turn_num)}
         data = {'auth': True, 'orders': middleman.Orders(cache).build(), 'turn': turn}
     else:
         data = {'auth': False}
@@ -192,7 +201,7 @@ def send_orders(environ, start_response):
             
             order_id_position, cache = middleman.Orders(cacher).sendOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), args)
             
-            turn = {'time': int(conn.time()), 'current': int(currentTurn)}
+            turn = {'time': int(conn.time().time), 'current': int(conn.time().turn_num)}
             data = {'auth': True, 'sent': True, 'turn': turn, 'order_position': order_id_position}
         else:
             data = {'auth': False}
@@ -223,7 +232,7 @@ def update_orders(environ, start_response):
                 
             cache = middleman.Orders(cacher).updateOrder(conn, int(postdata['id'][0]), int(postdata['type'][0]), int(postdata['order_position'][0]), args) 
 
-            turn = {'time': int(conn.time()), 'current': int(currentTurn)}
+            turn = {'time': int(conn.time().time), 'current': int(conn.time().turn_num)}
             data = {'auth': True, 'sent': True, 'turn': turn}
         else:
             data = {'auth': False}
@@ -250,7 +259,7 @@ def remove_orders(environ, start_response):
             
             cache = middleman.Orders(cacher).removeOrder(conn, int(postdata['id'][0]), int(postdata['order_position'][0])) 
             
-            turn = {'time': int(conn.time()), 'current': int(currentTurn)}
+            turn = {'time': int(conn.time().time), 'current': int(conn.time().turn_num)}
             data = {'auth': True, 'removed': True, 'turn': turn}
         else:
             data = {'auth': False}
@@ -271,7 +280,7 @@ def get_objects(environ, start_response):
         host, port, username, password, now = session['uid']
         conn = middleman.connect(host, port, username, password)
         
-        turn = {'time': int(conn.time()), 'current': int(currentTurn)}
+        turn = {'time': int(conn.time().time), 'current': int(conn.time().turn_num)}
         data = {'auth': True, 'objects': middleman.FriendlyObjects(cache, mediaListName).build(), 'turn': turn}
     else:
         data = {'auth': False}
@@ -297,7 +306,7 @@ def get_messages(environ, start_response):
         host, port, username, password, now = session['uid']
         conn = middleman.connect(host, port, username, password)
 
-        turn = {'time': int(conn.time()), 'current': int(currentTurn)}
+        turn = {'time': int(conn.time().time), 'current': int(conn.time().turn_num)}
         data = {'auth': True, 'messages': middleman.Messages(cache).build()}
     else:
         data = {'auth': False}
