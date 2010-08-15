@@ -129,7 +129,7 @@ function countNumberDigits(num, sizeNum) {
 	
 	var digitNum = 1;
 	
-	while(num > sizeNum) {
+	while(num > sizeNum + 50 ) {
 		num = num * 0.1;
 		digitNum = digitNum * 10;
 	}
@@ -249,6 +249,7 @@ Map = ( function() {
             universe = this.objects[0];
             
             var viewH = $(window).height();
+
             viewH = (viewH / 2) - (viewH / 16);
             //viewH = (viewH / 2);
             
@@ -302,17 +303,13 @@ Map = ( function() {
                     	if(object["Order Queue"] != undefined && object["Order Queue"]["queueid"] != undefined && parseInt(object["Order Queue"]["queueid"]) != 0) {
 	                    	queueid = parseInt(object["Order Queue"]["queueid"]);
 	                    	
-	                    	var counter = 0;
-	                    	
-	                    	for(var iter in this.orders[queueid].orders) {
-	                    		if(counter == 0) {
-	                    			var order = this.orders[queueid].orders[iter]
-	                    			if(order.args[0].name == "Pos") {
-	                    				destPos = SpacePostoPixel(order.args[0].value[0][0], order.args[0].value[0][1])
-	                    				this.drawpath(object.id, pixelPos, destPos)
-	                    			}
-	                    		}
-	                    		break;
+	                    	subid = OrderPosition2OrderId(this.orders[queueid].orders, 0);
+	                    	if(subid != undefined) {
+	                    		var order = this.orders[queueid].orders[subid]
+                    			if(order.args[0].name == "Pos") {
+                    				destPos = SpacePostoPixel(order.args[0].value[0][0], order.args[0].value[0][1])
+                    				this.drawpath(object.id, pixelPos, destPos)
+                    			}
 	                    	}
 	                    }
                     }
@@ -569,7 +566,7 @@ UserInterface = ( function() {
 	    		
 	    		ClickManagerComponent.orderType = null;
 	    		
-	    		alert(OrderComponent.objid)
+	    		alert("You have sent your ship on location.")
 	    		
 	    		shippos = SystemObjectComponent.objects[OrderComponent.objid].Position;
 	    		var originPos = SpacePostoPixel(shippos.x, shippos.y);
