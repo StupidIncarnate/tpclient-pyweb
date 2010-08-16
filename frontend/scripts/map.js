@@ -1982,6 +1982,7 @@ UserInterface = ( function() {
             	  $('#map-canvas').children('#'+SystemObjectComponent.currentId).css('z-index', '100');
             	  SystemObjectComponent.displaySubPanel = false;
             	  SystemObjectComponent.hideObjects();
+            	  ClickManagerComponent.clickObjectDisabled = 0;
             	  $(this).css({'width': '100px'});
               });
             
