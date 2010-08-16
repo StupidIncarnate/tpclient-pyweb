@@ -763,10 +763,7 @@ UserInterface = ( function() {
 				  	//cancel the default context menu
 			        return false;
 			   }).bind('click', function(eventData) {
-            	//Tells the info panel not to load panel above system panel
-            	eventData.clickThrough = "sysPanel";
-            	
-            	InfoComponent.onItemClick($(this).attr('id'));
+				   ClickManagerComponent.launchInfoComponent($(this).attr('id'));
             });
             
             //$('#overlay-content').append(system.append(systemsearch, systemcontent.append(ul)));
