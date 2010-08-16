@@ -302,14 +302,15 @@ Map = ( function() {
                     MapCreator.prototype.drawCoordinatePath = function(object, pixelPos) {
                     	if(object["Order Queue"] != undefined && object["Order Queue"]["queueid"] != undefined && parseInt(object["Order Queue"]["queueid"]) != 0) {
 	                    	queueid = parseInt(object["Order Queue"]["queueid"]);
-	                    	
-	                    	subid = OrderPosition2OrderId(this.orders[queueid].orders, 0);
-	                    	if(subid != undefined) {
-	                    		var order = this.orders[queueid].orders[subid]
-                    			if(order.args[0].name == "Pos") {
-                    				destPos = SpacePostoPixel(order.args[0].value[0][0], order.args[0].value[0][1])
-                    				this.drawpath(object.id, pixelPos, destPos)
-                    			}
+	                    	if(queueid != undefined) {
+		                    	subid = OrderPosition2OrderId(this.orders[queueid].orders, 0);
+		                    	if(subid != undefined) {
+		                    		var order = this.orders[queueid].orders[subid]
+	                    			if(order.args[0].name == "Pos") {
+	                    				destPos = SpacePostoPixel(order.args[0].value[0][0], order.args[0].value[0][1])
+	                    				this.drawpath(object.id, pixelPos, destPos)
+	                    			}
+		                    	}
 	                    	}
 	                    }
                     }
