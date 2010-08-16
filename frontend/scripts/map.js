@@ -1140,7 +1140,7 @@ UserInterface = ( function() {
                     if(data.auth === true) {
                         UserInterface.getOrders(function(data) {
                             OrderComponent.setup(data.orders);
-                            //InfoComponent.onItemClick(InfoComponent.id);
+                            InfoComponent.onItemClick(InfoComponent.id);
                             
                             // Add orders to map for coordinate drawing
                             Map.addOrders(data.orders);
@@ -1822,24 +1822,27 @@ UserInterface = ( function() {
 				ul = $(document.createElement('ul')).addClass('tree-list');
 				for(var i in object.contains) {
 				    toplevel = SystemObjectComponent.objects[object.contains[i]];
-				    li = $(document.createElement('li')).addClass(toplevel.type.name.toLowerCase().replace(" ", "")).attr("id", toplevel.id).attr("parent",object.id);
+				    li = $(document.createElement('li')).addClass(toplevel.type.name.toLowerCase().replace(" ", ""));
+				    
+				    container = $(document.createElement('div')).attr({"id": toplevel.id, "parent": object.id});
 				    
 				    img = $(document.createElement('img'));
 				    img.attr('src', toplevel.Media);
 				    
 				    text = $(document.createElement('p')).text(toplevel.name);
-				    ul.append(li.append(img).append(text));
+				    ul.append(li.append(container.append(img).append(text)));
 				    if(toplevel.contains.length > 0) {
 						subul = $(document.createElement('ul')).addClass('tree-list');
 						li.append(subul);
 						for(var j in toplevel.contains) {
 						    sublevel = SystemObjectComponent.objects[toplevel.contains[j]];
 						    
-						    subli = $(document.createElement('li')).addClass(toplevel.type.name.toLowerCase().replace(" ", "")).attr("id", sublevel.id).attr("parent",toplevel.id);
+						    subli = $(document.createElement('li')).addClass(toplevel.type.name.toLowerCase().replace(" ", ""));
+						    subcontainer = $(document.createElement('div')).attr({"id": sublevel.id, "parent": toplevel.id});
 						    
 						    img = $(document.createElement('img')).attr('src', sublevel.Media);
 						    text = $(document.createElement('p')).text(sublevel.name);
-						    subul.append(subli.append(img).append(text));
+						    subul.append(subli.append(subcontainer.append(img).append(text)));
 						}
 				    }
 				}
@@ -1849,7 +1852,7 @@ UserInterface = ( function() {
 				SystemObjectComponent.hideSystemTitles(id);
 				
 	            //Apply orders menu to rightclick and info panel to leftclick of children elements
-	    	    $('#system-planet-panel li').bind("contextmenu",function(eventData){
+	    	    $('#system-planet-panel li div').bind("contextmenu",function(eventData){
 	    	    	ClickManagerComponent.launchOrderMenu(eventData, $(this));
 	    	    	
 	    	    	//cancel the default context menu
