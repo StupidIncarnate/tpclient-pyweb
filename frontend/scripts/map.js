@@ -1419,7 +1419,10 @@ UserInterface = ( function() {
         	id = parseInt(cssobject.attr('id'))
         	obj = SystemObjectComponent.objects[id];
         	
-        	if(obj["Order Queue"] != undefined && obj["Order Queue"]["queueid"] != undefined && obj["Order Queue"]["queueid"] != 0) {		    		
+        	if(obj != undefined && 
+        	  obj["Order Queue"] != undefined && 
+        	  obj["Order Queue"]["queueid"] != undefined && 
+        	  obj["Order Queue"]["queueid"] != 0) {		    		
 	    		queueid = obj["Order Queue"]["queueid"];
 	    		var x = eventData.pageX;
 	    		var y = eventData.pageY;
@@ -1477,7 +1480,10 @@ UserInterface = ( function() {
             div.append($(document.createElement('h4')).text("Orders"));
             
         	obj = SystemObjectComponent.objects[id];
-            if(obj["Order Queue"] != undefined && obj["Order Queue"]["queueid"] != undefined && obj["Order Queue"]["queueid"] != 0) {		    		
+            if(obj != undefined && 
+              obj["Order Queue"] != undefined && 
+              obj["Order Queue"]["queueid"] != undefined && 
+              obj["Order Queue"]["queueid"] != 0) {		    		
 	    		queueid = obj["Order Queue"]["queueid"];
 	    		// Store selected object id
 	            OrderComponent.queueid = queueid;
@@ -1824,14 +1830,15 @@ UserInterface = ( function() {
 				    text = $(document.createElement('p')).text(toplevel.name);
 				    ul.append(li.append(img).append(text));
 				    if(toplevel.contains.length > 0) {
-						subul = $(document.createElement('ul')).addClass(toplevel.type.name.toLowerCase().replace(" ", "")).attr("id", sublevel.id).attr("parent",toplevel.id);
+						subul = $(document.createElement('ul')).addClass('tree-list');
 						li.append(subul);
 						for(var j in toplevel.contains) {
 						    sublevel = SystemObjectComponent.objects[toplevel.contains[j]];
 						    
-						    subli = $(document.createElement('li'));
+						    subli = $(document.createElement('li')).addClass(toplevel.type.name.toLowerCase().replace(" ", "")).attr("id", sublevel.id).attr("parent",toplevel.id);
+						    
 						    img = $(document.createElement('img')).attr('src', sublevel.Media);
-						    text = $(document.createElement('p')).text(sublevel.name).attr('class', 'name');
+						    text = $(document.createElement('p')).text(sublevel.name);
 						    subul.append(subli.append(img).append(text));
 						}
 				    }
@@ -1844,7 +1851,6 @@ UserInterface = ( function() {
 	            //Apply orders menu to rightclick and info panel to leftclick of children elements
 	    	    $('#system-planet-panel li').bind("contextmenu",function(eventData){
 	    	    	ClickManagerComponent.launchOrderMenu(eventData, $(this));
-	        		//OrderComponent.constructOrdersMenu(eventData, $(this).attr('id'));
 	    	    	
 	    	    	//cancel the default context menu
 	    	        return false;
