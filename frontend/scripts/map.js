@@ -599,6 +599,12 @@ UserInterface = ( function() {
     		//alert(SystemObjectComponent.objects[id].Position.x);
     		
     	};
+    	ClickManagerClass.prototype.setCoordinateOrder = function() {
+    		ClickManagerComponent.coordinateOrder = true;
+    	};
+    	ClickManagerClass.prototype.getCoordinateOrder = function() {
+    		return ClickManagerComponent.coordinateOrder;
+    	};
     	
     	return new ClickManagerClass();
     })();
@@ -1070,32 +1076,9 @@ UserInterface = ( function() {
         	}
         	this.initiateOrder = function(orderType, id) {
         		ClickManagerComponent.orderType = orderType;
-            	ClickManagerComponent.coordinateOrder = true; 
+        		ClickManagerComponent.setCoordinateOrder();
         	}
-        	/*
-            this.pos1 = null;
-            this.pos2 = null;
-            this.pos3 = null;
-            this.order_type = null;
-
-            this.build = function(order_type) {
-                this.order_type = order_type;
-                
-                if(this.order_type.value != null) {
-                    this.pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[0][0], 'size': 12});
-                    this.pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[0][1], 'size': 12});
-                    this.pos3 = $(document.createElement('input')).attr({'type': 'text', 'value': this.order_type.value[0][2], 'size': 12});
-                } else {
-                    this.pos1 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
-                    this.pos2 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
-                    this.pos3 = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
-                }
-                $('#order-panel').append(this.order_type.name, this.order_type.description, ("<br />"), this.pos1, ("<br />"), this.pos2, ("<br />"), this.pos3, ("<br />"));
-            };
-
-            this.getValue = function() {
-                return array2json([this.pos1.val(), this.pos2.val(), this.pos3.val()]);
-            };*/
+        	
         };
 
         /**
@@ -1373,7 +1356,6 @@ UserInterface = ( function() {
         	this.args = new Array();
             
         	orderpanel = InfoComponent.constructBase("order-panel");
-			$('#overlay').append(orderpanel)
             
             if(subid == null && OrderComponentClass.type != null) {
                 var orderType = OrderComponent.orders[OrderComponent.queueid].order_type[OrderComponentClass.type];
@@ -1419,16 +1401,12 @@ UserInterface = ( function() {
                     }
                 }
             }
-            
-            if(subid != null && ClickManagerComponent.coodinateOrder != true) {
+            if(subid != null && ClickManagerComponent.getCoordinateOrder() != true) {
                 update = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Update Order'}).click(function(eventData) {
                     OrderComponent.updateOrder(orderType);
                     return false;
-                });/*
-                remove = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Remove Order'}).click(function(eventData) {
-                    OrderComponent.removeOrder(orderType.order_id);
-                    return false;
-                });*/
+                });
+                
                 orderpanel.append(update);
                 $('#overlay').append(orderpanel);
             }
@@ -1517,10 +1495,13 @@ UserInterface = ( function() {
 	                    var order_id = OrderComponent.orders[OrderComponent.queueid]['orders'][i].order_id;
 	                    order = OrderComponent.orders[OrderComponent.queueid]['orders'][i];
 	                    dt = $(document.createElement('dt')).text(order.turns + ' turns');
-	                    dd = $(document.createElement('dd')).append(
-	                        $(document.createElement('a')).attr({'id': order.order_id, 'href': '#', 'title': order.description}).text(order.name).click(function(eventData) {
+	                    dd = $(document.createElement('dd'));
+	                    if(order.name != "Move")
+	                        dd.append($(document.createElement('a')).attr({'id': order.order_id, 'href': '#', 'title': order.description}).text(order.name).click(function(eventData) {
 	                        	OrderComponent.buildOrderPanel(eventData.currentTarget.id);
 	                        }));
+	                    else
+	                    	dd.append($(document.createElement('span')).attr({'id': order.order_id, 'title': order.description}).text(order.name));
 	                    
 	                    orderControl = $(document.createElement('div')).attr('id', 'ordercontrols');
 	                    dd.append(orderControl);
