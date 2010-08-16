@@ -40,6 +40,13 @@ def cacheObjectPrintout(cache):
         print "------------"
     print "================="
     
+    """
+    print "Printing Orders"
+    for listpos, node in enumerate(cache.orders):
+        order = node.CurrentOrder
+        print "-------------"
+    print "================="
+    """
     print "Printing Properties"
     for i in cache.properties:
         obj = cache.properties[i]
@@ -297,7 +304,7 @@ class FriendlyObjects(object):
         noExtensionURLs = {}
         #print("Build Object Data Structure")
         
-        cacheObjectPrintout(self.cache)
+        #cacheObjectPrintout(self.cache)
         minX = 0
         maxX = 0
         minY = 0
@@ -533,12 +540,23 @@ class Orders(object):
                 # Build the initialize structure for this object and its orders
                 return_data[queueid] = {'orders': {}, 'order_type': []}
                 
-                if orders.numorders > 0:
-                    # Go through all orders currently on the object
-                    orderobj = self.cache.orders[queueid]
-                    ordersAr = {}
-                    
+                orderobj = self.cache.orders[queueid]
+                
+                numorders = 0
+                # Go through all orders currently on the object
+                orderobj = self.cache.orders[queueid]
+                ordersAr = {}
+                
+                """
+                for d in objects.OrderDescs().values():
+                    print d
+                """
+                
+                print orderTypes
+                print len(orderTypes[queueid])
+                if queueid > 0:
                     for listpos, node in enumerate(orderobj):
+
                         order = node.CurrentOrder
                         orderdesc = objects.OrderDescs()[order.subtype]
                         
@@ -548,6 +566,7 @@ class Orders(object):
                             desc = orderdesc.__doc__
                             desc = desc.strip()
                         
+                        print order
                         
                         args = self.get_args(orderdesc, order)
                         
@@ -559,33 +578,37 @@ class Orders(object):
                             'turns': order.turns,
                             'args': args} 
                         
-                    for key in sorted(ordersAr.iterkeys()): 
-                        return_data[queueid]['orders'][key] = ordersAr[key]
+                        numorders+=1
                         
-                if len(orders.ordertypes) > 0:
-                    # Go through all possible orders this object can receive
-                    for type in orders.ordertypes:
-                        # If type is not recognized, ignore it
-                        if not objects.OrderDescs().has_key(type):
-                            continue
-    
-                        # Retrive order description
-                        orderdesc = objects.OrderDescs()[type]
-                        #print orderdesc.__dict__
-                        if hasattr(orderdesc, 'doc'):
-                            desc = orderdesc.doc
-                        else:
-                            desc = orderdesc.__doc__
-                            desc = desc.strip()
-    
-                        args = self.get_args(orderdesc)
-    
-                        return_data[queueid]['order_type'].append({
-                            'name': safestr(orderdesc._name),
-                            'description': safestr(desc),
-                            'type': type,
-                            'args': args})
-                
+                    if numorders > 1:
+                        print "Numorders have been successfully counted"
+                        for key in sorted(ordersAr.iterkeys()): 
+                            return_data[queueid]['orders'][key] = ordersAr[key]
+                    
+                    if len(orderTypes[queueid]) > 0:  
+                        # Go through all possible orders this object can receive
+                        for type in orderTypes[queueid]:
+                            # If type is not recognized, ignore it
+                            if not objects.OrderDescs().has_key(type):
+                                continue
+        
+                            # Retrive order description
+                            orderdesc = objects.OrderDescs()[type]
+                            #print orderdesc.__dict__
+                            if hasattr(orderdesc, 'doc'):
+                                desc = orderdesc.doc
+                            else:
+                                desc = orderdesc.__doc__
+                                desc = desc.strip()
+        
+                            args = self.get_args(orderdesc)
+        
+                            return_data[queueid]['order_type'].append({
+                                'name': safestr(orderdesc._name),
+                                'description': safestr(desc),
+                                'type': type,
+                                'args': args})
+                    
         print("Done Processing Orders")
 
         return return_data

@@ -60,7 +60,6 @@ def login(environ, start_response):
                 print "Getting the game object failed!"
                 return
             
-            print datetime.datetime.now()
             cache = middleman.createCache(host, port, username, password, games)
             
             conn.disconnect()
