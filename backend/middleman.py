@@ -542,20 +542,14 @@ class Orders(object):
                 
                 orderobj = self.cache.orders[queueid]
                 
-                numorders = 0
                 # Go through all orders currently on the object
                 orderobj = self.cache.orders[queueid]
                 ordersAr = {}
                 
-                """
-                for d in objects.OrderDescs().values():
-                    print d
-                """
                 
-                print orderTypes
-                print len(orderTypes[queueid])
                 if queueid > 0:
                     for listpos, node in enumerate(orderobj):
+                        print "order time"
 
                         order = node.CurrentOrder
                         orderdesc = objects.OrderDescs()[order.subtype]
@@ -566,8 +560,6 @@ class Orders(object):
                             desc = orderdesc.__doc__
                             desc = desc.strip()
                         
-                        print order
-                        
                         args = self.get_args(orderdesc, order)
                         
                         ordersAr[int(node.id)] = {
@@ -577,11 +569,8 @@ class Orders(object):
                             'type': order.subtype,
                             'turns': order.turns,
                             'args': args} 
-                        
-                        numorders+=1
-                        
-                    if numorders > 1:
-                        print "Numorders have been successfully counted"
+                    
+                    if len(ordersAr) > 0:
                         for key in sorted(ordersAr.iterkeys()): 
                             return_data[queueid]['orders'][key] = ordersAr[key]
                     

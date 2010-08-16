@@ -1463,10 +1463,10 @@ UserInterface = ( function() {
 	        		div.append(ul);
 		        	for(var i in OrderComponent.orders[queueid].order_type) {
 		                order_type = OrderComponent.orders[queueid].order_type[i];
-		                li = $(document.createElement('li')).attr('value', i).attr('queueid', queueid).text(order_type.name).click(function(eventData){
+		                li = $(document.createElement('li')).attr('value', order_type.type).attr('queueid', queueid).text(order_type.name).click(function(eventData){
 		                	menuId = $(this).attr('value');
 		                	queueId = parseInt($(this).attr('queueid'));
-		                	
+
 		                	$.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': queueId, 'type': menuId}, url: "/json/order/send/", 
 		                        error: function(req, textstatus) { 
 		                            UILock.error('Something went wrong, contact administrator or try again later.', true);
