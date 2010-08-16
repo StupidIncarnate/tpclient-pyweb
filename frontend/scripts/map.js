@@ -873,7 +873,7 @@ UserInterface = ( function() {
             this.object = null;
             this.order_type = null;
 
-            this.build = function(order_type) {
+            this.build = function(order_type, orderpanel) {
                 this.order_type = order_type;
                 
                 if(this.order_type.value != null) {
@@ -889,7 +889,7 @@ UserInterface = ( function() {
                         this.object.append($(document.createElement('option')).attr({'value': ObjectComponent.objects[i].id}));
                     }
                 }
-                $('#order-panel').append(this.order_type.name, this.order_type.description, this.object);
+                orderpanel.append(this.order_type.name, this.order_type.description, this.object);
             };
 
             this.getValue = function() {
@@ -971,7 +971,7 @@ UserInterface = ( function() {
             };
 
 
-            this.build = function(order_type) {
+            this.build = function(order_type, orderpanel) {
                 this.order_type = order_type;
 
                 this.choices = [];
@@ -1014,7 +1014,7 @@ UserInterface = ( function() {
                     }
                 }
 
-                $('#order-panel').append(
+                orderpanel.append(
                     $(document.createElement('div')).append(this.order_type.name, this.selectionsElement, this.optionsElement)
                 );
             };
@@ -1040,7 +1040,7 @@ UserInterface = ( function() {
             this.string = null;
             this.order_type = null;
 
-            this.build = function(order_type) {
+            this.build = function(order_type, orderpanel) {
                 this.order_type = order_type;
                 
                 if(this.order_type.value != null) {
@@ -1049,7 +1049,7 @@ UserInterface = ( function() {
                     var value = '';
                 }
                 this.string = $(document.createElement('input')).attr({'type': 'text', 'value': value});
-                $('#order-panel').append($(document.createElement('div')).append(this.order_type.name, this.string)
+                orderpanel.append($(document.createElement('div')).append(this.order_type.name, this.string)
                 );
             };
 
@@ -1106,7 +1106,7 @@ UserInterface = ( function() {
             this.time = null;
             this.order_type = null;
 
-            this.build = function(order_type) {
+            this.build = function(order_type, orderpanel) {
                 this.order_type = order_type;
 
                 if(this.order_type.value != null) {
@@ -1114,7 +1114,7 @@ UserInterface = ( function() {
                 } else {
                     this.time = $(document.createElement('input')).attr({'type': 'text', 'value': 0, 'size': 12});
                 }
-                $('#order-panel').append(this.order_type.name, this.order_type.description, this.time);
+                orderpanel.append(this.order_type.name, this.order_type.description, this.time);
             };
 
             this.getValue = function() {
@@ -1370,18 +1370,10 @@ UserInterface = ( function() {
         	//Reinitiate Clicking for the object that was right-clicked
         	ClickManagerComponent.clickObjectDisabled = 0;
         	
-            WindowManagerComponent.registerObject("#order-panel");
         	this.args = new Array();
             
-            orderpanel = $(document.createElement('div')).attr('id', 'order-panel');
-            
-            orderposTop = 5;
-			orderposLeft = (screen.width / 2) - (orderpanel.width() / 2);
-			
-			if(orderposLeft < 0)
-				orderposLeft = 0;
-			
-			orderpanel.css("top", orderposTop+"px").css("left", orderposLeft+"px");
+        	orderpanel = InfoComponent.constructBase("order-panel");
+			$('#overlay').append(orderpanel)
             
             if(subid == null && OrderComponentClass.type != null) {
                 var orderType = OrderComponent.orders[OrderComponent.queueid].order_type[OrderComponentClass.type];
@@ -1391,10 +1383,11 @@ UserInterface = ( function() {
                 return false;
             }
             orderpanel.append($(document.createElement('h5')).css({'margin': 0, 'padding': 0}).text(orderType.name));
-            
+
             if(orderType != null) {
                 for(var i in orderType.args) {
                     var argument = null;
+                    
                     // If argument type is coordinate, build a coordinate panel
                     if(orderType.args[i].type == 'coordinate') {
                         argument = new CoordinateArgumentPanel();
@@ -1403,22 +1396,22 @@ UserInterface = ( function() {
                     // Else if argument type is time, build a time panel
                     } else if(orderType.args[i].type == 'time') {
                         argument = new TimeArgumentPanel();
-                        argument.build(orderType.args[i]);
+                        argument.build(orderType.args[i], orderpanel);
 
                     // Else if argument type is string, build a string panel
                     } else if(orderType.args[i].type == 'string') {
                         argument = new StringArgumentPanel();
-                        argument.build(orderType.args[i]);
+                        argument.build(orderType.args[i], orderpanel);
 
                     // Else if argument type is object, build a object panel
                     } else if(orderType.args[i].type == 'object') {
                         argument = new ObjectArgumentPanel();
-                        argument.build(orderType.args[i]);
+                        argument.build(orderType.args[i], orderpanel);
 
                     // Else if argument type is list, build a list panel
                     } else if(orderType.args[i].type == 'list') {
                         argument = new ListArgumentPanel();
-                        argument.build(orderType.args[i]);
+                        argument.build(orderType.args[i], orderpanel);
                     }
 
                     if(argument != null) {
@@ -1427,7 +1420,7 @@ UserInterface = ( function() {
                 }
             }
             
-            if(subid != null && ClickManagerComponent.coodinateOrder == false) {
+            if(subid != null && ClickManagerComponent.coodinateOrder != true) {
                 update = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Update Order'}).click(function(eventData) {
                     OrderComponent.updateOrder(orderType);
                     return false;
@@ -1526,7 +1519,7 @@ UserInterface = ( function() {
 	                    dt = $(document.createElement('dt')).text(order.turns + ' turns');
 	                    dd = $(document.createElement('dd')).append(
 	                        $(document.createElement('a')).attr({'id': order.order_id, 'href': '#', 'title': order.description}).text(order.name).click(function(eventData) {
-	                            //OrderComponent.buildOrder(eventData.currentTarget.id);
+	                        	OrderComponent.buildOrderPanel(eventData.currentTarget.id);
 	                        }));
 	                    
 	                    orderControl = $(document.createElement('div')).attr('id', 'ordercontrols');
@@ -1551,7 +1544,6 @@ UserInterface = ( function() {
 	                    
 	                    orderControl.append(asc).append(desc).append(
 	                    		$(document.createElement('a')).attr({'id': order.order_id, 'href': '#'}).append(remove).click(function(eventData) {
-			                    	//alert(eventData.currentTarget.id);
 			                    	OrderComponent.removeOrder(eventData.currentTarget.id);
 			                    })
 			            );
@@ -1690,7 +1682,36 @@ UserInterface = ( function() {
     		
     	};
     	/*
-    	 * Event: onMapClick
+    	 * Construct the base component. The order portion also uses this panel.
+    	 * 
+    	 * windowName is the css tag name, without a # before it.
+    	 */
+    	InfoComponentClass.prototype.constructBase = function(windowName) {
+    		WindowManagerComponent.registerObject("#"+windowName);
+    		
+    		panel = $(document.createElement("div")).attr('id', windowName);
+    		
+    		closebutton = $(document.createElement("div")).attr('id', 'closebutton');
+			a = $(document.createElement('a')).one("click",function(eventData){
+				WindowManagerComponent.removeObject();
+			});
+			closebutton.append(a.append($(document.createElement("img")).attr('src', 'images/close.png')));
+			
+			panel.append(closebutton);
+    		
+		    posTop = 5;
+			posLeft = (screen.width / 2) - (panel.width() / 2);
+			
+			if(posLeft < 0)
+				posLeft = 0;
+			
+			panel.css("display", "inline").css("top", posTop+"px").css("left", posLeft+"px");
+			
+			return panel;
+    	};
+    	
+    	/*
+    	 * Event: onItemClick
     	 */
     	InfoComponentClass.prototype.onItemClick = function(id) {
     		id = parseInt(id);
@@ -1699,28 +1720,9 @@ UserInterface = ( function() {
     		}
     		else if(InfoComponent.objects[id] != undefined) {
     			InfoComponent.id = id;
-                WindowManagerComponent.registerObject("#info-panel");
                 
-    			infopanel = $(document.createElement("div")).attr('id', 'info-panel');
-    			
-    			closebutton = $(document.createElement("div")).attr('id', 'closebutton');
-    			a = $(document.createElement('a')).one("click",function(eventData){
-    				WindowManagerComponent.removeObject();
-    			});
-    			closebutton.append(a.append($(document.createElement("img")).attr('src', 'images/close.png')));
-    			
-    			$('#overlay').append(infopanel.append(closebutton));
-    			
-    			infoposTop = 5;
-				infoposLeft = (screen.width / 2) - (infopanel.width() / 2);
-				
-				if(infoposTop < 0)
-    				infoposTop = 0;
-    			if(infoposLeft < 0)
-    				infoposLeft = 0;
-    			
-    			infopanel.css("display", "inline").css("top", infoposTop+"px").css("left", infoposLeft+"px");
-	    			
+    			infopanel = this.constructBase("info-panel");
+    			$('#overlay').append(infopanel)
     			object = InfoComponent.objects[id];
     			
                 infoComponent = $(document.createElement("div")).attr('id', 'info-panel-text');
