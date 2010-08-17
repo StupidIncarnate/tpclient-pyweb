@@ -109,7 +109,7 @@ def login(environ, start_response):
                     fileHolder.write('')
                     fileHolder.close()
                     
-            middleman.cacheObjectPrintout(cache)
+            
     else:
         data = {'auth': False, 'error': 'Just use the form we provid to submit data, OK?'}
 
@@ -142,7 +142,7 @@ def cache_update(environ, start_response):
         
         host, port, username, password, now = session['uid']
         conn, cache = middleman.updateCache(host, port, username, password)
-        
+        middleman.cacheObjectPrintout(cache)
         currentTurn = cache.objects[0].__Informational.Year.value    
         
         turn = {'time': int(conn.time().time), 'current': int(conn.time().turn_num)}

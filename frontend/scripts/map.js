@@ -1752,9 +1752,20 @@ UserInterface = ( function() {
 		                    		dd = $(document.createElement('dd')).html("<img src=\""+ objText +"\">");
 		                    	} else if(typeof object[key] == "object") {
 		                    		var text = "";
-		                    		for(vars in object[key]){
-		                    			text += vars.toUpperCase() + ": " + object[key][vars] + ", <br />";
+		                    		
+		                    		if(key == "Ship List") {
+		                    			for(ships in object[key]){	
+	                    					text += object[key][ships][0] + ": " + object[key][ships][1] + ", <br />" 
+	                    					//alert (ship +  " "+ object[key][ships])
+	                    					//text += object[key][ships]
+		                    				
+		                    			}
+		                    		} else {
+			                    		for(vars in object[key]){
+			                    			text += vars.toUpperCase() + ": " + object[key][vars] + ", <br />";
+			                    		}
 		                    		}
+		                    		
 		                    		dd = $(document.createElement('dd')).html(text);
 		                    	} else {
 		                    		dd = $(document.createElement('dd')).text(objText);

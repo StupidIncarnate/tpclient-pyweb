@@ -40,13 +40,6 @@ def cacheObjectPrintout(cache):
         print "------------"
     print "================="
     
-    """
-    print "Printing Orders"
-    for listpos, node in enumerate(cache.orders):
-        order = node.CurrentOrder
-        print "-------------"
-    print "================="
-    """
     print "Printing Properties"
     for i in cache.properties:
         obj = cache.properties[i]
@@ -315,6 +308,7 @@ class FriendlyObjects(object):
             
             #Get Object Type Name
             objdesc = objects.ObjectDescs()[obj.subtype]
+            
             print obj.__dict__
             #The attributes that have no nested elements
             ret[obj.id] = {
@@ -340,7 +334,20 @@ class FriendlyObjects(object):
                 ret[obj.id]["Year"] = ret[obj.id]["Year"]["value"]
             if "Damage" in ret[obj.id]:
                 ret[obj.id]["Damage"] = ret[obj.id]["Damage"]["value"]
+            if "Ship List" in ret[obj.id]:
+                shiplist = {}
+                for listnum in ret[obj.id]["Ship List"]['references']:
+                    ships = ret[obj.id]["Ship List"]['references'][listnum]
+                    designs = self.cache.designs[ships[1]]
+                    shiplist[listnum] = {0: safestr(designs.name), 1: ships[2] }   
+                ret[obj.id]["Ship List"] = shiplist
+            if "Owner" in ret[obj.id]:
+                id = int(ret[obj.id]["Owner"]["id"])
                 
+                if id is 0:
+                    ret[obj.id]["Owner"] = safestr("")
+                else:
+                    ret[obj.id]["Owner"] = safestr(self.cache.players[id].name) 
             #ownerid = getOwner(self.cache, obj.id)
             
             """Fix for relative"""
