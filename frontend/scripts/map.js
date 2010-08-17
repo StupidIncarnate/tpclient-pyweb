@@ -1415,6 +1415,9 @@ UserInterface = ( function() {
             	orderpanel.append(orderdata);
             	
             	update = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Update Order'}).click(function(eventData) {
+            		parent = $(this).parent();
+            		$(this).empty();
+            		parent.append($(document.createElement('img')).attr({'src': "/images/loadingCircle.gif"}).css({ 'width': '20px', 'height': '20px'}))
                     OrderComponent.updateOrder(orderType);
                     return false;
                 });
