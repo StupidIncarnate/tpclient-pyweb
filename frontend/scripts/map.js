@@ -186,7 +186,7 @@ Map = ( function() {
             this.scroll.css('top', (((this.map.height()/2) + y))+'px');
             this.scroll.css('left', ((this.map.width()/2) + -x)+'px');
         }
-
+                
         // Setup event handlers
         /*$(this.viewport).bind("mousedown", this, this.down);
         $(document).bind("mousemove", this, this.move);
@@ -321,7 +321,6 @@ Map = ( function() {
                     	object = this.objects[system.contains[k]];
                     	this.drawCoordinatePath(object, pixelPos)
                     }
-                    
                     this.drawobject(pixelPos, system.id, system.name, system.type.name, system.Media);
                     
                 }
@@ -383,7 +382,6 @@ Map = ( function() {
  * A container for all User Interface functionality
  */
 UserInterface = ( function() {
-
     /**
      * User Interface Lock
      *
@@ -674,20 +672,30 @@ UserInterface = ( function() {
                         createList(temp, ul, match);
                     }
                 } else {
-                    li = $(document.createElement('li')).addClass("icon").css("background-image", "url("+temp.Icon+")").append(
-                        $(document.createElement('a'))
-                            .attr({'href': '#info/'+temp.id, 'id': temp.id, 'queueid': queueid})
-                            .addClass(temp.type.name.toLowerCase().split(' ').join(''))
-                            .text(temp.name)
-                    );
-                    ul.append(li);
+                    li = $(document.createElement('li')).addClass("icon").css("background-image", "url("+temp.Icon+")");
+                    a = $(document.createElement('a'))
+		                    .attr({'href': '#info/'+temp.id, 'id': temp.id, 'queueid': queueid})
+		                    .addClass(temp.type.name.toLowerCase().split(' ').join(''))
+		                    .text(temp.name);
+                    
+                    if(temp.Owner != undefined) {
+	                    if(temp.Owner == UserInterface.username) {
+	    			    	a.addClass('owned');
+	    			    } else if(temp.Owner.length  > 1) {
+	    			    	a.addClass('enemy');
+	    			    }
+                    }
+                    
+                    ul.append(li.append(a));
 
                     if(temp.contains.length > 0) {
                         subul = $(document.createElement('ul'));
                         li.append(subul);
                         createList(temp, subul, match);
                     }
+                    
                 }
+                
             }
         };
 
@@ -803,7 +811,9 @@ UserInterface = ( function() {
         var host = $("input[name='tphost']", this).val();
         var user = $("input[name='tpuser']", this).val();
         var pass = $("input[name='tppass']", this).val();
-
+        
+        UserInterface.username = user;
+        
         if(host == '' || user == '' || pass == '') {
             UILock.error('No empty fields are allowed.', true);
         } else {
@@ -1851,6 +1861,12 @@ UserInterface = ( function() {
 				    
 				    container = $(document.createElement('div')).attr({"id": toplevel.id, "parent": object.id});
 				    
+				    if(toplevel.Owner == UserInterface.username) {
+				    	container.addClass('owned');
+				    } else if(toplevel.Owner.length  > 1) {
+				    	container.addClass('enemy');
+				    }
+				    
 				    img = $(document.createElement('img'));
 				    img.attr('src', toplevel.Media);
 				    
@@ -1865,6 +1881,12 @@ UserInterface = ( function() {
 						    subli = $(document.createElement('li')).addClass(toplevel.type.name.toLowerCase().replace(" ", ""));
 						    subcontainer = $(document.createElement('div')).attr({"id": sublevel.id, "parent": toplevel.id});
 						    
+						    if(sublevel.Owner == UserInterface.username) {
+						    	container.addClass('owned');
+						    } else if(sublevel.Owner.length  > 1) {
+						    	container.addClass('enemy');
+						    }
+						    
 						    img = $(document.createElement('img')).attr('src', sublevel.Media);
 						    text = $(document.createElement('p')).text(sublevel.name);
 						    subul.append(subli.append(subcontainer.append(img).append(text)));
@@ -1875,7 +1897,7 @@ UserInterface = ( function() {
 				
 				$('#map-canvas').children('#'+id).append(infoComp).css('z-index', '200');
 				SystemObjectComponent.hideSystemTitles(id);
-				
+
 	            //Apply orders menu to rightclick and info panel to leftclick of children elements
 	    	    $('#system-planet-panel li div').bind("contextmenu",function(eventData){
 	    	    	ClickManagerComponent.launchOrderMenu(eventData, $(this));
@@ -1902,7 +1924,8 @@ UserInterface = ( function() {
     constructor.prototype.MessageComponent = MessageComponent;
     constructor.prototype.objects = null;
     constructor.prototype.orders = null;
-
+    constructor.prototype.username = null;
+    
     /**
      * Logout handler
      */
@@ -1966,7 +1989,7 @@ UserInterface = ( function() {
 
                     // Setup MessageComponent
                     UserInterface.MessageComponent.setup(data.messages)
-
+                    
                     // We are done, clear UI Lock
                     UILock.clear();
 
