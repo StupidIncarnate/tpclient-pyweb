@@ -1882,9 +1882,9 @@ UserInterface = ( function() {
 						    subcontainer = $(document.createElement('div')).attr({"id": sublevel.id, "parent": toplevel.id});
 						    
 						    if(sublevel.Owner == UserInterface.username) {
-						    	container.addClass('owned');
+						    	subcontainer.addClass('owned');
 						    } else if(sublevel.Owner.length  > 1) {
-						    	container.addClass('enemy');
+						    	subcontainer.addClass('enemy');
 						    }
 						    
 						    img = $(document.createElement('img')).attr('src', sublevel.Media);
