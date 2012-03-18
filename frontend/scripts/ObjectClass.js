@@ -25,10 +25,10 @@ ObjectClass = (function() {
 			 		 .addClass(type);
 		
 		if(obj.Owner != undefined) {
-			console.log(UserInterface.username);
+			console.log(obj.Owner);
 			if(obj.Owner == UserInterface.username)
 				$objContainer.addClass('owned');
-			else 
+			else if(obj.Owner.length > 0)
 				$objContainer.addClass('enemy');
 		}
 		

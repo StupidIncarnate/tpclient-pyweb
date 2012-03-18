@@ -146,6 +146,7 @@ UserInterface = ( function() {
         var pass = $("input[name='tppass']", this).val();
         
         UserInterface.username = user;
+        $.cookies.set("tpclient-user", user);
         
         if(host == '' || user == '' || pass == '') {
             UILock.error('No empty fields are allowed.', true);
@@ -380,6 +381,7 @@ UserInterface = ( function() {
         if($.cookies.get('tpclient-pyweb') == null) {
             return false;
         } else { 
+        	UserInterface.username = $.cookies.get("tpclient-user");
             return true;
         }
     };
