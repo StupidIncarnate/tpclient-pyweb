@@ -2,11 +2,88 @@
      * Object component
      * Handles all object business
      */
-var ObjectClass = (function() {
+ObjectClass = (function() {
+	
+	function constructDOMObject(objID, pos) {
+		
+		var obj = ObjectClass.objects[objID];
+	
+		var id = obj.id;
+		var type = obj.type.name.toLowerCase().replace(" ", "");
+		var name = obj.name;
+		var image = obj.Media;
+		var icon = obj.Icon;
+		var children = obj.contains;
+		
+		
+		var $parentContainer = $(document.createElement("div"))
+			.attr("id", obj.id)
+			.addClass("container");
+		
+		var $objContainer = $(document.createElement("div"));
+		$objContainer.attr("id", obj.id)
+			 		 .addClass(type);
+		
+		if(obj.Owner != undefined) {
+			console.log(UserInterface.username);
+			if(obj.Owner == UserInterface.username)
+				$objContainer.addClass('owned');
+			else 
+				$objContainer.addClass('enemy');
+		}
+		
+		
+		$parentContainer.append($objContainer);
+		
+		if(pos != undefined) {
+			
+			var top = pos.y + "px";
+			var left = pos.x + "px";
+			
+			$parentContainer.css({'top': top, 'left': left});
+		}
+		
+		var $objImg = $(document.createElement("img"));
+		$objImg.attr({"id": id, "src": image})
+			   .addClass("mapsystem");
+		
+		var $objText = $(document.createElement("span"));
+		$objText.attr("id", id)
+				.addClass("name")
+				.text(name);
+		
+		$objContainer.append($objImg).append($objText);
+		
+		
+		if(children.length > 0) {
+			
+			var $childUL = $(document.createElement("ul"))
+							.addClass("tree-list");
+			
+			for(var i in children) {
+				
+				var childID = children[i];
+			
+				var $childLI = $(document.createElement("li"))
+								.append(constructDOMObject(childID));
+				
+				$childUL.append($childLI);
+				
+			}
+			
+			$parentContainer.append($childUL);
+			
+		}
+			 
+		return $parentContainer;
+		
+		
+	};
+	
 	
 	var ObjectComponent = function(){};
 	ObjectComponent.prototype.objects = null;
-	
+		
 	/**
      * Setup object component
      */
@@ -14,6 +91,26 @@ var ObjectClass = (function() {
 		ObjectClass.objects = data;		
 		console.log(data);
 	}
+	
+	/**
+	 * Constructs DOM object with children
+	 */
+	ObjectComponent.prototype.constructDOMSystem = function(objID, pos) {
+		
+		var $obj = constructDOMObject(objID, pos);
+		$obj.hover(
+	    		function() {
+	    			$(this).addClass("hover");
+	    		}, 
+	    		function() {
+	    			$(this).removeClass("hover");
+	    		}
+	    	);
+			 
+		return $obj;
+		
+		
+	} 
 	
 	return new ObjectComponent();
 	
@@ -57,6 +154,7 @@ var ObjectClass = (function() {
          * Event: MouseOver
          */
         SystemObjectComponentClass.prototype.showObjects = function(systemobject) {
+        	/*
         	if(SystemObjectComponent.displayPanel == true && SystemObjectComponent.currentId != -1) 
         		id = SystemObjectComponent.currentId;
         	else 
@@ -69,9 +167,6 @@ var ObjectClass = (function() {
 		    	SystemObjectComponent.displayPanel = true;
 		    	SystemObjectComponent.currentId = id;
 		    	
-		    	/*posX = systemobject.position().left;
-		    	posY = systemobject.position().top;
-			    */
 			    var infoComp = $(document.createElement("div")).attr('id', 'system-planet-panel').css('z-index', '300');
 			    
 			    var dl = $(document.createElement("dl"));
@@ -132,7 +227,7 @@ var ObjectClass = (function() {
 
 	    		  });
 		    }		    
-        	
+        	*/
         };
         
 

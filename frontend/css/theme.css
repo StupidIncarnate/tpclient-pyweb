@@ -6,18 +6,34 @@
 		.owned{background-color: rgba(0, 255, 0, 0.5);padding: 2px;}
 		.enemy{background-color: rgba(255, 0, 0, 0.5);padding: 2px;}
 		
+		#mapdiv { position: absolute; top: 0; left: 0; margin: 0; padding: 0; width: 100%; height: 100%; }
 		#map-viewport { position: relative; overflow: hidden; width: 100%; }
-		#map-canvas .container{ position: absolute; z-index: 99;}
-		#map-canvas .mapsystem { text-align: center; float: left; width: 100;}
-		#map-canvas .mapsystem img {width: 30px; height: 30px; z-index: 100;}
-		#map-canvas .starsystem img {width: 50px; height: 50px;}
-		#map-canvas .name {width: 100px; position: relative; top: -20px; font-size: 15px; color: white; margin: 0; padding: 0; z-index: 100; cursor: default; line-height:95%;}
-        #mapdiv { position: absolute; top: 0; left: 0; margin: 0; padding: 0; width: 100%; height: 100%; }
 		
-		#system-planet-panel { width: 100px; float: left; text-align: center; }
-		#system-planet-panel p { color: white; }
-		#system-planet-panel img {width: 20px; height: 20px;}
-		#system-planet-panel .planet img {width: 35px; height: 35px;}
+		#map-canvas > .container{ position: absolute; z-index: 99;}
+		#map-canvas .container {text-align: left; width: 100px; }
+		#map-canvas .container > div { text-align: center; width: 100px;}
+		#map-canvas .container > ul { display: none; margin-left: 100px; z-index: 200;}
+		
+		#map-canvas .container.hover { width: 200px; text-align: left; }
+		#map-canvas .container.hover > div { float: left; }
+		#map-canvas .container.hover ul { display: block; }
+		
+		#map-canvas .mapsystem {width: 30px; height: 30px; z-index: 100; text-align: center; }
+		#map-canvas .starsystem img {width: 50px; height: 50px;}
+		#map-canvas .name {width: 100px; display: block; position: relative; top: -20px; font-size: 15px; color: white; margin: 0; padding: 0; z-index: 100; cursor: default; line-height:95%;}
+		#map-canvas .fleet img {width: 30px; }	
+		
+		/*
+		#map-canvas.tree-list { position: absolute; width: 100px; top: 0; text-align: center; }
+		#map-canvas.tree-list p { color: white; }
+		#map-canvas.tree-list img {width: 20px; height: 20px;}
+		#map-canvas.tree-list .planet img {width: 35px; height: 35px;}*/
+		
+		
+		ul.tree-list { margin: 2px 0 2px 0; list-style-type: none; }
+        ul.tree-list ul { margin: 2px 0 2px 0px; list-style-type: none; }
+        ul.tree-list li { margin: 0; padding: 0 0 1px 20px; line-height: 16px; }
+        
 		
 		#order-menu { width: 150px; z-index: 350; position: fixed; text-align: left; background-image: url('../images/system-panel-text.png'); background-repeat: repeat-y; background-position: -50px, -50px;}
 		#order-menu ul { padding: 0; margin: 0 0 0 20px; }
@@ -126,10 +142,6 @@
             width: 440px; margin: 0 0 0 -220px; padding: 1em 0; z-index: 10001; text-align: center; background: 0; border: 0; }
         #uilock-content.error { color: red; }
         #uilock-content.notice { color: orange; }
-        	
-        ul.tree-list { margin: 2px 0 2px 0; list-style-type: none; }
-        ul.tree-list ul { margin: 2px 0 2px 0px; list-style-type: none; }
-        ul.tree-list li { margin: 0; padding: 0 0 1px 20px; line-height: 16px; }
         
         #notify-component { position: absolute; bottom: 5px; right: 10px; width: 60em; height: 72px; z-index: 100; text-align: right; overflow: hidden; }
         #notify-component div { margin: 5px 0; }

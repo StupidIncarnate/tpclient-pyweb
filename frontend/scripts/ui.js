@@ -259,6 +259,7 @@ UserInterface = ( function() {
             	ClickManagerComponent.closeMenu(eventData, $(this).attr('id'));
             });
             
+        	/*
             //Bind rollover sytem object menu to mapobjects
             $('#map-canvas .starsystem').mouseenter(function() {  
             	if(SystemObjectComponent.displaySubPanel != true) {
@@ -275,7 +276,7 @@ UserInterface = ( function() {
             	  ClickManagerComponent.clickObjectDisabled = 0;
             	  $(this).css({'width': '100px'});
               });
-            
+            */
             $('.mapsystem').click(function(eventData) {
   			  	ClickManagerComponent.launchInfoComponent($(this).attr('id'));
   			 

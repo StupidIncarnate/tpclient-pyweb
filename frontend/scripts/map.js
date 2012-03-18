@@ -179,24 +179,14 @@ Map = ( function() {
     };
     
     MapCreator.prototype.drawobject = function(pos, id, name, type, image, destPos) {
-    	//alert(pos.x + " " + pos.y);
-    	type = type.toLowerCase().replace(" ", "");
     	
     	//Shift the icons so they're directly over they're coodinate point 
-    	var shiftedX = pos.x - 50;
-    	var shiftedY = pos.y - 25;
+    	var shifted = {};
+    	shifted.x = pos.x - 50;
+    	shifted.y = pos.y - 25;
     	
-    	var container = $(document.createElement('div')).attr('id', id).attr('class', type + " container").css({'top': shiftedY+'px', 'left': shiftedX+'px', 'width': '100px'});
-    	this.canvas.append(container);
-    	var objectdiv = $(document.createElement('div'));
-    	objectdiv.attr('class', 'mapsystem').attr('id', id);
-    	
-    	var objectIcon = $(document.createElement('img')).attr('src', image);
-    	
-    	var objectText = $(document.createElement('div'));
-    	objectText.attr('class', 'name').attr('id', id);
-    	objectText.text(name);
-    	container.append(objectdiv.append(objectIcon).append(objectText));    	
+    	var $mapObj = ObjectClass.constructDOMSystem(id, shifted);
+    	this.canvas.append($mapObj);
     	
     };
     MapCreator.prototype.drawpath = function(id, objpos, destpos) {
