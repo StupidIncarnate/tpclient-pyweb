@@ -272,7 +272,7 @@ OrderComponent = (function() {
                     if(data.auth === true) {
                         UserInterface.getOrders(function(data) {
                             OrderComponent.setup(data.orders);
-                            InfoComponent.onItemClick(InfoComponent.id);
+                            WindowClass.InfoWindow.onItemClick(WindowClass.InfoWindow.id);
                             
                             // Add orders to map for coordinate drawing
                             Map.addOrders(data.orders);
@@ -301,7 +301,7 @@ OrderComponent = (function() {
                     if(data.auth === true) {
                         UserInterface.getOrders(function(data) {
                             OrderComponent.setup(data.orders);
-                            InfoComponent.onItemClick(InfoComponent.id);
+                            WindowClass.InfoWindow.onItemClick(WindowClass.InfoWindow.id);
                             
                             // Add orders to map for coordinate drawing
                             Map.addOrders(data.orders);
@@ -533,7 +533,7 @@ OrderComponent = (function() {
                 }
             }
             if(subid != null && TaskManager.Click.getCoordinateOrder() != true) {
-            	orderpanel = InfoComponent.constructBase("order-panel");
+            	orderpanel = WindowClass.InfoWindow.constructBase("order-panel");
             	orderpanel.append($(document.createElement('h5')).css({'margin': 0, 'padding': 0}).text(orderType.name));
             	
             	orderpanel.append(orderdata);

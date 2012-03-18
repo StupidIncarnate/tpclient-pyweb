@@ -21,7 +21,7 @@ TaskManager = ( function() {
     			ClickManagerComponent.objectClicked(id);
     		else {
     			if(ClickManagerComponent.clickObjectDisabled != parseInt(id)) {
-    				  InfoComponent.onItemClick(id);
+    				  WindowClass.InfoWindow.onItemClick(id);
     			}
     		}
     	};

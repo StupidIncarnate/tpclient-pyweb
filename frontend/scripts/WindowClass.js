@@ -1,4 +1,9 @@
-/**
+
+
+WindowClass = (function() {
+	
+	var Components = function() {};
+	/**
      * System component
      *
      * A list of objects in the universe, searchable.
@@ -319,3 +324,11 @@
     	
     	return new InfoComponentClass();
     } )();
+    
+    Components.prototype.SystemMenu = SystemComponent;
+    Components.prototype.MessageMenu = MessageComponent;
+    Components.prototype.InfoWindow = InfoComponent;
+    
+    return new Components();
+    
+}) ();

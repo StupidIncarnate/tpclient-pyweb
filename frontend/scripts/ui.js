@@ -221,7 +221,7 @@ UserInterface = ( function() {
                 SystemObjectComponent.setup(data.objects);
                 
                 //Setup InfoComponent
-                InfoComponent.setup(data.objects);
+                WindowClass.InfoWindow.setup(data.objects);
 
                 // Add objects to map
                 Map.addObjects(data.objects);
@@ -236,14 +236,14 @@ UserInterface = ( function() {
                 UserInterface.initCssEvents();
                 
                 // Setup SystemComponent
-                SystemComponent.setup(data.objects);
+                WindowClass.SystemMenu.setup(data.objects);
                 
                 
                 // Get messages with ajax call
                 UserInterface.getMessages(function(data) {
 
                     // Setup MessageComponent
-                    MessageComponent.setup(data.messages)
+                    WindowClass.MessageMenu.setup(data.messages)
                     
                     // We are done, clear UI Lock
                     UILock.clear();
@@ -454,7 +454,7 @@ UserInterface = ( function() {
         
         /*$('#mapdiv').live('click', function(eventData) {
         	eventData.clickThrough = "mapobj";
-        	InfoComponent.onMapClick(eventData);
+        	WindowClass.InfoWindow.onMapClick(eventData);
         	//SystemObjectComponent.onMapClick(eventData);
         });*/
 
@@ -500,7 +500,7 @@ UserInterface = ( function() {
             OrderComponent.onMapClick(eventData);
             //ObjectComponent.onMapClick(eventData);
             eventData.clickThrough = "mapobj";
-            InfoComponent.onMapClick(eventData);
+            WindowClass.InfoWindow.onMapClick(eventData);
             //SystemObjectComponent.onMapClick(eventData);
         })
          */
