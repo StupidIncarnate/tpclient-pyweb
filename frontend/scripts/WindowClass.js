@@ -92,13 +92,13 @@ WindowClass = (function() {
                 $('#system-bar-text a').unbind('click');
                 $('#system-component-text').html('');
                 ul = $(document.createElement('ul')).addClass('tree-list');
-                createList(ObjectComponent.objects[0], ul, searchString.toLowerCase());
+                createList(ObjectClass.objects[0], ul, searchString.toLowerCase());
                 $('a', ul).bind('click', function(eventData) {
                 	//Tells the info panel not to load panel above system panel
                 	eventData.clickThrough = "sysPanel";
                 	
                 	InfoComponent.onItemClick($(this).attr('id'));
-                	//ObjectComponent.onMapClick(eventData);
+                	//ObjectClass.onMapClick(eventData);
                     OrderComponent.onMapClick(eventData);
                 });
                 $('#system-component-text').append(ul);

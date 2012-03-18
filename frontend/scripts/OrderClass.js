@@ -20,11 +20,11 @@ OrderComponent = (function() {
                     var value = -1;
                 }
                 this.object = $(document.createElement('select'));
-                for(var i in ObjectComponent.objects) {
-                    if(ObjectComponent.objects[i].id == value) {
-                        this.object.append($(document.createElement('option')).attr({'selected': 'selected', 'value': ObjectComponent.objects[i].id}));
+                for(var i in ObjectClass.objects) {
+                    if(ObjectClass.objects[i].id == value) {
+                        this.object.append($(document.createElement('option')).attr({'selected': 'selected', 'value': ObjectClass.objects[i].id}));
                     } else {
-                        this.object.append($(document.createElement('option')).attr({'value': ObjectComponent.objects[i].id}));
+                        this.object.append($(document.createElement('option')).attr({'value': ObjectClass.objects[i].id}));
                     }
                 }
                 orderpanel.append(this.order_type.name, this.order_type.description, this.object);
@@ -434,10 +434,10 @@ OrderComponent = (function() {
         //Old
         OrderComponentClass.prototype.onMapClick = function(eventData) {
         	var queueid = 0;
-        	if(ObjectComponent.objects[eventData.target.id] != undefined &&
-        			ObjectComponent.objects[eventData.target.id]["Order Queue"] != undefined && 
-        			ObjectComponent.objects[eventData.target.id]["Order Queue"]["queueid"] != undefined) 
-        		queueid = ObjectComponent.objects[eventData.target.id]["Order Queue"]["queueid"];
+        	if(ObjectClass.objects[eventData.target.id] != undefined &&
+        			ObjectClass.objects[eventData.target.id]["Order Queue"] != undefined && 
+        			ObjectClass.objects[eventData.target.id]["Order Queue"]["queueid"] != undefined) 
+        		queueid = ObjectClass.objects[eventData.target.id]["Order Queue"]["queueid"];
             OrderComponent.buildOrderPanel(parseInt(queueid));
         };*/
         /*

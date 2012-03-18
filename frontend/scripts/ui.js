@@ -212,7 +212,7 @@ UserInterface = ( function() {
             UserInterface.getOrders(function(orderdata) {
             	
             	// Setup ObjectComponent
-                ObjectComponent.setup(data.objects);
+                ObjectClass.setup(data.objects);
                 
             	// Setup OrderComponent
                 OrderComponent.setup(orderdata.orders);

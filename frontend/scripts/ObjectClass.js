@@ -2,103 +2,25 @@
      * Object component
      * Handles all object business
      */
-    var ObjectComponent = (function() {
-        var ObjectComponentClass = function(){};
+var ObjectClass = (function() {
+	
+	var ObjectComponent = function(){};
+	ObjectComponent.prototype.objects = null;
+	
+	/**
+     * Setup object component
+     */
+	ObjectComponent.prototype.setup = function(data){
+		ObjectClass.objects = data;		
+		console.log(data);
+	}
+	
+	return new ObjectComponent();
+	
+})();
 
-        // List of all objects
-        ObjectComponentClass.prototype.objects = null;
-
-        /**
-         * Setup object component
-         */
-        ObjectComponentClass.prototype.setup = function(data) {
-            ObjectComponent.objects = data
-        };
-        
-           
-        /**
-         * Event: onMapClick
-         */
-        
-        /*
-        ObjectComponentClass.prototype.onMapClick = function(eventData) {
-            id = parseInt(eventData.target.id);
-            object = ObjectComponent.objects[id];
-            infoComponent = $("#info-component-content").html("");
-            h4 = $(document.createElement("h4")).text(object.name).addClass("icon").css("background-image", "url("+object.Icon+")");
-            dl = $(document.createElement("dl"));
-            infoComponent.append(h4).append(dl);
-            if(object != undefined) {
-	            for(key in object){
-	            	if (key != "contains" && key != "Order Queue" && key != "name" && key != "Icon") {
-		            	dt = $(document.createElement('dt')).text(key);
-		                if(key == 'parent') {
-		                    o = ObjectComponent.objects[object[key]];
-		                    if(o.id > 0) {
-		                    	h4 = $(document.createElement("h4")).addClass("icon").css("background-image", "url("+o.Icon+")");
-		                        a = $(document.createElement('a')).attr({'href': '#info/' + o.id, 'id': o.id}).text(o.name);
-		                        a.one('click', ObjectComponent.onMapClick);
-		                        dd = $(document.createElement('dd')).append(h4.append(a));
-		                    } else {
-		                        dd = $(document.createElement('dd')).text(o.name);
-		                    }
-		                } else {
-		                    if(object[key].length == 0) {
-		                        dd = $(document.createElement('dd')).text('-');
-		                    } else {
-		                    	var objText = object[key].toString();
-		                    	//Checks if the thing has an image
-		                    	if(objText.substring(0,4) == "http"){
-		                    		dd = $(document.createElement('dd')).html("<img src=\""+ objText +"\">");
-		                    	} else if(typeof object[key] == "object") {
-		                    		var text = "";
-		                    		for(vars in object[key]){
-		                    			text += vars.toUpperCase() + ": " + object[key][vars] + ", ";
-		                    		}
-		                    		dd = $(document.createElement('dd')).text(text);
-		                    	} else {
-		                    		dd = $(document.createElement('dd')).text(objText);
-		                    	}
-		                    }
-		                }
-		                dl.append(dt).append(dd);
-	            	}
-	            	
-	            }
-	            
-	            // What objects are contained inside this object
-	            if(object.contains.length > 0) {
-	                dt = $(document.createElement('dt')).text('Contains');
-	                dd = $(document.createElement('dd'));
-	                ul = $(document.createElement('ul')).addClass('tree-list');
-	                for(var i in object.contains) {
-	                    toplevel = ObjectComponent.objects[object.contains[i]];
-	                    li = $(document.createElement('li')).addClass("icon").css("background-image", "url("+toplevel.Icon+")");
-	                    a = $(document.createElement('a')).attr({'href': '#info/' + toplevel.id, 'id': toplevel.id})
-	                        .addClass(toplevel.type.name.toLowerCase().replace(" ", "")).text(toplevel.name).one('click', ObjectComponent.onMapClick);
-	                    ul.append(li.append(a));
-	                    if(toplevel.contains.length > 0) {
-	                        subul = $(document.createElement('ul'));
-	                        li.append(subul);
-	                        for(var j in toplevel.contains) {
-	                            sublevel = ObjectComponent.objects[toplevel.contains[j]];
-	                            subli = $(document.createElement('li')).addClass("icon").css("background-image", "url("+sublevel.Icon+")");
-	                            a = $(document.createElement('a')).attr({'href': '#info/' + sublevel.id, 'id': sublevel.id}).text(sublevel.name)
-	                                .addClass(sublevel.type.name.toLowerCase().replace(" ", "")).one('click', ObjectComponent.onMapClick);
-	                            subul.append(subli.append(a));
-	                        }
-	                    }
-	                }
-	                dl.append(dt).append(dd.append(ul));
-	            }
-            }
-            
-            return false;
-        };*/
-
-        return new ObjectComponentClass();
-    } )();
-    
+	
+   
     /**
      * System object component
      * Handles all the panel for system objects in a system when the system is rolled over on the map
