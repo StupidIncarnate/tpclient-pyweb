@@ -268,7 +268,7 @@ WindowClass = (function() {
                 h4 = $(document.createElement("h4")).attr("id", "planet-title").text(object.name);
                 
                 mediadiv = $(document.createElement("div")).attr("id", "planet-media").html("<img src=\""+ object.Media.toString() +"\">");
-                ordersdiv = OrderComponent.currentOrderList(id);
+                ordersdiv = OrderComponent.constructCurrentOrders(id);
                 leftdiv = $(document.createElement("div")).attr("id", "leftcolumn").append(mediadiv).append(ordersdiv);
                 
                 dl = $(document.createElement("dl")).attr("id", "info-tree");

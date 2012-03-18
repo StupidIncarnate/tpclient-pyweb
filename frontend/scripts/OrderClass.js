@@ -1,8 +1,38 @@
 /**
-     * Order component
-     */
+* Order component
+*/
 OrderComponent = (function() {
-
+		
+		/**
+		 * Grabs the Order Queue num if there is one
+		 */
+		function hasQueue(obj) {
+			
+			if(obj["Order Queue"] != undefined && 
+			   obj["Order Queue"]["queueid"] != undefined && 
+			   obj["Order Queue"]["queueid"] != 0) {
+				return obj["Order Queue"]["queueid"];
+			} else {
+				return 0;
+			}
+		
+		}
+		
+		/**
+		 * Checks if there are orders
+		 */
+		function hasOrders(queueid) {
+			
+			if(OrderComponent.orders[queueid] != undefined &&
+			   OrderComponent.orders[queueid]["orders"] != undefined &&
+			   objKeyCount(OrderComponent.orders[queueid]["orders"]) > 0) {
+				return OrderComponent.orders[queueid]["orders"];
+			}             
+			else {
+				return 0;
+			}
+		}
+		
         /**
          * Inline class: object argument panel
          * Old
@@ -556,7 +586,7 @@ OrderComponent = (function() {
         	 */
         	
         	id = parseInt(cssobject.attr('id'))
-        	obj = SystemObjectComponent.objects[id];
+        	obj = ObjectClass.objects[id];
         	
         	if(obj != undefined && 
         	  obj["Order Queue"] != undefined && 
@@ -613,64 +643,68 @@ OrderComponent = (function() {
 	    	}
         	
         };
-        OrderComponentClass.prototype.currentOrderList = function(id) {
-        	div = $(document.createElement('div'));
-            div.attr('id','order-list');
-            div.append($(document.createElement('h4')).text("Orders"));
-            
-        	obj = SystemObjectComponent.objects[id];
-            if(obj != undefined && 
-              obj["Order Queue"] != undefined && 
-              obj["Order Queue"]["queueid"] != undefined && 
-              obj["Order Queue"]["queueid"] != 0) {		    		
-	    		queueid = obj["Order Queue"]["queueid"];
-	    		// Store selected object id
-	            OrderComponent.queueid = queueid;
-	    		
+        
+        OrderComponentClass.prototype.constructCurrentOrders = function(id) {
+        	
+        	function constructControls(counter, totalOrders) {
+        		orderControl = $(document.createElement('div')).addClass('ordercontrols');
+           
+                asc = $(document.createElement('img')).attr("src", "/images/asc.png");
+                desc = $(document.createElement('img')).attr("src", "/images/desc.png");
+            	remove = $(document.createElement('img')).attr("src", "/images/delete.png");
+                
+            	//Determine which buttons to disable
+                if(counter == 0) { 
+                	asc.attr('class', 'disabled');
+                }else {
+                	asc.one('click', OrderComponent.ascendOrder);
+                }
+                console.log(counter + " " + totalOrders);
+                if(counter + 1 == totalOrders) 
+                	desc.attr('class', 'disabled');
+                else 
+                	desc.one('click', OrderComponent.descendOrder);
+            	
+                
+                orderControl.append(asc).append(desc).append(
+                		$(document.createElement('a')).attr({'id': order.order_id, 'href': '#'}).append(remove).click(function(eventData) {
+                			$(this).parent().empty().append($(document.createElement('img')).attr({'src': "/images/loadingCircle.gif"}).css({ 'width': '20px', 'height': '20px'})) 
+                			//alert($(this).parent().attr('id'));
+                			OrderComponent.removeOrder(eventData.currentTarget.id);
+	                    })
+	            );
+        		
+                return orderControl;
+        	}
+        	
+        	var $ordersContain = $(document.createElement("div"))
+        							.attr("id", "order-list");
+        	
+        	obj = ObjectClass.objects[id];
+        	if(queueID = hasQueue(obj)) {
+        		
+        		// Store selected object id
+	            OrderComponent.queueid = queueID;
 	            OrderComponentClass.args = new Array();
-	
-	            // If this object has orders continue
-	            if(OrderComponent.queueid > 0 && OrderComponent.orders[OrderComponent.queueid] != undefined) {	                
-	                OrderComponent.orders[OrderComponent.queueid]['orders'] = 
-	                	sortArrByKey(OrderComponent.orders[OrderComponent.queueid]['orders']);
-	                
-	                counter = 0;
-	                numorders = objKeyCount(OrderComponent.orders[OrderComponent.queueid]['orders']);
-	                for(var i in OrderComponent.orders[OrderComponent.queueid]['orders']) {
-	                    var order_id = OrderComponent.orders[OrderComponent.queueid]['orders'][i].order_id;
-	                    order = OrderComponent.orders[OrderComponent.queueid]['orders'][i];
+	            
+        		$ordersContain.append($(document.createElement('h4')).text("Orders"))
+        		
+        		if(orders = hasOrders(queueID)) {
+        			OrderComponent.orders[queueID]['orders'] = sortArrByKey(orders);
+        			
+        			orderCounter = 0;
+        			numOrders = objKeyCount(orders);
+        			
+        			for(var i in orders) {
+	                    var order_id = orders[i].order_id;
+	                    order = orders[i];
 	                    
 	                    dh = $(document.createElement('dh'));
 	                    dt = $(document.createElement('dt')).text(order.turns + ' turns');
 	                    dd = $(document.createElement('dd'));
 	                    
-	                    orderControl = $(document.createElement('div')).attr('id', 'ordercontrols');
-	                    dd.append(orderControl);
+	                    dd.append(constructControls(orderCounter, numOrders));
 	                    
-	                    asc = $(document.createElement('img')).attr({'src': '/images/asc.png'});
-    	                desc = $(document.createElement('img')).attr({'src': '/images/desc.png'});
-    	            	remove = $(document.createElement('img')).attr({'src': '/images/delete.png'});
-	                    
-    	            	//Determine which buttons to disable
-	                    if(counter == 0) { 
-	                    	asc.attr('class', 'disabled');
-	                    }else {
-	                    	asc.one('click', OrderComponent.ascendOrder);
-	                    }
-	                    	
-	                    if(counter + 1 == numorders) 
-	                    	desc.attr('class', 'disabled');
-	                    else 
-	                    	desc.one('click', OrderComponent.descendOrder);
-                    	
-	                    
-	                    orderControl.append(asc).append(desc).append(
-	                    		$(document.createElement('a')).attr({'id': order.order_id, 'href': '#'}).append(remove).click(function(eventData) {
-	                    			$(this).parent().empty().append($(document.createElement('img')).attr({'src': "/images/loadingCircle.gif"}).css({ 'width': '20px', 'height': '20px'})) 
-	                    			//alert($(this).parent().attr('id'));
-	                    			OrderComponent.removeOrder(eventData.currentTarget.id);
-			                    })
-			            );
 	                    
 	                    if(order.name != "Move") {
 	                    	ordername = order.name;
@@ -686,19 +720,19 @@ OrderComponent = (function() {
 	                    
 	                    //orderControl.append(asc).append(desc).append(remove);
 	                    
-	                    div.append(dh.append(dt).append(dd));
-	                    counter++;
+	                    $ordersContain.append(dh.append(dt).append(dd));
+	                    orderCounter++;
 	                }
-	                
-	                //OrderComponent.buildOrder();
-	            } else {
-	                div.append('No orders for this object');
-	            }
-            } else {
-	            div.append('No orders for this object');
-	        }
-            return div;
+        			
+        			
+        		} else {
+        			$ordersContain.append("No given orders!");      				
+        		}
+        	}
+        	
+        	return $ordersContain;
         };
         
         return new OrderComponentClass();
     } )();
+
