@@ -3,161 +3,27 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
     <title>Thousand Parsec Web Client</title>
+    
     <link rel="stylesheet" href="/css/screen.css" type="text/css" media="screen, projection" />
     <link rel="stylesheet" href="/css/print.css" type="text/css" media="print" /> 
+    
     <!--[if lt IE 8]>
         <link rel="stylesheet" href="/css/ie.css" type="text/css" media="screen, projection">
     <![endif]-->
-    <style type="text/css">
-        html, body { background: black url('/images/Starfield.jpg') repeat; }
-		
-		.icon {background-repeat: no-repeat; background-position: 0 0;}
-		#systemBox {background-image: url('/images/systempanel.png'); background-repeat: no-repeat; width: 310px; height: 700px;}
-			
-		.owned{background-color: rgba(0, 255, 0, 0.5);padding: 2px;}
-		.enemy{background-color: rgba(255, 0, 0, 0.5);padding: 2px;}
-		
-		#map-viewport { position: relative; overflow: hidden; width: 100%; }
-		#map-canvas .container{ position: absolute; z-index: 99;}
-		#map-canvas .mapsystem { text-align: center; float: left; width: 100;}
-		#map-canvas .mapsystem img {width: 30px; height: 30px; z-index: 100;}
-		#map-canvas .starsystem img {width: 50px; height: 50px;}
-		#map-canvas .name {width: 100px; position: relative; top: -20px; font-size: 15px; color: white; margin: 0; padding: 0; z-index: 100; cursor: default; line-height:95%;}
-        #mapdiv { position: absolute; top: 0; left: 0; margin: 0; padding: 0; width: 100%; height: 100%; }
-		
-		#system-planet-panel { width: 100px; float: left; text-align: center; }
-		#system-planet-panel p { color: white; }
-		#system-planet-panel img {width: 20px; height: 20px;}
-		#system-planet-panel .planet img {width: 35px; height: 35px;}
-		
-		#order-menu { width: 150px; z-index: 350; position: fixed; text-align: left; background-image: url('/images/system-panel-text.png'); background-repeat: repeat-y; background-position: -50px, -50px;}
-		#order-menu ul { padding: 0; margin: 0 0 0 20px; }
-		#order-menu li {height: 15px; color: #000080; font-size: 15px; list-style-type: none; padding: 5px 0 10px 0; }
-		
-		#order-panel { width: 430px; height: 430px; z-index: 100; background-image: url('images/info-panel.png'); background-repeat: no-repeat;
-        		position: absolute; top: 0px; left: 0px; margin: 0; padding: 12px;}
-        #order-panel dl {float: right; padding-left: 10px; display: inline; padding-right: 10px;}
-        #order-panel dt { float: left; clear: left; width: 45px; text-align: right; margin-right: 10px; display: block;}
-        #order-panel dd { float: left; dispaly: block; width: 130px;}
-		
-		.order-menu-roll{background-color: rgba(255, 255, 255, 0.2);}
-		
-		#header{ position: relative; padding: 10px; margin: 0; z-index: 100; }
-		#header h1 { width: 297px; height: 118px; margin: 0; background: url('/images/logonew.png') no-repeat scroll 0 0; z-index: 100; } 
-        #header h1 span { display: none; }
-		
-        #overlay { top: 0; left: 0; width: 100%; height: 100%; }
-        #overlay-content { top: 113px; width: 100%; height: 100%; }
+    
+    <link rel="stylesheet" href="/css/theme.css" type="text/css" media="screen" /> 
+    
+    <script type="text/javascript" src="libs/raphael.js"></script>
         
-        #closebutton {position: absolute; top: 12px; right: 15px;}
-        #closebutton img {width: 25px; height: 25px;}
-        
-        .titlestrip {float: right; background-repeat: no-repeat; height: 100%;}
-        .titlestrip span {display: none;}
-        .textstrip {margin: 0; background-repeat: repeat-x;}
-        
-        .jScrollPaneContainer {
-			position: relative;
-			overflow: hidden;
-			z-index: 1;
-		}
-		.jScrollPaneTrack {
-			position: absolute;
-			cursor: pointer;
-			right: 0;
-			top: 0;
-			height: 100%;
-			display: block;
-		}
-		.jScrollPaneDrag {
-			position: absolute;
-			background: url('images/scrollicon.png') no-repeat 50% 50%;
-			cursor: pointer;
-			overflow: hidden;
-			
-		}
-
-        #menu-bar {position: relative; width: 270px; height: 186px; z-index: 100; left: 0px;}
-        #menu-bar-title {background-image: url('images/menu-panel-title.png'); width:59px;}
-		#menu-bar ul {padding-top: 28px; font-size: 17px; background-image: url('images/menu-panel-text.png'); width: 211px; height:186px; }
-        #menu-bar ul li { margin: 0; padding: 0 1em; list-style-type: none; }
-        
-        #turn-component { position: absolute; top: 79px; left: 134px;  color: white; }
-        #turn-component .timeleft, #turn-component .turn { font-size: 1.2em; font-weight: bold; }
-        
-        #message-bar { position: relative; width: 550px; height: 400px; z-index: 100; }
-        #message-bar-title { background-image: url('images/message-panel-title.png'); width: 58px; }
-        #message-bar-container {background-image: url('images/message-panel-text.png'); width: 478px; height: 400px; padding: 7px;}
-        #message-bar-text { width: 482px; height: 376px;}
-        #message-bar-text p {padding: 10px; font-size: 17px;}
-        
-        #info-panel { width: 430px; height: 430px; z-index: 100; background-image: url('images/info-panel.png'); background-repeat: no-repeat; display: none;
-        		position: absolute; top: 0px; left: 0px; margin: 0; padding: 12px; font-size: 13px;}
-        #info-panel #planet-title {font-size: 18px; width: 100%; text-align: center;}
-        #info-panel #leftcolumn {width: 45%; position: absolute; left: 0px; margin: 0 40px 0 10px; text-align: center;}
-        #info-panel #info-panel-text {overflow: auto; height: 420px; width: 410px;}
-        #info-panel #ordercontrols {float: right; position: absolute; top: 0px; right: 0px;}
-        #info-panel dl {float: right; padding-left: 10px; display: inline; padding-right: 10px;}
-        #info-panel dt {float: left; clear: left; text-align: right; display: block;}
-        #info-panel img {margin-right: 2px;}
-		#order-list h4 {font-weight: bold; font-size: 14px; padding-top: 10px;}
-		#order-list dh {text-align: center; }
-		#order-list dt {width: 50px; margin: 0; padding: 0 7px 0 0; }
-        #order-list dd {width: 125px; float: left; dispaly: block; text-align: left; margin: 0;}
-        #order-list img {width: 15px; height: 15px; cursor: pointer;}
-        #order-list #ordercontrols { text-align: right; display: block; position: relative; top: 0;}
-        #order-list .disabled{opacity: 0.3; filter: alpha(opacity=30); cursor: default;}
-        #info-tree dt{ margin-right: 10px;  width: 45px;}
-        #info-tree dd { float: left; dispaly: block; width: 130px;}
-        
-        #system-bar { position: absolute; top: 2px; right: 2px; width: 303px; height: 698px; z-index: 100; }
-        #system-bar-title { position: absolute; bottom: 0px; background-image: url('images/system-panel-title.png'); background-repeat: no-repeat; width: 303px; height: 59px; }
-        #system-bar-title span {display: none; }
-        #system-bar-container {background-image: url('images/system-panel-text.png'); background-repeat: repeat-y; width: 303px; height: 639px; padding-left: 15px;}
-        #system-component-search { height: 30px; }
-		#system-component-search input { padding: 5px; border: 0; float: left; width: 260px; height: 20px; font-size: 1em; }
-		#system-component-search input:focus { border: 0; outline: none; }
-		#system-component-text {padding: 10px;}
-		#system-bar-text {clear: both; overflow: auto; width: 285px; height: 640px;}
-		
-		#loginbox { position: absolute; top: 40px; left: 50%; width: 440px; margin-left: -220px; z-index: 1001; color: orange; background-color: #222; }
-        #loginbox h1 { color: orange; text-align: center; margin: 0.4em 0; padding: 0; width: 440px; height: 63px; background: transparent url('/images/logo.png') no-repeat scroll center; }
-        #loginbox h1 span { display: none; }
-        #loginbox .content { background-color: #222; margin: 2em; text-align: left; }
-        #loginbox .content p.info { margin: 0 0 1em 0; padding: 0; } 
-        #loginbox fieldset { margin: 0em 0em; border: 0; padding: 0em 0em; }
-        #loginbox fieldset input { float: right; }
-        #loginbox fieldset label { float: left; margin-top: 10px; }
-        #loginbox fieldset p { clear: both; }
-
-        .transparent { filter:alpha(opacity=80); -moz-opacity: 0.8; -khtml-opacity: 0.8; opacity: 0.8; -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=80)"; }
-
-        #uilock { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000 }
-        #uilock-content { position: absolute; top: 0; left: 50%;
-            width: 440px; margin: 0 0 0 -220px; padding: 1em 0; z-index: 10001; text-align: center; background: 0; border: 0; }
-        #uilock-content.error { color: red; }
-        #uilock-content.notice { color: orange; }
-        	
-        ul.tree-list { margin: 2px 0 2px 0; list-style-type: none; }
-        ul.tree-list ul { margin: 2px 0 2px 0px; list-style-type: none; }
-        ul.tree-list li { margin: 0; padding: 0 0 1px 20px; line-height: 16px; }
-        
-        #notify-component { position: absolute; bottom: 5px; right: 10px; width: 60em; height: 72px; z-index: 100; text-align: right; overflow: hidden; }
-        #notify-component div { margin: 5px 0; }
-        #notify-component .category { color: orange; font-size: 0.8em; }
-        #notify-component .text { padding-left: 2px; color: #fff; }
+    <script type="text/javascript" src="libs/jquery-dev.js"></script>
+    <script type="text/javascript" src="libs/jquery-timers.js"></script>
+    <script type="text/javascript" src="libs/jquery.cookies.2.1.0.min.js"></script>
+    <script type="text/javascript" src="libs/jquery-ui.js"></script>
+    <script type="text/javascript" src="libs/jquery.mousewheel.min.js"></script>
+	<script type="text/javascript" src="libs/jquery.em.js"></script>
+	<script type="text/javascript" src="libs/jScrollPane.js"></script>
 	
-    </style>
-    <script type="text/javascript" src="scripts/raphael.js"></script>
-        
-    <script type="text/javascript" src="scripts/jquery-dev.js"></script>
-    <script type="text/javascript" src="scripts/jquery-timers.js"></script>
-    <script type="text/javascript" src="scripts/jquery.cookies.2.1.0.min.js"></script>
-    <script type="text/javascript" src="scripts/jquery-ui.js"></script>
-    <script type="text/javascript" src="scripts/jquery.mousewheel.min.js"></script>
-	<script type="text/javascript" src="scripts/jquery.em.js"></script>
-	<script type="text/javascript" src="scripts/jScrollPane.js"></script>
-	
+	<script type="text/javascript" src="scripts/func.js"></script>
 	<script type="text/javascript" src="scripts/map.js"></script>
 
 	<!--<link rel="stylesheet" type="text/css" media="all" href="css/jScrollPane.css" />-->
