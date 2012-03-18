@@ -43,16 +43,31 @@ ObjectClass = (function() {
 			$parentContainer.css({'top': top, 'left': left});
 		}
 		
-		var $objImg = $(document.createElement("img"));
-		$objImg.attr({"id": id, "src": image})
-			   .addClass("mapsystem");
+		var $objImg = $(document.createElement("img"))
+			$objImg.attr({"id": id, "src": image})
+				   .addClass("mapsystem");
+		
+		var $objIcon = $(document.createElement("img"))
+			$objIcon.attr({"id": id, "src": icon})
+					.addClass("icon");
 		
 		var $objText = $(document.createElement("span"));
 		$objText.attr("id", id)
 				.addClass("name")
 				.text(name);
 		
-		$objContainer.append($objImg).append($objText);
+		$objContainer.append($objImg).append($objIcon).append($objText);
+		
+		//Apply orders menu to rightclick and info panel to leftclick of children elements
+	    $objContainer.bind("contextmenu",function(eventData){
+	    	TaskManager.Click.launchOrderMenu(eventData, $(this));
+	    	
+	    	//cancel the default context menu
+	        return false;
+	    }).click(function(eventData) {
+	    	TaskManager.Click.launchInfoComponent($(this).attr('id'));
+
+		});
 		
 		
 		if(children.length > 0) {
@@ -101,9 +116,11 @@ ObjectClass = (function() {
 		$obj.hover(
 	    		function() {
 	    			$(this).addClass("hover");
+	    			Map.hideSystemTitles($(this).attr("id"));
 	    		}, 
 	    		function() {
 	    			$(this).removeClass("hover");
+	    			Map.showSystemTitles();
 	    		}
 	    	);
 			 

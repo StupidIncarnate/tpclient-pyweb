@@ -210,6 +210,14 @@ Map = ( function() {
        
     };
     
+    MapCreator.prototype.hideSystemTitles = function(id) {
+    	$('#map-canvas .name').css({'color': 'grey', 'z-index': '99'});
+    	$('#map-canvas #'+id+' .name').css({'color':'white'});
+    };
+    MapCreator.prototype.showSystemTitles = function() {
+    	$('#map-canvas .name').css('color', 'white');
+    };
+    
     
     return new MapCreator();
 } )();
