@@ -147,7 +147,7 @@ Map = ( function() {
                     var destPos = null;
                     
                     //Determines if an object has a move order and proceeds to draw the path if it does.
-                    MapCreator.prototype.drawCoordinatePath = function(object, pixelPos) {
+                    /*MapCreator.prototype.drawCoordinatePath = function(object, pixelPos) {
                     	if(object["Order Queue"] != undefined && object["Order Queue"]["queueid"] != undefined && parseInt(object["Order Queue"]["queueid"]) != 0) {
 	                    	queueid = parseInt(object["Order Queue"]["queueid"]);
 	                    	if(queueid != undefined) {
@@ -168,7 +168,7 @@ Map = ( function() {
                     for(var k in system.contains) { 
                     	object = this.objects[system.contains[k]];
                     	this.drawCoordinatePath(object, pixelPos)
-                    }
+                    }*/
                     this.drawobject(pixelPos, system.id, system.name, system.type.name, system.Media);
                     
                 }

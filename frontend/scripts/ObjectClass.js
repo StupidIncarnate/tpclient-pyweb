@@ -25,7 +25,6 @@ ObjectClass = (function() {
 			 		 .addClass(type);
 		
 		if(obj.Owner != undefined) {
-			console.log(obj.Owner);
 			if(obj.Owner == UserInterface.username)
 				$objContainer.addClass('owned');
 			else if(obj.Owner.length > 0)
@@ -64,8 +63,9 @@ ObjectClass = (function() {
 	    	
 	    	//cancel the default context menu
 	        return false;
-	    }).click(function(eventData) {
-	    	TaskManager.Click.launchInfoComponent($(this).attr('id'));
+	    }).bind("click", function(eventData) {
+	    	
+	       	TaskManager.Click.launchInfoComponent($(this).attr('id'));
 
 		});
 		

@@ -34,7 +34,7 @@
 		#order-menu li {height: 15px; color: #000080; font-size: 15px; list-style-type: none; padding: 5px 0 10px 0; }
 		
 		#order-panel { width: 430px; height: 430px; z-index: 100; background-image: url('../images/info-panel.png'); background-repeat: no-repeat;
-        		position: absolute; top: 0px; left: 0px; margin: 0; padding: 12px;}
+        		position: absolute; top: 0px; left: 0px; margin: 0; padding: 20px 15px 10px 15px;}
         #order-panel dl {float: right; padding-left: 10px; display: inline; padding-right: 10px;}
         #order-panel dt { float: left; clear: left; width: 45px; text-align: right; margin-right: 10px; display: block;}
         #order-panel dd { float: left; dispaly: block; width: 130px;}
@@ -48,7 +48,7 @@
         #overlay { top: 0; left: 0; width: 100%; height: 100%; }
         #overlay-content { top: 0px; width: 100%; height: 100%; }
         
-        #closebutton {position: absolute; top: 12px; right: 15px;}
+        #closebutton {position: absolute; top: 12px; right: 20px; z-index: 200;}
         #closebutton img {width: 25px; height: 25px;}
         
         .titlestrip {float: right; background-repeat: no-repeat; height: 100%;}

@@ -56,7 +56,7 @@ function OrderId2OrderPosition(ordersArr, id) {
 			counter++;
 		}
 	}
-	return undefined
+	return undefined;
 }
 function sortArrByKey(array) {
 	var sortedArr = new Array();

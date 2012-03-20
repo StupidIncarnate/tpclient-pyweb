@@ -137,7 +137,7 @@ WindowClass = (function() {
   				  
 				  	//cancel the default context menu
 			        return false;
-			   }).bind('click', function(eventData) {
+			   }).bind('click', function(eventData) {	
 				   TaskManager.Click.launchInfoComponent($(this).attr('id'));
             });
             
@@ -210,6 +210,8 @@ WindowClass = (function() {
     	
     	InfoComponentClass.prototype.objects = null;
     	InfoComponentClass.prototype.id = null;
+    	InfoComponentClass.prototype.currentWindow = null;
+    	InfoComponentClass.prototype.$loaderImg = null;
     	
     	/*
     	 * Setup the information panel
@@ -226,16 +228,22 @@ WindowClass = (function() {
     	InfoComponentClass.prototype.constructBase = function(windowName) {
     		TaskManager.Window.registerObject("#"+windowName);
     		
-    		panel = $(document.createElement("div")).attr('id', windowName);
-    		$('#overlay').append(panel)
+    		panel = $(document.createElement("div")).attr('id', windowName).addClass("window");
+    		$('#overlay').append(panel);
     		
     		closebutton = $(document.createElement("div")).attr('id', 'closebutton');
-			a = $(document.createElement('a')).one("click",function(eventData){
+    		closebutton.one("click",function(eventData){
 				TaskManager.Window.removeObject();
 			});
-			closebutton.append(a.append($(document.createElement("img")).attr('src', 'images/close.png')));
+			closebutton.append($(document.createElement("img")).attr('src', 'images/close.png'));
 			
 			panel.append(closebutton);
+			
+			//$content = $(document.createElement("div")).attr("id", "content");
+			
+			this.$loadingImg = $(document.createElement("img"));
+			this.$loadingImg.attr("src", "images/loaderBar.gif");
+			panel.append(this.$loadingImg);
 			
 		    posTop = 5;
 			posLeft = ($(window).width() / 2) - (panel.width() / 2);
@@ -245,16 +253,41 @@ WindowClass = (function() {
 			
 			panel.css("display", "inline").css("top", posTop+"px").css("left", posLeft+"px");
 			
+			this.currentWindow = panel;
+			
+			
 			return panel;
     	};
+    	
+    	/**
+    	 * Removes the loading images from the bar when content is ready to go.
+    	 */
+    	InfoComponentClass.prototype.removeLoader = function() {
+    		if(this.$loadingImg != null){
+    			this.$loadingImg.remove();
+    			this.$loadingImg = null;    			
+    		}
+    		
+    	};
+    	
+    	InfoComponentClass.prototype.returnCurrentWin = function() {
+    		return this.currentWindow;
+    	};
+    	
+    	InfoComponentClass.prototype.returnContent = function() {
+    		return this.currentWindow.children("#content");
+    	}
     	
     	/*
     	 * Event: onItemClick
     	 */
     	InfoComponentClass.prototype.onItemClick = function(id) {
+    		
     		id = parseInt(id);
+    		
     		if(InfoComponent.objects[id] == undefined) {
     			TaskManager.Window.removeObject();
+    			this.currentWindow = null;
     		}
     		else if(InfoComponent.objects[id] != undefined) {
     			InfoComponent.id = id;
@@ -315,6 +348,9 @@ WindowClass = (function() {
     	            }
     	            
                 }
+                
+                this.removeLoader();
+                
                 //Apply a custom scroll to the component
                 infoComponent.jScrollPane({scrollbarWidth:28, dragMinHeight:25, dragMaxHeight:25});
     		}

@@ -284,9 +284,42 @@ OrderComponent = (function() {
         OrderComponentClass.prototype.coordinateOrder = false;
         OrderComponentClass.prototype.coordinates = [];
         
+        OrderComponentClass.prototype.orderID = null;
+        
         OrderComponentClass.prototype.setup = function(data) {
             OrderComponent.orders = data;
         };
+        
+        OrderComponentClass.prototype.sendOrder = function(queueID, menuID){
+        	
+        	$.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': queueID, 'type': menuID}, url: "/json/order/send/", 
+                error: function(req, textstatus) { 
+                    UserInterface.UILock.error('Something went wrong, contact administrator or try again later.', true);
+                }, 
+                success: function(data, textstatus) {
+                    if(data.auth === true) {
+
+                        UserInterface.getOrders(function(data_extra) {
+                        	OrderComponent.setup(data_extra.orders);
+                        	
+                            orderid = OrderPosition2OrderId(OrderComponent.orders[OrderComponent.queueid].orders, data.order_position);
+                                  
+                        	if(orderid != undefined) { 
+                        		
+                        		var orderTypeObj = OrderComponent.orders[OrderComponent.queueid].orders[orderid];
+                        		OrderComponent.buildOrderPanel(orderTypeObj);
+                        		
+                        	}
+                                                    
+                        });
+                    } else {
+                        UserInterface.UILock.error(data.error, true);
+                    }
+                }
+            });
+        	
+        };
+        
         //old
         OrderComponentClass.prototype.updateOrder = function(order) {
             var temp = new Array();
@@ -302,7 +335,8 @@ OrderComponent = (function() {
                     if(data.auth === true) {
                         UserInterface.getOrders(function(data) {
                             OrderComponent.setup(data.orders);
-                            WindowClass.InfoWindow.onItemClick(WindowClass.InfoWindow.id);
+                            
+                            WindowClass.InfoWindow.onItemClick(OrderComponent.objid);
                             
                             // Add orders to map for coordinate drawing
                             Map.addOrders(data.orders);
@@ -318,6 +352,8 @@ OrderComponent = (function() {
                     }
                 }
             });
+            
+            OrderComponent.orderID = null;
         };
         //Old
         OrderComponentClass.prototype.removeOrder = function(order_id) {
@@ -331,7 +367,7 @@ OrderComponent = (function() {
                     if(data.auth === true) {
                         UserInterface.getOrders(function(data) {
                             OrderComponent.setup(data.orders);
-                            WindowClass.InfoWindow.onItemClick(WindowClass.InfoWindow.id);
+                            WindowClass.InfoWindow.onItemClick(OrderComponent.objid);
                             
                             // Add orders to map for coordinate drawing
                             Map.addOrders(data.orders);
@@ -357,174 +393,23 @@ OrderComponent = (function() {
         	var order_position = OrderId2OrderPosition(OrderComponent.orders[order_id].orders, order_id);
         	
         };
-        /*
-        //Old
-        OrderComponentClass.prototype.buildOrder = function(subid) {
-            this.args = new Array();
 
-            $('#order-component-create-order').html('').append('Create a new order: ', OrderComponent.buildOrderList());
-            if(subid == null && OrderComponentClass.type != null) {
-                var orderType = OrderComponent.orders[OrderComponent.queueid].order_type[OrderComponentClass.type];
-            } else if(subid != null) {
-            	var orderType = OrderComponent.orders[OrderComponent.queueid].orders[subid];
-            } else {
-                return false;
-            }
-            $('#order-component-create-order').append($(document.createElement('h5')).css({'margin': 0, 'padding': 0}).text(orderType.name));
-            
-            if(orderType != null) {
-                for(var i in orderType.args) {
-                    var argument = null;
-                    // If argument type is coordinate, build a coordinate panel
-                    if(orderType.args[i].type == 'coordinate') {
-                        argument = new CoordinateArgumentPanel();
-                        argument.build(orderType.args[i]);
-
-                    // Else if argument type is time, build a time panel
-                    } else if(orderType.args[i].type == 'time') {
-                        argument = new TimeArgumentPanel();
-                        argument.build(orderType.args[i]);
-
-                    // Else if argument type is string, build a string panel
-                    } else if(orderType.args[i].type == 'string') {
-                        argument = new StringArgumentPanel();
-                        argument.build(orderType.args[i]);
-
-                    // Else if argument type is object, build a object panel
-                    } else if(orderType.args[i].type == 'object') {
-                        argument = new ObjectArgumentPanel();
-                        argument.build(orderType.args[i]);
-
-                    // Else if argument type is list, build a list panel
-                    } else if(orderType.args[i].type == 'list') {
-                        argument = new ListArgumentPanel();
-                        argument.build(orderType.args[i]);
-                    }
-
-                    if(argument != null) {
-                        this.args[orderType.args[i].type] = argument;
-                    }
-                }
-            }
-            
-            if(subid != null) {
-                update = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Update Order'}).click(function(eventData) {
-                    OrderComponent.updateOrder(orderType);
-                    return false;
-                });
-                remove = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Remove Order'}).click(function(eventData) {
-                    OrderComponent.removeOrder(orderType.order_id);
-                    return false;
-                });
-                $('#order-component-create-order').append(update, remove);
-            }
-        };*/
-        /*
-         * TODO: Convert this to rightlicck menu
-         * Old
-         */
-        /*OrderComponentClass.prototype.buildOrderList = function() {
-        	var counter = 0;
-            select = $(document.createElement('select')).attr('id', 'order_list');
-            for(var i in OrderComponent.orders[OrderComponent.queueid].order_type) {
-                order_type = OrderComponent.orders[OrderComponent.queueid].order_type[i];
-                option = $(document.createElement('option')).attr('value', i).text(order_type.name);
-                select.append(option);
-                counter++;
-            }
-            if(counter > 0) {
-	            return $(document.createElement('div')).append(select,
-	                $(document.createElement('input')).attr({'type': 'submit', 'value': 'New order'}).click(function(eventData) {
-	                    OrderComponentClass.type = $('#order_list').val();
-	                    var sendType = OrderComponent.orders[OrderComponent.queueid].order_type[OrderComponentClass.type].type;
-	                    $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponent.queueid, 'type': sendType}, url: "/json/order/send/", 
-	                        error: function(req, textstatus) { 
-	                            UserInterface.UILock.error('Something went wrong, contact administrator or try again later.', true);
-	                        }, 
-	                        success: function(data, textstatus) {
-	                            if(data.auth === true) {
-	                                UserInterface.getOrders(function(data_extra) {
-	                                    OrderComponent.setup(data_extra.orders);
-	                                    subid = OrderPosition2OrderId(OrderComponent.orders[OrderComponent.queueid].orders, data.order_position);
-	                                	if(subid != undefined) { 
-	                                		OrderComponent.buildOrder(subid);
-	                                	}
-	                                    
-	                                });
-	                            } else {
-	                                UserInterface.UILock.error(data.error, true);
-	                            }
-	                        }
-	                    });
-	                }));
-            }
-        	return false;
-        };*/
-        /*
-        //Old
-        OrderComponentClass.prototype.onMapClick = function(eventData) {
-        	var queueid = 0;
-        	if(ObjectClass.objects[eventData.target.id] != undefined &&
-        			ObjectClass.objects[eventData.target.id]["Order Queue"] != undefined && 
-        			ObjectClass.objects[eventData.target.id]["Order Queue"]["queueid"] != undefined) 
-        		queueid = ObjectClass.objects[eventData.target.id]["Order Queue"]["queueid"];
-            OrderComponent.buildOrderPanel(parseInt(queueid));
-        };*/
-        /*
-        //Old
-        OrderComponentClass.prototype.buildOrderPanel = function(id) {
-            // Store selected object id
-            OrderComponent.queueid = id;
-            
-            // Reset selected order
-            OrderComponentClass.type = null;
-
-            OrderComponentClass.args = new Array();
-
-            // Reset order component content
-            orderComponent = $('#order-component-content').html('');
-
-            // If this object has orders continue
-            if(OrderComponent.queueid > 0 && OrderComponent.orders[OrderComponent.queueid]) {
-                dl = $(document.createElement('dl'));
-                
-                OrderComponent.orders[OrderComponent.queueid]['orders'] = 
-                	sortArrByKey(OrderComponent.orders[OrderComponent.queueid]['orders']);
-                
-                for(var i in OrderComponent.orders[OrderComponent.queueid]['orders']) {
-                    var order_id = OrderComponent.orders[OrderComponent.queueid]['orders'][i].order_id;
-                    order = OrderComponent.orders[OrderComponent.queueid]['orders'][i];
-                    dt = $(document.createElement('dt')).text(order.turns + ' turns');
-                    dd = $(document.createElement('dd')).append(
-                        $(document.createElement('a')).attr({'id': order.order_id, 'href': '#'}).text(order.name).click(function(eventData) {
-                        	OrderComponent.buildOrder(eventData.currentTarget.id);
-                            //OrderComponent.buildOrder(eventData.currentTarget.id);
-                        }),
-                        $(document.createElement('br')),
-                        order.description);
-                    dl.append(dt).append(dd);
-                }
-                orderComponent.append(dl, $(document.createElement('div')).attr('id', 'order-component-create-order'));
-                OrderComponent.buildOrder();
-            } else {
-                orderComponent.text('No orders for this object');
-            }
-
-        };*/
-        OrderComponentClass.prototype.buildOrderPanel = function(subid) {
+        OrderComponentClass.prototype.buildOrderPanel = function(orderType) {
         	//Reinitiate Clicking for the object that was right-clicked
         	TaskManager.Click.clickObjectDisabled = 0;
         	
         	this.args = new Array();
             
-            if(subid == null && OrderComponentClass.type != null) {
+        	if(orderType == undefined)
+        		return false;
+           
+        	/*if(subid == null && OrderComponentClass.type != null) {
                 var orderType = OrderComponent.orders[OrderComponent.queueid].order_type[OrderComponentClass.type];
             } else if(subid != null) {
             	var orderType = OrderComponent.orders[OrderComponent.queueid].orders[subid];
             } else {
                 return false;
-            }
-
+            }*/
             if(orderType != null) {
             	var orderdata = $(document.createElement('div'));
             	
@@ -562,12 +447,13 @@ OrderComponent = (function() {
                     }
                 }
             }
-            if(subid != null && TaskManager.Click.getCoordinateOrder() != true) {
-            	orderpanel = WindowClass.InfoWindow.constructBase("order-panel");
+            if(TaskManager.Click.getCoordinateOrder() != true) {
+            	
+            	orderpanel = $(document.createElement("div")).attr("id", "content");
+            	
             	orderpanel.append($(document.createElement('h5')).css({'margin': 0, 'padding': 0}).text(orderType.name));
             	
             	orderpanel.append(orderdata);
-            	
             	update = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Update Order'}).click(function(eventData) {
             		parent = $(this).parent();
             		$(this).empty();
@@ -578,6 +464,8 @@ OrderComponent = (function() {
                 
                 orderpanel.append(update);
                 
+                WindowClass.InfoWindow.removeLoader();
+                WindowClass.InfoWindow.returnCurrentWin().append(orderpanel.children());
             }
         };
         OrderComponentClass.prototype.constructOrdersMenu = function(eventData, cssobject) {
@@ -588,13 +476,10 @@ OrderComponent = (function() {
         	id = parseInt(cssobject.attr('id'))
         	obj = ObjectClass.objects[id];
         	
-        	if(obj != undefined && 
-        	  obj["Order Queue"] != undefined && 
-        	  obj["Order Queue"]["queueid"] != undefined && 
-        	  obj["Order Queue"]["queueid"] != 0) {		    		
-	    		queueid = obj["Order Queue"]["queueid"];
+        	if(queueid = hasQueue(obj)) {	    		
 	    		var x = eventData.pageX;
 	    		var y = eventData.pageY;
+	    		
 	    		if(queueid != undefined && queueid != null) {
 	    			OrderComponent.objid = id;
 	    			OrderComponent.queueid = queueid;
@@ -606,38 +491,29 @@ OrderComponent = (function() {
 	        		div.append(ul);
 		        	for(var i in OrderComponent.orders[queueid].order_type) {
 		                order_type = OrderComponent.orders[queueid].order_type[i];
-		                li = $(document.createElement('li')).attr('value', order_type.type).attr('queueid', queueid).text(order_type.name).click(function(eventData){
-		                	menuId = $(this).attr('value');
-		                	queueId = parseInt($(this).attr('queueid'));
-
-		                	$.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': queueId, 'type': menuId}, url: "/json/order/send/", 
-		                        error: function(req, textstatus) { 
-		                            UserInterface.UILock.error('Something went wrong, contact administrator or try again later.', true);
-		                        }, 
-		                        success: function(data, textstatus) {
-		                            if(data.auth === true) {
-
-		                                UserInterface.getOrders(function(data_extra) {
-		                                	OrderComponent.setup(data_extra.orders);
-		                                    subid = OrderPosition2OrderId(OrderComponent.orders[OrderComponent.queueid].orders, data.order_position);
-		                                    		                                    
-		                                	if(subid != undefined) { 
-		                                		OrderComponent.buildOrderPanel(subid);
-		                                	}
-		                                    
-		                                });
-		                            } else {
-		                                UserInterface.UILock.error(data.error, true);
-		                            }
-		                        }
-		                    });
+		                li = $(document.createElement('li')).attr('value', i).attr('queueid', queueid).text(order_type.name).click(function(eventData){
+		                	
+		                	orderTypeID = $(this).attr('value');
+		                	queueid = parseInt($(this).attr('queueid'));
+		                	
+		                	orderTypeObj = OrderComponent.orders[queueid].order_type[orderTypeID];
+		                	OrderComponent.sendOrder(queueid, orderTypeObj.type);
+		             		
+		                	WindowClass.InfoWindow.constructBase("order-panel");
+		                	//OrderComponent.buildOrderPanel(orderTypeObj);
+		                	
+		                	return false;
+		                	
 		                }).mouseenter(function() {  
 		                	  $(this).addClass("order-menu-roll")
-		    	          }).mouseleave(function() {
+		    	        }).mouseleave(function() {
 		    	        	  $(this).removeClass("order-menu-roll");
-		    	          });
+		    	        });
+		                
 		                ul.append(li);
 		            }
+		        	
+		        	// This is to keep the rollover map item active
 		        	cssobject.append(div);
 	        	}
 	    	}
@@ -657,13 +533,13 @@ OrderComponent = (function() {
                 if(counter == 0) { 
                 	asc.attr('class', 'disabled');
                 }else {
-                	asc.one('click', OrderComponent.ascendOrder);
+                	asc.click(OrderComponent.ascendOrder);
                 }
-                console.log(counter + " " + totalOrders);
+                
                 if(counter + 1 == totalOrders) 
                 	desc.attr('class', 'disabled');
                 else 
-                	desc.one('click', OrderComponent.descendOrder);
+                	desc.click(OrderComponent.descendOrder);
             	
                 
                 orderControl.append(asc).append(desc).append(
@@ -680,6 +556,7 @@ OrderComponent = (function() {
         	var $ordersContain = $(document.createElement("div"))
         							.attr("id", "order-list");
         	
+        	OrderComponent.objid = id;
         	obj = ObjectClass.objects[id];
         	if(queueID = hasQueue(obj)) {
         		
@@ -712,7 +589,8 @@ OrderComponent = (function() {
 	                    		ordername = ordername.substring(0, 9) + "...";
 	                    	
 	                        dd.append($(document.createElement('a')).attr({'id': order.order_id, 'href': '#', 'title': order.description}).text(ordername).click(function(eventData) {
-	                        	OrderComponent.buildOrderPanel(eventData.currentTarget.id);
+	                        	//OrderComponent.buildOrderPanel(eventData.currentTarget.id);
+	                        	alert("trying to edit order");
 	                        }));
 	                    } else
 	                    	dd.append($(document.createElement('span')).attr({'id': order.order_id, 'title': order.description}).text(order.name));
