@@ -8,6 +8,7 @@
 		
 		#mapdiv { position: absolute; top: 0; left: 0; margin: 0; padding: 0; width: 100%; height: 100%; }
 		#map-viewport { position: relative; overflow: hidden; width: 100%; }
+		#shiplines{ position: absolute; top:0; left:0; width: 100%; height: 100%; }
 		
 		#map-canvas > .container{ position: absolute; z-index: 99;}
 		#map-canvas .container {text-align: left; width: 100px; }
@@ -19,7 +20,7 @@
 		#map-canvas .container.hover ul { display: block; }
 		
 		#map-canvas .mapsystem {width: 30px; height: 30px; z-index: 100; text-align: center; }
-		#map-canvas .starsystem img {width: 50px; height: 50px;}
+		#map-canvas .starsystem img {width: 50px; height: 50px; z-index: 200;}
 		#map-canvas .name {width: 100px; display: block; position: relative; top: -20px; font-size: 15px; color: white; margin: 0; padding: 0; z-index: 100; cursor: default; line-height:95%;}
 		#map-canvas .fleet img {width: 30px; }	
 		#map-canvas .icon { display: none; }
@@ -28,8 +29,12 @@
         ul.tree-list ul { margin: 2px 0 2px 0px; list-style-type: none; }
         ul.tree-list li { margin: 0; padding: 0 0 1px 20px; line-height: 16px; }
         
+		#loading-panel { width: 250px; height: 50px; z-index: 100; background-image: url('../images/info-panel.png'); background-position: -50px -50px; background-repeat: no-repeat;
+        		position: absolute; top: 0px; left: 0px; margin: 0; padding: 20px 15px 10px 15px; text-align: center;}
+        #loading-panel img { width: 200px;  }
 		
-		#order-menu { width: 150px; z-index: 350; position: fixed; text-align: left; background-image: url('../images/system-panel-text.png'); background-repeat: repeat-y; background-position: -50px, -50px;}
+		#order-menu { width: 150px; z-index: 350; position: fixed; text-align: left; background-image: url('../images/system-panel-text.png'); 
+						background-repeat: repeat-y; background-position: -50px, -50px;}
 		#order-menu ul { padding: 0; margin: 0 0 0 20px; }
 		#order-menu li {height: 15px; color: #000080; font-size: 15px; list-style-type: none; padding: 5px 0 10px 0; }
 		

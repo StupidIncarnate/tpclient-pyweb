@@ -24,14 +24,6 @@ ObjectClass = (function() {
 		$objContainer.attr("id", obj.id)
 			 		 .addClass(type);
 		
-		if(obj.Owner != undefined) {
-			if(obj.Owner == UserInterface.username)
-				$objContainer.addClass('owned');
-			else if(obj.Owner.length > 0)
-				$objContainer.addClass('enemy');
-		}
-		
-		
 		$parentContainer.append($objContainer);
 		
 		if(pos != undefined) {
@@ -54,6 +46,18 @@ ObjectClass = (function() {
 		$objText.attr("id", id)
 				.addClass("name")
 				.text(name);
+		
+		if(obj.Owner != undefined) {
+			if(obj.Owner == UserInterface.username) {
+				$objContainer.addClass('owned');
+				//$objImg.addClass('owned');
+				//$objText.addClass('owned');
+			} else if(obj.Owner.length > 0) {
+				$objContainer.addClass('enemy');
+				//$objImg.addClass('enemy');
+				//$objText.addClass('enemy');
+			}
+		}
 		
 		$objContainer.append($objImg).append($objIcon).append($objText);
 		

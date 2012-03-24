@@ -143,9 +143,18 @@ function determineLesserNumber(num1, num2) {
 	else
 		return num2;
 }
-function SpacePostoPixel(x, y) {
-	pixX = x / Map.UniverseSize;
-	pixY = y / Map.UniverseSize;
+function SpacePostoPixel(pos) {
+	pixX = pos.x / Map.UniverseSize;
+	pixY = pos.y / Map.UniverseSize;
 	return {'x': pixX, 'y': pixY};
 
+}
+function PixelCoortoPixelPos(centerPoint, pos) {
+	
+	var newpos = {x:0, y:0};
+	newpos.x = centerPoint.x + pos.x;
+	newpos.y = centerPoint.y + pos.y;
+	
+	return newpos;
+	
 }

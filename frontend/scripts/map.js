@@ -34,6 +34,11 @@ Map = ( function() {
             this.scroll.css('top', (((this.map.height()/2) + y))+'px');
             this.scroll.css('left', ((this.map.width()/2) + -x)+'px');
         }
+        
+        this.shippaths = $(document.createElement('div')).attr('id', 'shiplines')
+        	.css({'position': 'absolute', 'top':'0px', 'left':'0px'});
+        this.map.append(this.shippaths);
+        this.paper = Raphael("shiplines", this.shippaths.width(), this.shippaths.height());
                 
         // Setup event handlers
         /*$(this.viewport).bind("mousedown", this, this.down);
@@ -92,7 +97,9 @@ Map = ( function() {
     	var boundaryOffset = 50; //pixels
     	
         if(this.objects) {
+        	
         	this.canvas.empty();
+            this.paper.clear();
         	
             universe = this.objects[0];
             
@@ -131,49 +138,45 @@ Map = ( function() {
             
             Map.UniverseSize = digitNum;
             
-            if($('#shiplines').length != 0)
-            	$('#shiplines').remove();
-            
-            var shiplines = $(document.createElement('div')).attr({'id': 'shiplines'});
-            this.canvas.append(shiplines);
-            
             for(var i in universe.contains) {
                 galaxy = this.objects[universe.contains[i]];
                 for(var j in galaxy.contains) { 
                 	system = this.objects[galaxy.contains[j]];
                     
-                    var pixelPos = SpacePostoPixel(system.Position.x, system.Position.y)
+                    var pixelPos = SpacePostoPixel(system.Position)
                     
                     var destPos = null;
-                    
-                    //Determines if an object has a move order and proceeds to draw the path if it does.
-                    /*MapCreator.prototype.drawCoordinatePath = function(object, pixelPos) {
-                    	if(object["Order Queue"] != undefined && object["Order Queue"]["queueid"] != undefined && parseInt(object["Order Queue"]["queueid"]) != 0) {
-	                    	queueid = parseInt(object["Order Queue"]["queueid"]);
-	                    	if(queueid != undefined) {
-		                    	subid = OrderPosition2OrderId(this.orders[queueid].orders, 0);
-		                    	if(subid != undefined) {
-		                    		var order = this.orders[queueid].orders[subid]
-	                    			if(order.args[0].name == "Pos") {
-	                    				destPos = SpacePostoPixel(order.args[0].value[0][0], order.args[0].value[0][1])
-	                    				this.drawpath(object.id, pixelPos, destPos)
-	                    			}
-		                    	}
-	                    	}
-	                    }
-                    }
-                    
-                    this.drawCoordinatePath(system, pixelPos)
-                    
-                    for(var k in system.contains) { 
-                    	object = this.objects[system.contains[k]];
-                    	this.drawCoordinatePath(object, pixelPos)
-                    }*/
-                    this.drawobject(pixelPos, system.id, system.name, system.type.name, system.Media);
+                   
+                    this.drawobject(pixelPos, system.id, system.name, system.type.name, system.Media);                    
                     
                 }
                 
             }            
+            for( var obj in this.objects ){
+            	if(this.objects[obj]["Order Queue"] != undefined && this.objects[obj]["Order Queue"]["queueid"] != undefined) {
+		            if( (queueid = this.objects[obj]["Order Queue"]["queueid"]) != 0) {
+		            	
+		            	var startPos = this.objects[obj].Position;
+		            	for(var i = 0; i < objKeyCount(this.orders[queueid].orders); i++) {
+		            		
+		            		var orderID = OrderPosition2OrderId(this.orders[queueid].orders, i);
+		        			var order = this.orders[queueid].orders[orderID];
+		        			if(order.name == "Move"){
+		        				for(var h in order.args) {
+		        					var movePos = order.args[h].value[0];
+		        					movePos = {x:movePos[0], y: movePos[1]};
+		        					
+		        					this.drawpath(this.objects[obj].id, startPos, movePos);
+		        					
+		        					startPos = movePos;
+		        				}
+		        			}   				
+		    			}
+		            	
+		            	this.paper.path("Z");
+		            }
+            	}
+            }
             
         }
     };
@@ -184,28 +187,39 @@ Map = ( function() {
     	var shifted = {};
     	shifted.x = pos.x - 50;
     	shifted.y = pos.y - 25;
-    	
+
     	var $mapObj = ObjectClass.constructDOMSystem(id, shifted);
     	this.canvas.append($mapObj);
     	
     };
-    MapCreator.prototype.drawpath = function(id, objpos, destpos) {
-    	var width = Math.abs(objpos.x - destpos.x); 
-        var height = Math.abs(objpos.y - destpos.y);
+    MapCreator.prototype.drawpath = function(id, startpos, destpos) {
+    	//console.log(objpos)
+    	//console.log(destpos)
+    	
+    	var startposPix = SpacePostoPixel(startpos);
+    	var destposPix = SpacePostoPixel(destpos);
+    
+    	var width = Math.abs(startposPix.x - destposPix.x); 
+        var height = Math.abs(startposPix.y - destposPix.y);
         
-    	var shapli = $(document.createElement('div')).attr({'id': 'shipline'+id});
-        $('#shiplines').append(shapli);
+    	//var shapli = $(document.createElement('div')).attr({'id': 'shipline'+id});
+        //$('#shiplines').append(shapli);
         
-        var r = Raphael('shipline'+id, width, height);
-        r.clear();
         //Determine the placement of the line shape
-        shapli.css({'top': determineLesserNumber(objpos.y, destpos.y),'left': determineLesserNumber(objpos.x, destpos.x), 'position': 'absolute'});
+        //shapli.css({'top': determineLesserNumber(startposPix.y, destposPix.y),'left': determineLesserNumber(startposPix.x, destposPix.x), 'position': 'absolute'});
+        var centerPos = { y: this.scroll.position().top, x: this.scroll.position().left };
         
-        if((objpos.x < destpos.x && objpos.y < destpos.y) || (objpos.x > destpos.x && objpos.y > destpos.y))
+        var transStartPos = PixelCoortoPixelPos(centerPos, startposPix);
+        var transEndPos = PixelCoortoPixelPos(centerPos, destposPix);
+        
+        this.paper.path("M " + transStartPos.x + ", " + transStartPos.y + " L " + transEndPos.x + ", " + transEndPos.y ).attr("stroke", "#f00");
+        
+        /*
+        if((startposPix.x < destposPix.x && startposPix.y < destposPix.y) || (startposPix.x > destposPix.x && startposPix.y > destposPix.y))
         	r.path("M 0 0 L " + width + " " + height).attr("stroke", "#f00");
         else 
         	r.path("M 0 "+height+ " L " + width *2+ " " + -height).attr("stroke", "#f00");
-        
+        */
         
        
     };

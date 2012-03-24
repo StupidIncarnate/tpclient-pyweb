@@ -280,14 +280,21 @@ OrderComponent = (function() {
         OrderComponentClass.prototype.type = null;
         OrderComponentClass.prototype.args = null;
         OrderComponentClass.prototype.orders = null;
+        OrderComponentClass.prototype.currentOrderType = null;
         
-        OrderComponentClass.prototype.coordinateOrder = false;
         OrderComponentClass.prototype.coordinates = [];
         
         OrderComponentClass.prototype.orderID = null;
         
         OrderComponentClass.prototype.setup = function(data) {
             OrderComponent.orders = data;
+        };
+        
+        OrderComponentClass.prototype.setCoordinates = function(endPos) {
+        	
+        	OrderComponent.coordinates = endPos;
+        	OrderComponent.updateOrder(OrderComponent.orders[queueid].order_type[orderTypeID]);
+        	
         };
         
         OrderComponentClass.prototype.sendOrder = function(queueID, menuID){
@@ -307,6 +314,8 @@ OrderComponent = (function() {
                         	if(orderid != undefined) { 
                         		
                         		var orderTypeObj = OrderComponent.orders[OrderComponent.queueid].orders[orderid];
+                        		
+                        		OrderComponent.currentOrderType = orderTypeObj;
                         		OrderComponent.buildOrderPanel(orderTypeObj);
                         		
                         	}
@@ -321,12 +330,16 @@ OrderComponent = (function() {
         };
         
         //old
-        OrderComponentClass.prototype.updateOrder = function(order) {
+        OrderComponentClass.prototype.updateOrder = function() {
+        	
+        	var order = OrderComponent.currentOrderType;
+        	
             var temp = new Array();
             for(var i in this.args) {
                 temp = temp.concat(this.args[i].getValue());
             }
             var order_position = OrderId2OrderPosition(OrderComponent.orders[OrderComponent.queueid].orders, order.order_id);
+            
             $.ajax({type: "POST", dataType: 'json', data: {'action': 'create before', 'id': OrderComponent.queueid, 'type': parseInt(order.type), 'order_position': order_position, 'args': temp}, url: "/json/order/update/", 
                 error: function(req, textstatus) { 
                     UserInterface.UILock.error('Something went wrong, contact administrator or try again later.', true);
@@ -354,9 +367,18 @@ OrderComponent = (function() {
             });
             
             OrderComponent.orderID = null;
+            OrderComponent.currentOrderType = null;
         };
         //Old
         OrderComponentClass.prototype.removeOrder = function(order_id) {
+        	
+        	if(order_id == undefined) {
+        		var order = OrderComponent.currentOrderType;
+        		order_id = order.order_id;
+        	}
+        	
+        	TaskManager.Click.removeCoordinateCommand();
+        	
         	//FIX: Does not remove when send order and then press remove
         	 var order_position = OrderId2OrderPosition(OrderComponent.orders[OrderComponent.queueid].orders, order_id);
              $.ajax({type: "POST", dataType: 'json', data: {'action': 'remove', 'id': OrderComponent.queueid, 'order_position': order_position}, url: "/json/order/remove/", 
@@ -393,7 +415,7 @@ OrderComponent = (function() {
         	var order_position = OrderId2OrderPosition(OrderComponent.orders[order_id].orders, order_id);
         	
         };
-
+        
         OrderComponentClass.prototype.buildOrderPanel = function(orderType) {
         	//Reinitiate Clicking for the object that was right-clicked
         	TaskManager.Click.clickObjectDisabled = 0;
@@ -447,31 +469,33 @@ OrderComponent = (function() {
                     }
                 }
             }
-            if(TaskManager.Click.getCoordinateOrder() != true) {
-            	
-            	orderpanel = $(document.createElement("div")).attr("id", "content");
-            	
-            	orderpanel.append($(document.createElement('h5')).css({'margin': 0, 'padding': 0}).text(orderType.name));
-            	
+            
+            orderpanel = $(document.createElement("div")).attr("id", "content");
+            orderpanel.append($(document.createElement('h5')).css({'margin': 0, 'padding': 0}).text(orderType.name));
+            
+            if(TaskManager.Click.getCoordinateOrder()) {
+            	$text = $(document.createElement("p")).text("Click anywhere on the map or list on the right to select a move destination.");
+            	orderpanel.append($text);
+            }
+            else {
+              	
             	orderpanel.append(orderdata);
             	update = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Update Order'}).click(function(eventData) {
             		parent = $(this).parent();
             		$(this).empty();
             		parent.append($(document.createElement('img')).attr({'src': "/images/loadingCircle.gif"}).css({ 'width': '20px', 'height': '20px'}))
-                    OrderComponent.updateOrder(orderType);
+                    OrderComponent.updateOrder();
                     return false;
                 });
                 
                 orderpanel.append(update);
-                
-                WindowClass.InfoWindow.removeLoader();
-                WindowClass.InfoWindow.returnCurrentWin().append(orderpanel.children());
+
             }
+            
+            WindowClass.InfoWindow.removeLoader();
+            WindowClass.InfoWindow.returnCurrentWin().append(orderpanel.children());
         };
         OrderComponentClass.prototype.constructOrdersMenu = function(eventData, cssobject) {
-        	/*
-        	 * parentContainer - Must be something like #id
-        	 */
         	
         	id = parseInt(cssobject.attr('id'))
         	obj = ObjectClass.objects[id];
@@ -489,6 +513,7 @@ OrderComponent = (function() {
 	        		div = $(document.createElement('div')).attr('id', 'order-menu').css({'top': y+'px', 'left': x+'px'});
 	        		ul = $(document.createElement('ul'));
 	        		div.append(ul);
+	        		
 		        	for(var i in OrderComponent.orders[queueid].order_type) {
 		                order_type = OrderComponent.orders[queueid].order_type[i];
 		                li = $(document.createElement('li')).attr('value', i).attr('queueid', queueid).text(order_type.name).click(function(eventData){
@@ -499,9 +524,8 @@ OrderComponent = (function() {
 		                	orderTypeObj = OrderComponent.orders[queueid].order_type[orderTypeID];
 		                	OrderComponent.sendOrder(queueid, orderTypeObj.type);
 		             		
-		                	WindowClass.InfoWindow.constructBase("order-panel");
-		                	//OrderComponent.buildOrderPanel(orderTypeObj);
-		                	
+		                	WindowClass.InfoWindow.constructBase("order-panel", OrderComponent.removeOrder);
+		                			                	
 		                	return false;
 		                	
 		                }).mouseenter(function() {  

@@ -17,18 +17,18 @@ TaskManager = ( function() {
     	ClickManagerClass.prototype.clickObjectDisabled = 0; //Object that gets right-clicked
     	
     	ClickManagerClass.prototype.launchInfoComponent = function(id){
-    		if(ClickManagerComponent.coordinateOrder == true)
+    		if(ClickManagerComponent.coordinateOrder == true) {
     			ClickManagerComponent.objectClicked(id);
-    		else {
+    		} else {
     			if(ClickManagerComponent.clickObjectDisabled != parseInt(id)) {
     				  WindowClass.InfoWindow.onItemClick(id);
     			}
     		}
     	};
     	ClickManagerClass.prototype.launchOrderMenu = function(eventData, cssobject) {
-    		if(ClickManagerComponent.coordinateOrder == true)
+    		if(ClickManagerComponent.coordinateOrder == true) {
     			ClickManagerComponent.objectClicked(id);
-    		else {
+    		} else {
     			ClickManagerComponent.clickObjectDisabled = parseInt(cssobject.attr('id'));
     			OrderComponent.constructOrdersMenu(eventData, cssobject);
     		}
@@ -50,24 +50,26 @@ TaskManager = ( function() {
     	};
     	//These two functions are for when a coordinate order is issued, such as move. 
     	ClickManagerClass.prototype.mapClicked = function(eventData) {
+    		console.log("MAP CLICKED");
     		if(ClickManagerComponent.coordinateOrder == true) {
 	    		var destX = (eventData.clientX - $("#map-scroll").position().left) * Map.UniverseSize;
 	    		var destY = (eventData.clientY - $("#map-scroll").position().top) * Map.UniverseSize;
 	    		
 	    		ClickManagerComponent.coordinateOrder = false;
 	    		
-	    		OrderComponent.coordinates = [destX, destY, 0];
-	    		OrderComponent.updateOrder(ClickManagerComponent.orderType);
+	    		OrderComponent.setCoordinates([destX, destY, 0]);
+	    		//OrderComponent.coordinates = [destX, destY, 0];
+	    		//OrderComponent.updateOrder(ClickManagerComponent.orderType);
 	    		
 	    		ClickManagerComponent.orderType = null;
 	    		
-	    		alert("You have sent your ship on location.")
+	    		//alert("You have sent your ship on location.")
 	    		
 	    		shippos = SystemObjectComponent.objects[OrderComponent.objid].Position;
-	    		var originPos = SpacePostoPixel(shippos.x, shippos.y);
+	    		//var originPos = SpacePostoPixel(shippos.x, shippos.y);
 	    		var destpos = {'x': destX, 'y': destY};
 	    		
-	    		Map.drawpath(OrderComponent.objid, originPos, destpos);
+	    		Map.drawpath(OrderComponent.objid, shippos, destpos);
 
     		}
     		else if(WindowManagerComponent.registeredWindow() == "#order-menu") {
@@ -75,20 +77,33 @@ TaskManager = ( function() {
     		}
     	};
     	ClickManagerClass.prototype.objectClicked = function(id) {
+    		console.log("PLANET CLICKED");
     		ClickManagerComponent.coordinateOrder = false;
     		var objPos = SystemObjectComponent.objects[id].Position
-    		OrderComponent.coordinates = [objPos.x, objPos.y, 0];
     		
-    		OrderComponent.updateOrder(ClickManagerComponent.orderType);
+    		OrderComponent.setCoordinates([objPos.x, objPos.y, 0]);
+    		//alert("#map-canvas #"+id);
+    		
+    		/*
+    		var objT = $("#map-canvas").children("#"+id).position().top + 25;
+    		var objL = $("#map-canvas").children("#"+id).position().left + 50;
+    		var destX = (objL - $("#map-canvas").position().left) * Map.UniverseSize;
+    		var destY = (objT - $("#map-canvas").position().top) * Map.UniverseSize;
+    		var objDest = SystemObjectComponent.objects[id].Position;
+    		console.log("x" + destX + "y" + destY);
+    		console.log(objDest.x + " " + objDest.y);*/
+    		
+    		//OrderComponent.updateOrder(ClickManagerComponent.orderType);
     		
     		ClickManagerComponent.orderType = null;
     		
-    		shippos = SystemObjectComponent.objects[OrderComponent.objid].Position;
-    		objdest = SystemObjectComponent.objects[id].Position;
-    		var originPos = SpacePostoPixel(shippos.x, shippos.y);
-    		var destpos = SpacePostoPixel(objdest.x, objdest.y);
+    		var shippos = SystemObjectComponent.objects[OrderComponent.objid].Position;
+    		var objdest = SystemObjectComponent.objects[id].Position;
     		
-    		Map.drawpath(OrderComponent.objid, originPos, destpos);
+    		//var originPos = SpacePostoPixel(shippos.x, shippos.y);
+    		//var destpos = SpacePostoPixel(objdest.x, objdest.y);
+    		
+    		Map.drawpath(OrderComponent.objid, shippos, objdest);
     		
     		
     		//alert(SystemObjectComponent.objects[id].Position.x);
@@ -99,6 +114,9 @@ TaskManager = ( function() {
     	};
     	ClickManagerClass.prototype.getCoordinateOrder = function() {
     		return ClickManagerComponent.coordinateOrder;
+    	};
+    	ClickManagerClass.prototype.removeCoordinateCommand = function() {
+    		ClickManagerComponent.coordinateOrder = false;
     	};
     	
     	return new ClickManagerClass();

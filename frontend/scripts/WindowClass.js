@@ -225,25 +225,39 @@ WindowClass = (function() {
     	 * 
     	 * windowName is the css tag name, without a # before it.
     	 */
-    	InfoComponentClass.prototype.constructBase = function(windowName) {
+    	InfoComponentClass.prototype.constructBase = function(windowName, event) {
     		TaskManager.Window.registerObject("#"+windowName);
     		
+    		/* Loading panel creation */
+    		this.loadingPanel = $(document.createElement("div"))
+						.attr("id","loading-panel");
+			this.loadingPanel.append($(document.createElement("img")).attr("src", "images/loaderBar.gif"))
+			$('#overlay').append(this.loadingPanel);
+			
+			posTop = 15;
+			posLeft = ($(window).width() / 2) - (this.loadingPanel.width() / 2);
+			if(posLeft < 0)
+				posLeft = 0;
+			
+    		this.loadingPanel.css("display", "inline").css("top", posTop+"px").css("left", posLeft+"px");
+    		
+    		
+    		
+    		/*	Window panel creation */
     		panel = $(document.createElement("div")).attr('id', windowName).addClass("window");
     		$('#overlay').append(panel);
     		
-    		closebutton = $(document.createElement("div")).attr('id', 'closebutton');
-    		closebutton.one("click",function(eventData){
-				TaskManager.Window.removeObject();
-			});
-			closebutton.append($(document.createElement("img")).attr('src', 'images/close.png'));
-			
-			panel.append(closebutton);
-			
-			//$content = $(document.createElement("div")).attr("id", "content");
-			
-			this.$loadingImg = $(document.createElement("img"));
-			this.$loadingImg.attr("src", "images/loaderBar.gif");
-			panel.append(this.$loadingImg);
+    		this.$closebutton = $(document.createElement("div")).attr('id', 'closebutton')
+					    		.one("click",function(eventData){
+					    			if(event != undefined) 
+					    				event();
+									TaskManager.Window.removeObject();
+								})
+								.append($(document.createElement("img")).attr('src', 'images/close.png'));
+    		
+    		
+					
+			panel.append(this.$closebutton);	
 			
 		    posTop = 5;
 			posLeft = ($(window).width() / 2) - (panel.width() / 2);
@@ -252,8 +266,8 @@ WindowClass = (function() {
 				posLeft = 0;
 			
 			panel.css("display", "inline").css("top", posTop+"px").css("left", posLeft+"px");
-			
 			this.currentWindow = panel;
+			this.currentWindow.hide();
 			
 			
 			return panel;
@@ -263,9 +277,10 @@ WindowClass = (function() {
     	 * Removes the loading images from the bar when content is ready to go.
     	 */
     	InfoComponentClass.prototype.removeLoader = function() {
-    		if(this.$loadingImg != null){
-    			this.$loadingImg.remove();
-    			this.$loadingImg = null;    			
+    		if(this.loadingPanel != null){
+    			this.loadingPanel.remove();
+    			this.loadingPanel = null;
+    			this.currentWindow.show();
     		}
     		
     	};

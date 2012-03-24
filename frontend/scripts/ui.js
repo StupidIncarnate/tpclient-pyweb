@@ -279,7 +279,6 @@ UserInterface = ( function() {
               });
             */
             $('.mapsystem').click(function(eventData) {
-            	alert("launching from mapclicked");
   			  	ClickManagerComponent.launchInfoComponent($(this).attr('id'));
   			 
             	
