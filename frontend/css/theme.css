@@ -2,6 +2,7 @@
 		
 		/* -----Z-INDEX------ */
 		#map-canvas > .container { z-index: 99; }
+		#map-canvas .hover { z-index: 400; }
 		#map-canvas .container > ul { z-index: 200; }
 		#map-canvas .mapsystem { z-index: 100; }
 		#map-canvas .starsystem img { z-index: 200; }

@@ -117,17 +117,20 @@ ObjectClass = (function() {
 	ObjectComponent.prototype.constructDOMSystem = function(objID, pos) {
 		
 		var $obj = constructDOMObject(objID, pos);
-		$obj.hover(
-	    		function() {
-	    			$(this).addClass("hover");
-	    			Map.hideSystemTitles($(this).attr("id"));
-	    		}, 
-	    		function() {
-	    			$(this).removeClass("hover");
-	    			Map.showSystemTitles();
-	    		}
-	    	);
-			 
+		
+		if($obj.children("ul").length) {
+			$obj.hover(
+		    		function() {
+		    			$(this).addClass("hover");
+		    			Map.hideSystemTitles($(this).attr("id"));
+		    		}, 
+		    		function() {
+		    			$(this).removeClass("hover");
+		    			Map.showSystemTitles();
+		    		}
+		    	);
+		}
+		
 		return $obj;
 		
 		
