@@ -1,27 +1,49 @@
  html, body { background: black url('../images/Starfield.jpg') repeat; }
 		
+		/* -----Z-INDEX------ */
+		#map-canvas > .container { z-index: 99; }
+		#map-canvas .container > ul { z-index: 200; }
+		#map-canvas .mapsystem { z-index: 100; }
+		#map-canvas .starsystem img { z-index: 200; }
+		#map-canvas .name { z-index: 100; }
+		#loading-panel { z-index: 100; }
+		#order-menu { z-index: 350; }
+		#order-panel { z-index: 100; }
+		#header { z-index: 100; }
+		#header h1 { z-index: 100; }
+		#closebutton { z-index: 200; }
+		.jScrollPaneContainer { z-index: 1; }
+        #menu-bar { z-index: 100; }
+        #message-bar { z-index: 100; }
+        #info-panel { z-index: 100; }
+        #system-bar { z-index: 100; }
+        #loginbox { z-index: 1001; }
+        #uilock { z-index: 10000; }
+        #uilock-content { z-index: 10001; } 
+        #notify-component { z-index: 100; }
+		
 		.icon {background-repeat: no-repeat; background-position: 0 0;}
 		#systemBox {background-image: url('../images/systempanel.png'); background-repeat: no-repeat; width: 310px; height: 700px;}
 			
-		.owned{background-color: rgba(0, 255, 0, 0.5);padding: 2px;}
-		.enemy{background-color: rgba(255, 0, 0, 0.5);padding: 2px;}
+		.owned{background-color: rgba(0, 255, 0, 0.5); padding: 2px;}
+		.enemy{background-color: rgba(255, 0, 0, 0.5); padding: 2px;}
 		
 		#mapdiv { position: absolute; top: 0; left: 0; margin: 0; padding: 0; width: 100%; height: 100%; }
 		#map-viewport { position: relative; overflow: hidden; width: 100%; }
 		#shiplines{ position: absolute; top:0; left:0; width: 100%; height: 100%; }
 		
-		#map-canvas > .container{ position: absolute; z-index: 99;}
+		#map-canvas > .container{ position: absolute;}
 		#map-canvas .container {text-align: left; width: 100px; }
 		#map-canvas .container > div { text-align: center; width: 100px;}
-		#map-canvas .container > ul { display: none; margin-left: 100px; z-index: 200;}
+		#map-canvas .container > ul { display: none; margin-left: 100px;}
 		
 		#map-canvas .container.hover { width: 200px; text-align: left; }
 		#map-canvas .container.hover > div { float: left; }
 		#map-canvas .container.hover ul { display: block; }
 		
-		#map-canvas .mapsystem {width: 30px; height: 30px; z-index: 100; text-align: center; }
-		#map-canvas .starsystem img {width: 50px; height: 50px; z-index: 200;}
-		#map-canvas .name {width: 100px; display: block; position: relative; top: -20px; font-size: 15px; color: white; margin: 0; padding: 0; z-index: 100; cursor: default; line-height:95%;}
+		#map-canvas .mapsystem {width: 30px; height: 30px; text-align: center; }
+		#map-canvas .starsystem img {width: 50px; height: 50px;}
+		#map-canvas .name {width: 100px; display: block; position: relative; top: -20px; font-size: 15px; color: white; margin: 0; padding: 0; cursor: default; line-height:95%;}
 		#map-canvas .fleet img {width: 30px; }	
 		#map-canvas .icon { display: none; }
 		
@@ -29,16 +51,16 @@
         ul.tree-list ul { margin: 2px 0 2px 0px; list-style-type: none; }
         ul.tree-list li { margin: 0; padding: 0 0 1px 20px; line-height: 16px; }
         
-		#loading-panel { width: 250px; height: 50px; z-index: 100; background-image: url('../images/info-panel.png'); background-position: -50px -50px; background-repeat: no-repeat;
+		#loading-panel { width: 250px; height: 50px; background-image: url('../images/info-panel.png'); background-position: -50px -50px; background-repeat: no-repeat;
         		position: absolute; top: 0px; left: 0px; margin: 0; padding: 20px 15px 10px 15px; text-align: center;}
         #loading-panel img { width: 200px;  }
 		
-		#order-menu { width: 150px; z-index: 350; position: fixed; text-align: left; background-image: url('../images/system-panel-text.png'); 
+		#order-menu { width: 150px; position: fixed; text-align: left; background-image: url('../images/system-panel-text.png'); 
 						background-repeat: repeat-y; background-position: -50px, -50px;}
 		#order-menu ul { padding: 0; margin: 0 0 0 20px; }
 		#order-menu li {height: 15px; color: #000080; font-size: 15px; list-style-type: none; padding: 5px 0 10px 0; }
 		
-		#order-panel { width: 430px; height: 430px; z-index: 100; background-image: url('../images/info-panel.png'); background-repeat: no-repeat;
+		#order-panel { width: 430px; height: 430px; background-image: url('../images/info-panel.png'); background-repeat: no-repeat;
         		position: absolute; top: 0px; left: 0px; margin: 0; padding: 20px 15px 10px 15px;}
         #order-panel dl {float: right; padding-left: 10px; display: inline; padding-right: 10px;}
         #order-panel dt { float: left; clear: left; width: 45px; text-align: right; margin-right: 10px; display: block;}
@@ -46,24 +68,23 @@
 		
 		.order-menu-roll{background-color: rgba(255, 255, 255, 0.2);}
 		
-		#header{ position: relative; padding: 10px; margin: 0; z-index: 100; width: 300px; }
-		#header h1 { width: 297px; height: 118px; margin: 0; background: url('../images/logonew.png') no-repeat scroll 0 0; z-index: 100; } 
+		#header{ position: relative; padding: 10px; margin: 0; width: 300px; }
+		#header h1 { width: 297px; height: 118px; margin: 0; background: url('../images/logonew.png') no-repeat scroll 0 0; } 
         #header h1 span { display: none; }
 		
         #overlay { top: 0; left: 0; width: 100%; height: 100%; }
         #overlay-content { top: 0px; width: 100%; height: 100%; }
         
-        #closebutton {position: absolute; top: 12px; right: 20px; z-index: 200;}
+        #closebutton {position: absolute; top: 12px; right: 20px; }
         #closebutton img {width: 25px; height: 25px;}
         
         .titlestrip {float: right; background-repeat: no-repeat; height: 100%;}
         .titlestrip span {display: none;}
         .textstrip {margin: 0; background-repeat: repeat-x;}
-        
+             
         .jScrollPaneContainer {
 			position: relative;
 			overflow: hidden;
-			z-index: 1;
 		}
 		.jScrollPaneTrack {
 			position: absolute;
@@ -81,7 +102,7 @@
 			
 		}
 
-        #menu-bar {position: relative; width: 270px; height: 186px; z-index: 100; left: 0px;}
+        #menu-bar {position: relative; width: 270px; height: 186px; left: 0px;}
         #menu-bar-title {background-image: url('../images/menu-panel-title.png'); width:59px;}
 		#menu-bar ul {padding-top: 28px; font-size: 17px; background-image: url('../images/menu-panel-text.png'); width: 211px; height:186px; }
         #menu-bar ul li { margin: 0; padding: 0 1em; list-style-type: none; }
@@ -89,13 +110,13 @@
         #turn-component { position: absolute; top: 79px; left: 134px;  color: white; }
         #turn-component .timeleft, #turn-component .turn { font-size: 1.2em; font-weight: bold; }
         
-        #message-bar { position: relative; width: 550px; height: 400px; z-index: 100; }
+        #message-bar { position: relative; width: 550px; height: 400px; }
         #message-bar-title { background-image: url('../images/message-panel-title.png'); width: 58px; }
         #message-bar-container {background-image: url('../images/message-panel-text.png'); width: 478px; height: 400px; padding: 7px;}
         #message-bar-text { width: 482px; height: 376px;}
         #message-bar-text p {padding: 10px; font-size: 17px;}
         
-        #info-panel { width: 430px; height: 430px; z-index: 100; background-image: url('../images/info-panel.png'); background-repeat: no-repeat; display: none;
+        #info-panel { width: 430px; height: 430px; background-image: url('../images/info-panel.png'); background-repeat: no-repeat; display: none;
         		position: absolute; top: 0px; left: 0px; margin: 0; padding: 12px; font-size: 13px;}
         #info-panel #planet-title {font-size: 18px; width: 100%; text-align: center;}
         #info-panel #leftcolumn {width: 45%; position: absolute; left: 0px; margin: 0 40px 0 10px; text-align: center;}
@@ -116,7 +137,7 @@
         #info-tree dt{ margin-right: 10px;  width: 45px;}
         #info-tree dd { float: left; dispaly: block; width: 130px;}
         
-        #system-bar { position: absolute; top: 2px; right: 2px; width: 303px; height: 698px; z-index: 100; }
+        #system-bar { position: absolute; top: 2px; right: 2px; width: 303px; height: 698px; }
         #system-bar-title { position: absolute; bottom: 0px; background-image: url('../images/system-panel-title.png'); background-repeat: no-repeat; width: 303px; height: 59px; }
         #system-bar-title span {display: none; }
         #system-bar-container {background-image: url('../images/system-panel-text.png'); background-repeat: repeat-y; width: 303px; height: 639px; padding-left: 15px;}
@@ -126,7 +147,7 @@
 		#system-component-text {padding: 10px;}
 		#system-bar-text {clear: both; overflow: auto; width: 285px; height: 640px;}
 		
-		#loginbox { position: absolute; top: 40px; left: 50%; width: 440px; margin-left: -220px; z-index: 1001; color: orange; background-color: #222; }
+		#loginbox { position: absolute; top: 40px; left: 50%; width: 440px; margin-left: -220px; color: orange; background-color: #222; }
         #loginbox h1 { color: orange; text-align: center; margin: 0.4em 0; padding: 0; width: 440px; height: 63px; background: transparent url('../images/logo.png') no-repeat scroll center; }
         #loginbox h1 span { display: none; }
         #loginbox .content { background-color: #222; margin: 2em; text-align: left; }
@@ -138,13 +159,13 @@
 
         .transparent { filter:alpha(opacity=80); -moz-opacity: 0.8; -khtml-opacity: 0.8; opacity: 0.8; -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=80)"; }
 
-        #uilock { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000 }
+        #uilock { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         #uilock-content { position: absolute; top: 0; left: 50%;
-            width: 440px; margin: 0 0 0 -220px; padding: 1em 0; z-index: 10001; text-align: center; background: 0; border: 0; }
+            width: 440px; margin: 0 0 0 -220px; padding: 1em 0; text-align: center; background: 0; border: 0; }
         #uilock-content.error { color: red; }
         #uilock-content.notice { color: orange; }
         
-        #notify-component { position: absolute; bottom: 5px; right: 10px; width: 60em; height: 72px; z-index: 100; text-align: right; overflow: hidden; }
+        #notify-component { position: absolute; bottom: 5px; right: 10px; width: 60em; height: 72px; text-align: right; overflow: hidden; }
         #notify-component div { margin: 5px 0; }
         #notify-component .category { color: orange; font-size: 0.8em; }
         #notify-component .text { padding-left: 2px; color: #fff; }

@@ -288,13 +288,7 @@ UserInterface = ( function() {
     		  	//cancel the default context menu
     	        return false;
     	   });
-    	    
-    	    
-    	    $('#map-viewport').bind('click', function(eventData) {
-    	    	ClickManagerComponent.mapClicked(eventData);
-    	    	
-            });
-            
+    	                
             // Hack to fix height and width
             jQuery('#overlay-content').css('height', (jQuery(window).height() - jQuery('#overlay-content').offset().top));
             jQuery('#overlay-content').css('width', jQuery(window).width());
@@ -454,6 +448,11 @@ UserInterface = ( function() {
 	
         $('#logout').bind('click', UserInterface.logout);
         $('#loginform').bind("submit", this, login);
+        
+        $('#mapdiv').bind('click', function(eventData) {
+	    	ClickManagerComponent.mapClicked(eventData);
+	    	
+        });
         
         /*$('#mapdiv').live('click', function(eventData) {
         	eventData.clickThrough = "mapobj";
