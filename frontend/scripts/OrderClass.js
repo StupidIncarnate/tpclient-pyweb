@@ -612,13 +612,18 @@ OrderComponent = (function() {
 	                    	if(order.name.length > 10)
 	                    		ordername = ordername.substring(0, 9) + "...";
 	                    	
-	                        dd.append($(document.createElement('a')).attr({'id': order.order_id, 'href': '#', 'title': order.description}).text(ordername).click(function(eventData) {
-	                        	//OrderComponent.buildOrderPanel(eventData.currentTarget.id);
-	                        	alert("trying to edit order");
+	                        dd.append($(document.createElement('a')).attr({'orderid': order.order_id,  'href': '#', 'title': order.description}).text(ordername).click(function(eventData) {
+	                        	var orderid = $(this).attr("orderid");
+	                        	var orderTypeObj = OrderComponent.orders[OrderComponent.queueid].orders[orderid];
+	                        	
+	                        	WindowClass.InfoWindow.constructBase("order-panel");
+	                        	OrderComponent.currentOrderType = orderTypeObj;
+	                        	OrderComponent.buildOrderPanel(orderTypeObj);
+	                        	
 	                        }));
-	                    } else
-	                    	dd.append($(document.createElement('span')).attr({'id': order.order_id, 'title': order.description}).text(order.name));
-	                    
+	                    } else {
+	                    	dd.append($(document.createElement('span')).attr({'orderid': order.order_id, 'title': order.description}).text(order.name));
+	                    }
 	                    
 	                    //orderControl.append(asc).append(desc).append(remove);
 	                    
