@@ -332,6 +332,8 @@ OrderComponent = (function() {
         //old
         OrderComponentClass.prototype.updateOrder = function() {
         	
+        	Map.removeCrossHairs();
+        	
         	var order = OrderComponent.currentOrderType;
         	
             var temp = new Array();
@@ -345,6 +347,9 @@ OrderComponent = (function() {
                     UserInterface.UILock.error('Something went wrong, contact administrator or try again later.', true);
                 }, 
                 success: function(data, textstatus) { 
+                	
+                	WindowClass.InfoWindow.removeLoader();
+                	
                     if(data.auth === true) {
                         UserInterface.getOrders(function(data) {
                             OrderComponent.setup(data.orders);
@@ -368,6 +373,7 @@ OrderComponent = (function() {
             
             OrderComponent.orderID = null;
             OrderComponent.currentOrderType = null;
+            
         };
         //Old
         OrderComponentClass.prototype.removeOrder = function(order_id) {
@@ -419,7 +425,7 @@ OrderComponent = (function() {
         OrderComponentClass.prototype.buildOrderPanel = function(orderType) {
         	//Reinitiate Clicking for the object that was right-clicked
         	TaskManager.Click.clickObjectDisabled = 0;
-        	
+        	        	
         	this.args = new Array();
             
         	if(orderType == undefined)
@@ -474,26 +480,47 @@ OrderComponent = (function() {
             orderpanel.append($(document.createElement('h5')).css({'margin': 0, 'padding': 0}).text(orderType.name));
             
             if(TaskManager.Click.getCoordinateOrder()) {
+            	
+            	/*
+            	var panel = WindowClass.InfoWindow.constructBase("order-panel", OrderComponent.removeOrder);
+            	
             	$text = $(document.createElement("p")).text("Click anywhere on the map or list on the right to select a move destination.");
-            	orderpanel.append($text);
-            }
-            else {
+            	panel.append($text);
+            	
+            	 WindowClass.InfoWindow.removeLoader();
+                 //WindowClass.InfoWindow.returnCurrentWin().append(orderpanel.children());
+            	*/
+            	
+            	WindowClass.InfoWindow.removeLoader();
+            	Map.setCrossHairs();
+            	
+            	
+            } else if(orderType.args.length == 0) {
+            	
+            	OrderComponent.updateOrder();
+            	//TaskManager.Window.removeObject();
+            	
+            } else {
               	
-            	orderpanel.append(orderdata);
+            	var panel = WindowClass.InfoWindow.constructBase("order-panel", OrderComponent.removeOrder);
+            	
+            	panel.append(orderdata);
             	update = $(document.createElement('input')).attr({'type': 'submit', 'value': 'Update Order'}).click(function(eventData) {
             		parent = $(this).parent();
             		$(this).empty();
             		parent.append($(document.createElement('img')).attr({'src': "/images/loadingCircle.gif"}).css({ 'width': '20px', 'height': '20px'}))
                     OrderComponent.updateOrder();
+            		
                     return false;
                 });
                 
-                orderpanel.append(update);
-
+                panel.append(update);
+                
+                WindowClass.InfoWindow.removeLoader();
+                //WindowClass.InfoWindow.returnCurrentWin().append(orderpanel.children());
             }
             
-            WindowClass.InfoWindow.removeLoader();
-            WindowClass.InfoWindow.returnCurrentWin().append(orderpanel.children());
+           
         };
         OrderComponentClass.prototype.constructOrdersMenu = function(eventData, cssobject) {
         	
@@ -523,9 +550,9 @@ OrderComponent = (function() {
 		                	
 		                	orderTypeObj = OrderComponent.orders[queueid].order_type[orderTypeID];
 		                	OrderComponent.sendOrder(queueid, orderTypeObj.type);
-		             		
-		                	WindowClass.InfoWindow.constructBase("order-panel", OrderComponent.removeOrder);
-		                			                	
+		                	
+		                	WindowClass.InfoWindow.constructLoader();
+		                	
 		                	return false;
 		                	
 		                }).mouseenter(function() {  

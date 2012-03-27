@@ -54,7 +54,7 @@ TaskManager = ( function() {
     		if(ClickManagerComponent.coordinateOrder == true) {
 	    		var destX = (eventData.clientX - $("#map-scroll").position().left) * Map.UniverseSize;
 	    		var destY = (eventData.clientY - $("#map-scroll").position().top) * Map.UniverseSize;
-	    		
+	    			    		
 	    		ClickManagerComponent.coordinateOrder = false;
 	    		
 	    		OrderComponent.setCoordinates([destX, destY, 0]);
@@ -65,8 +65,9 @@ TaskManager = ( function() {
 	    		
 	    		//alert("You have sent your ship on location.")
 	    		
-	    		shippos = SystemObjectComponent.objects[OrderComponent.objid].Position;
+	    		//shippos = SystemObjectComponent.objects[OrderComponent.objid].Position;
 	    		//var originPos = SpacePostoPixel(shippos.x, shippos.y);
+	    		var shippos = Map.getShipPosition(OrderComponent.objid);
 	    		var destpos = {'x': destX, 'y': destY};
 	    		
 	    		Map.drawpath(OrderComponent.objid, shippos, destpos);
@@ -111,6 +112,7 @@ TaskManager = ( function() {
     	};
     	ClickManagerClass.prototype.setCoordinateOrder = function() {
     		ClickManagerComponent.coordinateOrder = true;
+    		//Map.viewport.css("cursor:crosshair")
     	};
     	ClickManagerClass.prototype.getCoordinateOrder = function() {
     		return ClickManagerComponent.coordinateOrder;

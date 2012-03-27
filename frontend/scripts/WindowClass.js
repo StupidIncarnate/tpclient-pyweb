@@ -220,13 +220,10 @@ WindowClass = (function() {
     		InfoComponentClass.prototype.objects = data;	
     		
     	};
-    	/*
-    	 * Construct the base component. The order portion also uses this panel.
-    	 * 
-    	 * windowName is the css tag name, without a # before it.
-    	 */
-    	InfoComponentClass.prototype.constructBase = function(windowName, event) {
-    		TaskManager.Window.registerObject("#"+windowName);
+    	
+    	InfoComponentClass.prototype.constructLoader = function() {
+    		
+    		TaskManager.Window.removeObject();
     		
     		/* Loading panel creation */
     		this.loadingPanel = $(document.createElement("div"))
@@ -242,6 +239,14 @@ WindowClass = (function() {
     		this.loadingPanel.css("display", "inline").css("top", posTop+"px").css("left", posLeft+"px");
     		
     		
+    	};
+    	/*
+    	 * Construct the base component. The order portion also uses this panel.
+    	 * 
+    	 * windowName is the css tag name, without a # before it.
+    	 */
+    	InfoComponentClass.prototype.constructBase = function(windowName, event) {
+    		TaskManager.Window.registerObject("#"+windowName);
     		
     		/*	Window panel creation */
     		panel = $(document.createElement("div")).attr('id', windowName).addClass("window");
@@ -259,16 +264,14 @@ WindowClass = (function() {
 					
 			panel.append(this.$closebutton);	
 			
-		    posTop = 5;
+		    posTop = 20;
 			posLeft = ($(window).width() / 2) - (panel.width() / 2);
 			
 			if(posLeft < 0)
 				posLeft = 0;
 			
 			panel.css("display", "inline").css("top", posTop+"px").css("left", posLeft+"px");
-			this.currentWindow = panel;
-			this.currentWindow.hide();
-			
+			this.currentWindow = panel;			
 			
 			return panel;
     	};
@@ -280,7 +283,6 @@ WindowClass = (function() {
     		if(this.loadingPanel != null){
     			this.loadingPanel.remove();
     			this.loadingPanel = null;
-    			this.currentWindow.show();
     		}
     		
     	};

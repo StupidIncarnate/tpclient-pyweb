@@ -223,15 +223,51 @@ Map = ( function() {
         
        
     };
+    MapCreator.prototype.getShipPosition = function(id) {
+    	
+    	var currentPos = this.objects[id].Position;
+    	
+    	if(this.objects[id]["Order Queue"] != undefined && this.objects[id]["Order Queue"]["queueid"] != undefined) {
+            if( (queueid = this.objects[id]["Order Queue"]["queueid"]) != 0) {
+            	
+            	var orderCount = objKeyCount(this.orders[queueid].orders);
+            	var orderid = OrderPosition2OrderId(this.orders[queueid].orders, orderCount-1);
+            	            	
+            	if(orderid != undefined) {
+            		var order = this.orders[queueid].orders[orderid];
+            		
+            		if(order.name == "Move"){
+        				for(var h in order.args) {
+        					var movePos = order.args[h].value[0];
+        					currentPos = {x:movePos[0], y: movePos[1]};
+        					console.log(currentPos);
+        					
+        				}
+        			}
+            	}
+            } 
+    	}
+    	console.log("returning");
+    	console.log(currentPos);
+    	return currentPos;
+    	
+    };
     
     MapCreator.prototype.hideSystemTitles = function(id) {
     	$('#map-canvas .name').css({'color': 'grey', 'z-index': '99'});
     	$('#map-canvas #'+id+' .name').css({'color':'white'});
     };
+    
     MapCreator.prototype.showSystemTitles = function() {
     	$('#map-canvas .name').css('color', 'white');
     };
     
+    MapCreator.prototype.setCrossHairs = function() {
+    	this.viewport.css("cursor","crosshair");
+    };
+    MapCreator.prototype.removeCrossHairs = function() {
+    	this.viewport.css("cursor", "auto");
+    };
     
     return new MapCreator();
 } )();

@@ -1,37 +1,42 @@
  html, body { background: black url('../images/Starfield.jpg') repeat; }
 		
 		/* -----Z-INDEX------ */
+		#map-viewport { z-index: 100;}
 		#map-canvas > .container { z-index: 99; }
 		#map-canvas .hover { z-index: 400; }
 		#map-canvas .container > ul { z-index: 200; }
 		#map-canvas .mapsystem { z-index: 100; }
 		#map-canvas .starsystem img { z-index: 200; }
 		#map-canvas .name { z-index: 100; }
+		#shiplines { z-index: 95; }
 		#loading-panel { z-index: 100; }
 		#order-menu { z-index: 350; }
-		#order-panel { z-index: 100; }
 		#header { z-index: 100; }
 		#header h1 { z-index: 100; }
 		#closebutton { z-index: 200; }
 		.jScrollPaneContainer { z-index: 1; }
-        #menu-bar { z-index: 100; }
-        #message-bar { z-index: 100; }
-        #info-panel { z-index: 100; }
-        #system-bar { z-index: 100; }
+        #menu-bar { z-index: 500; }
+        #message-bar { z-index: 500; }
+        #info-panel { z-index: 500; }
+        #system-bar { z-index: 500; }
+        .window{ z-index: 500; }
         #loginbox { z-index: 1001; }
         #uilock { z-index: 10000; }
         #uilock-content { z-index: 10001; } 
         #notify-component { z-index: 100; }
+		
+		#new-panel {width: 350px; height: 150px; background-image: url('../images/info-panel.png'); background-position: -50px -50px; position: absolute; left: 100px; padding: 5px; font-size: 1.4em;}
+		#new-panel input { margin-left: 10px; }
 		
 		.icon {background-repeat: no-repeat; background-position: 0 0;}
 		#systemBox {background-image: url('../images/systempanel.png'); background-repeat: no-repeat; width: 310px; height: 700px;}
 			
 		.owned{background-color: rgba(0, 255, 0, 0.5); padding: 2px;}
 		.enemy{background-color: rgba(255, 0, 0, 0.5); padding: 2px;}
-		
+				
 		#mapdiv { position: absolute; top: 0; left: 0; margin: 0; padding: 0; width: 100%; height: 100%; }
 		#map-viewport { position: relative; overflow: hidden; width: 100%; }
-		#shiplines{ position: absolute; top:0; left:0; width: 100%; height: 100%; }
+		#shiplines{ position: absolute; top:0; left:0; width: 100%; height: 100%;  }
 		
 		#map-canvas > .container{ position: absolute;}
 		#map-canvas .container {text-align: left; width: 100px; }
@@ -65,7 +70,8 @@
 		#order-menu li {height: 15px; color: #000080; font-size: 15px; list-style-type: none; padding: 5px 0 10px 0; }
 		
 		#order-panel { width: 430px; height: 430px; background-image: url('../images/info-panel.png'); background-repeat: no-repeat;
-        		position: absolute; top: 0px; left: 0px; margin: 0; padding: 20px 15px 10px 15px;}
+        		position: absolute; top: 0px; left: 0px; margin: 0; padding: 20px 15px 10px 15px; font-size: 1.2em;}
+        #order-panel a { color: white; text-decoration: none; }
         #order-panel dl {float: right; padding-left: 10px; display: inline; padding-right: 10px;}
         #order-panel dt { float: left; clear: left; width: 45px; text-align: right; margin-right: 10px; display: block;}
         #order-panel dd { float: left; dispaly: block; width: 130px;}
@@ -122,6 +128,7 @@
         
         #info-panel { width: 430px; height: 430px; background-image: url('../images/info-panel.png'); background-repeat: no-repeat; display: none;
         		position: absolute; top: 0px; left: 0px; margin: 0; padding: 12px; font-size: 13px;}
+        #info-panel a { color: white; text-decoration: none; }
         #info-panel #planet-title {font-size: 18px; width: 100%; text-align: center;}
         #info-panel #leftcolumn {width: 45%; position: absolute; left: 0px; margin: 0 40px 0 10px; text-align: center;}
         #info-panel #info-panel-text {overflow: auto; height: 420px; width: 410px;}
@@ -141,7 +148,7 @@
         #info-tree dt{ margin-right: 10px;  width: 45px;}
         #info-tree dd { float: left; dispaly: block; width: 130px;}
         
-        #system-bar { position: absolute; top: 2px; right: 2px; width: 303px; height: 698px; }
+        #system-bar { position: absolute; top: 2px; right: 2px; width: 303px; height: 698px; color: white; font-size: 1.2em; }
         #system-bar-title { position: absolute; bottom: 0px; background-image: url('../images/system-panel-title.png'); background-repeat: no-repeat; width: 303px; height: 59px; }
         #system-bar-title span {display: none; }
         #system-bar-container {background-image: url('../images/system-panel-text.png'); background-repeat: repeat-y; width: 303px; height: 639px; padding-left: 15px;}
@@ -150,6 +157,7 @@
 		#system-component-search input:focus { border: 0; outline: none; }
 		#system-component-text {padding: 10px;}
 		#system-bar-text {clear: both; overflow: auto; width: 285px; height: 640px;}
+		#system-bar a { color: white; text-decoration: none; }
 		
 		#loginbox { position: absolute; top: 40px; left: 50%; width: 440px; margin-left: -220px; color: orange; background-color: #222; }
         #loginbox h1 { color: orange; text-align: center; margin: 0.4em 0; padding: 0; width: 440px; height: 63px; background: transparent url('../images/logo.png') no-repeat scroll center; }
