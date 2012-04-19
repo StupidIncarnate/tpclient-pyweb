@@ -1,3 +1,123 @@
+[UBUNTU VERSION 11.10]
+
+--------------------------------------------------------------
+=STEP 1= Installing apache & python
+
+sudo apt-get install apache2 apache2.2-common apache2-mpm-prefork apache2-utils libapache2-mod-wsgi libexpat1 ssl-cert python-beaker
+sudo apt-get install python-dev
+
+
+--------------------------------------------------------------
+=STEP 2= Run apache
+
+sudo /etc/init.d/apache2 start
+
+# If you get something like this: "apache2: Could not reliably determine the server's fully qualified domain name",
+# move to STEP 3.
+# Otherwise move to STEP 4.
+
+--------------------------------------------------------------
+=STEP 3= Editing the apache config file
+
+sudo gedit /etc/apache2/apache2.conf
+
+# Add this to the bottom of the file.
+
+ServerName awesome
+
+-------------------------------------------------------------
+=STEP 4= 
+
+sudo gedit /etc/apache2/apache2.conf
+
+# Make sure "Include sites-enabled/" is not commented out
+# Restart apache
+
+sudo /etc/init.d/apache2 restart
+
+-------------------------------------------------------------
+=STEP 5= Creating a virtual host 
+
+cd /etc/apache2/sites-available/
+
+# Put the following virtual host in a file named "tpweb.conf".
+
+<VirtualHost *:80>
+    ServerName tpweb.tp
+    ServerAlias tpweb.tp
+    DocumentRoot /home/manny/workspace/tpclient-pyweb/frontend
+
+	#we want specific log file for this server
+	CustomLog /var/log/apache2/tpserver-access.log combined
+	ErrorLog /var/log/apache2/tpserver-error.log
+
+    WSGIScriptAlias /json /home/manny/workspace/tpclient-pyweb/tpclient-pyweb.wsgi
+
+    WSGIDaemonProcess tpclient-pyweb user=manny group=manny python-path=/home/manny/workspace/tpclient-pyweb home=/home/manny/workspace/tpclient-pyweb processes=1 threads=5
+    WSGIProcessGroup tpclient-pyweb
+
+	<Directory /var/www/>
+		Options Indexes FollowSymLinks MultiViews ExecCGI
+
+		AddHandler cgi-script .cgi
+		AddHandler wsgi-script .wsgi
+	
+		AllowOverride None
+		Order allow,deny
+		allow from all
+	</Directory>
+</VirtualHost>
+
+# Make sure to change "/home/manny/workspace/tpclient-pyweb/" to point to where you have tpclient-pyweb saved. 
+# Also change the user and group in the WSGIDaemonProcess to match your group. 
+
+---------------------------------------------------------------
+=STEP 6= Setting up the link
+
+sudo a2ensite tpweb.conf
+	or
+sudo ln -s /etc/apache2/sites-available/tpweb.conf /etc/apache2/sites-enabled/tpweb.conf
+
+
+---------------------------------------------------------------
+=STEP 7= Edit the host files
+
+sudo gedit /etc/hosts
+
+# After the lines that begin with 127.0.1.1, insert the following line. 
+
+127.0.0.1 localhost.localdomain localhost tpweb.tp www.tpweb.tp
+
+# This will allow you to browse to the client from your web browser by calling "www.tpweb.tp".
+
+
+----------------------------------------------------------------
+=STEP 8= Create cache folder
+
+sudo mkdir /tmp/tpclient-pyweb
+sudo mkdir /tmp/tpclient-pyweb/cache
+
+
+----------------------------------------------------------------
+=STEP 9= Installing the client libs
+
+# If you downloaded this project from git, you will need to install the libraries as well.
+
+cd /home/manny/workspace/tpclient-pyweb
+git submodule init
+git submodule update
+
+
+---------------------------------------------------------------
+=STEP 10= Restart apache
+
+sudo /etc/init.d/apache2 restart
+
+# Goto www.tpweb.tp. This should let you put in a host/user/pass and join a game.
+
+
+================================================================
+[UBUNTU VERSION 9.04]
 Here is one way to get Tpclient-pyweb working for linux. It requires an array of technologies installed, but hopefully I've covered them all. 
 
 
