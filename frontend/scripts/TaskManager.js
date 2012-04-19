@@ -83,28 +83,19 @@ TaskManager = ( function() {
     		var objPos = SystemObjectComponent.objects[id].Position
     		
     		OrderComponent.setCoordinates([objPos.x, objPos.y, 0]);
-    		//alert("#map-canvas #"+id);
-    		
-    		/*
-    		var objT = $("#map-canvas").children("#"+id).position().top + 25;
-    		var objL = $("#map-canvas").children("#"+id).position().left + 50;
-    		var destX = (objL - $("#map-canvas").position().left) * Map.UniverseSize;
-    		var destY = (objT - $("#map-canvas").position().top) * Map.UniverseSize;
-    		var objDest = SystemObjectComponent.objects[id].Position;
-    		console.log("x" + destX + "y" + destY);
-    		console.log(objDest.x + " " + objDest.y);*/
-    		
-    		//OrderComponent.updateOrder(ClickManagerComponent.orderType);
     		
     		ClickManagerComponent.orderType = null;
     		
-    		var shippos = SystemObjectComponent.objects[OrderComponent.objid].Position;
-    		var objdest = SystemObjectComponent.objects[id].Position;
+    		//var shippos = SystemObjectComponent.objects[OrderComponent.objid].Position;
+    		//var objdest = SystemObjectComponent.objects[id].Position;
+    		
+    		var shippos = Map.getShipPosition(OrderComponent.objid);
+    		var destpos = {'x': destX, 'y': destY};
     		
     		//var originPos = SpacePostoPixel(shippos.x, shippos.y);
     		//var destpos = SpacePostoPixel(objdest.x, objdest.y);
     		
-    		Map.drawpath(OrderComponent.objid, shippos, objdest);
+    		Map.drawpath(OrderComponent.objid, shippos, destpos);
     		
     		
     		//alert(SystemObjectComponent.objects[id].Position.x);
